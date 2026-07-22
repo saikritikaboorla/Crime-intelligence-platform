@@ -32,13 +32,15 @@ import {
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ScatterChart, Scatter, LabelList } from "recharts";
 import { Message, UserRole, AuditLog } from "./types";
 import NetworkGraph from "./components/NetworkGraph";
+import MissionControl from "./components/MissionControl";
+import SociologicalInsights from "./components/SociologicalInsights";
 import { mockFinancialTransactions } from "./mockData";
 
 export default function App() {
   // Roles and clearance states
   const [activeRole, setActiveRole] = useState<UserRole>("Investigator");
   const [selectedLanguage, setSelectedLanguage] = useState<"en" | "kn">("en");
-  const [activeTab, setActiveTab] = useState<string>("conversational");
+  const [activeTab, setActiveTab] = useState<string>("mission");
   
   // Conversational AI state
   const [chatInput, setChatInput] = useState("");
@@ -391,75 +393,116 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-slate-950 font-sans text-slate-200 overflow-hidden selection:bg-blue-500/30 selection:text-blue-200">
+    <div className="flex h-screen w-screen bg-slate-950 font-sans text-slate-200 overflow-hidden" style={{fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif"}}>
       
       {/* Sidebar: Navigation - Desktop (hidden on mobile) */}
-      <nav className="hidden lg:flex w-72 bg-slate-900 border-r border-slate-800 flex-col shrink-0 h-full z-20 overflow-y-auto">
-        {/* KSP Official Command Header */}
-        <div className="p-5 border-b border-slate-800 bg-slate-950/60">
+      <nav className="hidden lg:flex w-64 bg-slate-900 border-r border-slate-800/80 flex-col shrink-0 h-full z-20 overflow-y-auto">
+        {/* KSP Header */}
+        <div className="p-5 border-b border-slate-800/80">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 border border-blue-400 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/30 shrink-0">
-              <span className="text-base font-black tracking-tighter text-white">KSP</span>
+            <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shrink-0">
+              <Shield className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
-              <h2 className="text-xs font-black text-slate-100 tracking-wider uppercase">Karnataka Police</h2>
-              <p className="text-[10px] font-mono text-amber-500/90 tracking-widest uppercase mt-0.5">Intel division</p>
+              <div className="text-sm font-bold text-slate-100 tracking-tight">Karnataka Police</div>
+              <div className="text-micro text-amber-500/80 tracking-widest uppercase mt-0.5">Intelligence Division</div>
             </div>
           </div>
-          <div className="mt-4 bg-slate-900/80 border border-slate-800/80 px-2.5 py-1 rounded flex items-center justify-between text-[10px] text-slate-400">
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> SECURE NODE 01
-            </span>
-            <span className="font-mono text-slate-500">v1.4-LOCKED</span>
+          <div className="mt-3 flex items-center gap-2 text-micro text-slate-500">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
+            Secure Node · v1.4
           </div>
         </div>
 
-        {/* Workspace Navigation List */}
-        <div className="flex-grow p-4 space-y-1.5">
+        {/* Navigation */}
+        <div className="flex-grow p-3 space-y-0.5 overflow-y-auto">
+          {/* Overview section */}
+          <div className="text-micro text-slate-600 px-3 py-2 uppercase tracking-widest font-semibold">Overview</div>
           {[
-            { id: "conversational", icon: MessageSquare, label: "Conversational Search", desc: "Scan FIR logs, suspect dossiers" },
-            { id: "network", icon: Users, label: "Criminal Network Map", desc: "Entity linkage & transactions" },
-            { id: "hotspots", icon: TrendingUp, label: "Hotspots & Trends", desc: "Spatial crime velocity indexes" },
-            { id: "sociological", icon: LineChart, label: "Sociological Insights", desc: "Urbanization & economic stress" },
-            { id: "profiling", icon: UserCheck, label: "Offender Dossiers", desc: "MOs & predictive recidivism" },
-            { id: "decision", icon: BrainCircuit, label: "Decision Support Console", desc: "Automated case leads & timeline" },
-            { id: "financial", icon: DollarSign, label: "Financial Trace", desc: "Mule accounts & sequence layering" },
-            { id: "forecasting", icon: AlertTriangle, label: "Early Warning Alarms", desc: "Signal modeling & patrols" },
-            { id: "audit", icon: History, label: "Secure Audit Vault", desc: "DPDP Act compliance registry" }
+            { id: "mission",       icon: Activity,      label: "Mission Control",        desc: "Executive dashboard" },
           ].map((tab) => {
             const Icon = tab.icon;
             const isSelected = activeTab === tab.id;
             return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`w-full p-2.5 rounded-xl border text-left flex gap-3 transition group relative overflow-hidden ${
-                  isSelected
-                    ? "bg-slate-800 border-blue-500/40 text-blue-400 shadow-md ring-1 ring-blue-500/20"
-                    : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 hover:border-slate-800"
-                }`}
-              >
-                <div className={`p-1.5 rounded-lg shrink-0 ${isSelected ? "bg-blue-500/10 text-blue-400" : "bg-slate-950 text-slate-500 group-hover:text-slate-300"}`}>
-                  <Icon className="w-4 h-4" />
+              <button key={tab.id} onClick={() => handleTabChange(tab.id)}
+                className={`nav-item ${isSelected ? "active" : ""}`}>
+                <div className="nav-icon"><Icon className="w-4 h-4" /></div>
+                <div className="truncate min-w-0">
+                  <div className="nav-label text-slate-200">{tab.label}</div>
+                  <div className="nav-desc">{tab.desc}</div>
                 </div>
-                <div className="truncate">
-                  <div className={`text-xs font-bold leading-tight ${isSelected ? "text-blue-300" : "text-slate-300 group-hover:text-slate-100"}`}>{tab.label}</div>
-                  <div className="text-[10px] text-slate-500 font-medium truncate mt-0.5">{tab.desc}</div>
+              </button>
+            );
+          })}
+
+          <div className="text-micro text-slate-600 px-3 py-2 mt-3 uppercase tracking-widest font-semibold">Investigation</div>
+          {[
+            { id: "conversational", icon: MessageSquare, label: "AI Chat Search",    desc: "Query FIR records" },
+            { id: "network",        icon: Users,         label: "Criminal Network",  desc: "Entity linkages" },
+            { id: "profiling",      icon: UserCheck,     label: "Offender Profiles", desc: "Risk & MO analysis" },
+            { id: "decision",       icon: BrainCircuit,  label: "Decision Support",  desc: "Case leads & timeline" },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isSelected = activeTab === tab.id;
+            return (
+              <button key={tab.id} onClick={() => handleTabChange(tab.id)}
+                className={`nav-item ${isSelected ? "active" : ""}`}>
+                <div className="nav-icon"><Icon className="w-4 h-4" /></div>
+                <div className="truncate min-w-0">
+                  <div className="nav-label text-slate-200">{tab.label}</div>
+                  <div className="nav-desc">{tab.desc}</div>
+                </div>
+              </button>
+            );
+          })}
+
+          <div className="text-micro text-slate-600 px-3 py-2 mt-3 uppercase tracking-widest font-semibold">Analytics</div>
+          {[
+            { id: "hotspots",     icon: TrendingUp,    label: "Hotspots & Trends",   desc: "Spatial crime velocity" },
+            { id: "sociological", icon: LineChart,      label: "Sociological Insights",desc: "Socio-economic factors" },
+            { id: "financial",    icon: DollarSign,     label: "Financial Trace",      desc: "Money flow analysis" },
+            { id: "forecasting",  icon: AlertTriangle,  label: "Early Warnings",       desc: "Predictive signals" },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isSelected = activeTab === tab.id;
+            return (
+              <button key={tab.id} onClick={() => handleTabChange(tab.id)}
+                className={`nav-item ${isSelected ? "active" : ""}`}>
+                <div className="nav-icon"><Icon className="w-4 h-4" /></div>
+                <div className="truncate min-w-0">
+                  <div className="nav-label text-slate-200">{tab.label}</div>
+                  <div className="nav-desc">{tab.desc}</div>
+                </div>
+              </button>
+            );
+          })}
+
+          <div className="text-micro text-slate-600 px-3 py-2 mt-3 uppercase tracking-widest font-semibold">Governance</div>
+          {[
+            { id: "audit", icon: History, label: "Audit Vault", desc: "DPDP compliance logs" },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isSelected = activeTab === tab.id;
+            return (
+              <button key={tab.id} onClick={() => handleTabChange(tab.id)}
+                className={`nav-item ${isSelected ? "active" : ""}`}>
+                <div className="nav-icon"><Icon className="w-4 h-4" /></div>
+                <div className="truncate min-w-0">
+                  <div className="nav-label text-slate-200">{tab.label}</div>
+                  <div className="nav-desc">{tab.desc}</div>
                 </div>
               </button>
             );
           })}
         </div>
 
-        {/* Active Session & Operator Profile Card */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/40 space-y-3 shrink-0">
-          <div className="bg-slate-900 border border-slate-850 p-3 rounded-xl flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full border border-blue-500/20 bg-slate-950 flex items-center justify-center font-bold text-xs text-blue-400 shrink-0">
-              IP
-            </div>
-            <div className="truncate">
-              <div className="text-[11px] font-bold text-slate-300">Insp. Meera Bai</div>
-              <div className="text-[9px] text-slate-500 font-mono uppercase mt-0.5">KGID: KSP-2026882</div>
+        {/* Operator Profile */}
+        <div className="p-3 border-t border-slate-800/80 shrink-0">
+          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
+            <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center font-bold text-xs text-blue-400 shrink-0">IP</div>
+            <div className="truncate min-w-0">
+              <div className="text-body-sm font-semibold text-slate-300">Insp. Meera Bai</div>
+              <div className="text-micro text-slate-500 font-mono uppercase">KGID: KSP-2026882</div>
             </div>
           </div>
         </div>
@@ -485,71 +528,105 @@ export default function App() {
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
               className="fixed top-0 left-0 bottom-0 w-72 bg-slate-900 border-r border-slate-800 flex flex-col h-full z-40 overflow-y-auto lg:hidden"
             >
-              <div className="p-5 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
+              <div className="p-4 border-b border-slate-800/80 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-600 border border-blue-400 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/30 shrink-0">
-                    <span className="text-base font-black tracking-tighter text-white">KSP</span>
+                  <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
+                    <Shield className="w-4.5 h-4.5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xs font-black text-slate-100 tracking-wider uppercase">Karnataka Police</h2>
-                    <p className="text-[10px] font-mono text-amber-500/90 tracking-widest uppercase mt-0.5">Intel division</p>
+                    <div className="text-sm font-bold text-slate-100">Karnataka Police</div>
+                    <div className="text-micro text-amber-500/80 tracking-widest uppercase mt-0.5">Intelligence Division</div>
                   </div>
                 </div>
-                <button
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-100 transition"
-                >
+                <button onClick={() => setIsSidebarOpen(false)}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-100 transition">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="flex-grow p-4 space-y-1.5">
+              <div className="flex-grow p-3 space-y-0.5 overflow-y-auto">
+                <div className="text-micro text-slate-600 px-3 py-2 uppercase tracking-widest font-semibold">Overview</div>
                 {[
-                  { id: "conversational", icon: MessageSquare, label: "Conversational Search", desc: "Scan FIR logs, suspect dossiers" },
-                  { id: "network", icon: Users, label: "Criminal Network Map", desc: "Entity linkage & transactions" },
-                  { id: "hotspots", icon: TrendingUp, label: "Hotspots & Trends", desc: "Spatial crime velocity indexes" },
-                  { id: "sociological", icon: LineChart, label: "Sociological Insights", desc: "Urbanization & economic stress" },
-                  { id: "profiling", icon: UserCheck, label: "Offender Dossiers", desc: "MOs & predictive recidivism" },
-                  { id: "decision", icon: BrainCircuit, label: "Decision Support Console", desc: "Automated case leads & timeline" },
-                  { id: "financial", icon: DollarSign, label: "Financial Trace", desc: "Mule accounts & sequence layering" },
-                  { id: "forecasting", icon: AlertTriangle, label: "Early Warning Alarms", desc: "Signal modeling & patrols" },
-                  { id: "audit", icon: History, label: "Secure Audit Vault", desc: "DPDP Act compliance registry" }
+                  { id: "mission", icon: Activity, label: "Mission Control", desc: "Executive dashboard" },
                 ].map((tab) => {
                   const Icon = tab.icon;
                   const isSelected = activeTab === tab.id;
                   return (
-                    <button
-                      key={tab.id}
-                      onClick={() => {
-                        handleTabChange(tab.id);
-                        setIsSidebarOpen(false);
-                      }}
-                      className={`w-full p-2.5 rounded-xl border text-left flex gap-3 transition group relative overflow-hidden ${
-                        isSelected
-                          ? "bg-slate-800 border-blue-500/40 text-blue-400 shadow-md ring-1 ring-blue-500/20"
-                          : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 hover:border-slate-800"
-                      }`}
-                    >
-                      <div className={`p-1.5 rounded-lg shrink-0 ${isSelected ? "bg-blue-500/10 text-blue-400" : "bg-slate-950 text-slate-500 group-hover:text-slate-300"}`}>
-                        <Icon className="w-4 h-4" />
+                    <button key={tab.id} onClick={() => { handleTabChange(tab.id); setIsSidebarOpen(false); }}
+                      className={`nav-item ${isSelected ? "active" : ""}`}>
+                      <div className="nav-icon"><Icon className="w-4 h-4" /></div>
+                      <div className="truncate min-w-0">
+                        <div className="nav-label text-slate-200">{tab.label}</div>
+                        <div className="nav-desc">{tab.desc}</div>
                       </div>
-                      <div className="truncate">
-                        <div className={`text-xs font-bold leading-tight ${isSelected ? "text-blue-300" : "text-slate-300 group-hover:text-slate-100"}`}>{tab.label}</div>
-                        <div className="text-[10px] text-slate-500 font-medium truncate mt-0.5">{tab.desc}</div>
+                    </button>
+                  );
+                })}
+                <div className="text-micro text-slate-600 px-3 py-2 mt-3 uppercase tracking-widest font-semibold">Investigation</div>
+                {[
+                  { id: "conversational", icon: MessageSquare, label: "AI Chat Search",    desc: "Query FIR records" },
+                  { id: "network",        icon: Users,         label: "Criminal Network",  desc: "Entity linkages" },
+                  { id: "profiling",      icon: UserCheck,     label: "Offender Profiles", desc: "Risk & MO analysis" },
+                  { id: "decision",       icon: BrainCircuit,  label: "Decision Support",  desc: "Case leads & timeline" },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isSelected = activeTab === tab.id;
+                  return (
+                    <button key={tab.id} onClick={() => { handleTabChange(tab.id); setIsSidebarOpen(false); }}
+                      className={`nav-item ${isSelected ? "active" : ""}`}>
+                      <div className="nav-icon"><Icon className="w-4 h-4" /></div>
+                      <div className="truncate min-w-0">
+                        <div className="nav-label text-slate-200">{tab.label}</div>
+                        <div className="nav-desc">{tab.desc}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+                <div className="text-micro text-slate-600 px-3 py-2 mt-3 uppercase tracking-widest font-semibold">Analytics</div>
+                {[
+                  { id: "hotspots",     icon: TrendingUp,   label: "Hotspots & Trends",    desc: "Spatial crime velocity" },
+                  { id: "sociological", icon: LineChart,     label: "Sociological Insights", desc: "Socio-economic factors" },
+                  { id: "financial",    icon: DollarSign,    label: "Financial Trace",       desc: "Money flow analysis" },
+                  { id: "forecasting",  icon: AlertTriangle, label: "Early Warnings",        desc: "Predictive signals" },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isSelected = activeTab === tab.id;
+                  return (
+                    <button key={tab.id} onClick={() => { handleTabChange(tab.id); setIsSidebarOpen(false); }}
+                      className={`nav-item ${isSelected ? "active" : ""}`}>
+                      <div className="nav-icon"><Icon className="w-4 h-4" /></div>
+                      <div className="truncate min-w-0">
+                        <div className="nav-label text-slate-200">{tab.label}</div>
+                        <div className="nav-desc">{tab.desc}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+                <div className="text-micro text-slate-600 px-3 py-2 mt-3 uppercase tracking-widest font-semibold">Governance</div>
+                {[
+                  { id: "audit", icon: History, label: "Audit Vault", desc: "DPDP compliance logs" },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isSelected = activeTab === tab.id;
+                  return (
+                    <button key={tab.id} onClick={() => { handleTabChange(tab.id); setIsSidebarOpen(false); }}
+                      className={`nav-item ${isSelected ? "active" : ""}`}>
+                      <div className="nav-icon"><Icon className="w-4 h-4" /></div>
+                      <div className="truncate min-w-0">
+                        <div className="nav-label text-slate-200">{tab.label}</div>
+                        <div className="nav-desc">{tab.desc}</div>
                       </div>
                     </button>
                   );
                 })}
               </div>
 
-              <div className="p-4 border-t border-slate-800 bg-slate-950/40 space-y-3 shrink-0">
-                <div className="bg-slate-900 border border-slate-850 p-3 rounded-xl flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full border border-blue-500/20 bg-slate-950 flex items-center justify-center font-bold text-xs text-blue-400 shrink-0">
-                    IP
-                  </div>
-                  <div className="truncate">
-                    <div className="text-[11px] font-bold text-slate-300">Insp. Meera Bai</div>
-                    <div className="text-[9px] text-slate-500 font-mono uppercase mt-0.5">KGID: KSP-2026882</div>
+              <div className="p-3 border-t border-slate-800/80 shrink-0">
+                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
+                  <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center font-bold text-xs text-blue-400 shrink-0">IP</div>
+                  <div className="truncate min-w-0">
+                    <div className="text-body-sm font-semibold text-slate-300">Insp. Meera Bai</div>
+                    <div className="text-micro text-slate-500 font-mono uppercase">KGID: KSP-2026882</div>
                   </div>
                 </div>
               </div>
@@ -561,89 +638,56 @@ export default function App() {
       {/* Main Layout Area */}
       <div className="flex-1 flex flex-col overflow-hidden h-full">
         {/* Top Header Command Bar */}
-        <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 lg:px-6 shadow-md z-10 shrink-0">
+        <header className="h-14 bg-slate-900/95 border-b border-slate-800/80 flex items-center justify-between px-4 lg:px-5 shadow-sm z-10 shrink-0 backdrop-blur-md">
           <div className="flex items-center gap-2 lg:gap-3">
-            {/* Hamburger Menu Toggle on Mobile */}
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="p-2 -ml-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition lg:hidden"
+              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition lg:hidden"
               title="Toggle Menu"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div className="h-6 w-1 bg-blue-500 rounded-full hidden sm:block" />
+            <div className="h-5 w-px bg-slate-700 hidden sm:block" />
             <div>
-              <h1 className="text-xs sm:text-sm font-bold tracking-tight text-slate-100 uppercase truncate max-w-[120px] sm:max-w-none">Crime Intelligence Hub</h1>
-              <p className="text-[8px] sm:text-[10px] text-slate-500 mt-0.5 hidden xs:block">Karnataka State Police Decision Support</p>
+              <h1 className="text-sm font-semibold text-slate-200 tracking-tight truncate max-w-[140px] sm:max-w-none">Crime Intelligence Hub</h1>
+              <p className="text-micro text-slate-500 hidden sm:block">Karnataka State Police · AI Division</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            {/* System Directory Quick-Help Button */}
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
-              onClick={() => {
-                setShowHelp(!showHelp);
-                logAuditEvent("Help View", `${showHelp ? "Closed" : "Opened"} the interactive schema directory.`);
-              }}
-              className={`text-xs font-bold py-1.5 px-3 rounded-lg border flex items-center gap-1.5 transition ${
-                showHelp
-                  ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                  : "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
+              onClick={() => { setShowHelp(!showHelp); logAuditEvent("Help View", `${showHelp ? "Closed" : "Opened"} the interactive schema directory.`); }}
+              className={`text-micro font-semibold py-1.5 px-2.5 rounded-lg border flex items-center gap-1.5 transition ${
+                showHelp ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-800"
               }`}
             >
               <HelpCircle className="w-3.5 h-3.5" />
-              {showHelp ? "Hide Schema Guide" : "Schema Guide"}
+              <span className="hidden sm:inline">Schema Guide</span>
             </button>
 
-            {/* Bilingual Translation Switcher */}
-            <div className="bg-slate-950/80 border border-slate-800 p-0.5 rounded-lg flex shrink-0">
-              <button
-                onClick={() => {
-                  setSelectedLanguage("en");
-                  logAuditEvent("Language Switch", "Changed platform interface language to English.");
-                }}
-                className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition ${
-                  selectedLanguage === "en" ? "bg-blue-600 text-white shadow" : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedLanguage("kn");
-                  logAuditEvent("Language Switch", "Changed platform interface language to Kannada.");
-                }}
-                className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition ${
-                  selectedLanguage === "kn" ? "bg-blue-600 text-white shadow" : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                ಕನ್ನಡ
-              </button>
+            <div className="bg-slate-800/60 border border-slate-700/60 p-0.5 rounded-lg flex shrink-0">
+              {(["en", "kn"] as const).map(lang => (
+                <button key={lang} onClick={() => { setSelectedLanguage(lang); logAuditEvent("Language Switch", `Changed language to ${lang}.`); }}
+                  className={`px-2.5 py-1 text-micro font-bold rounded-md transition ${selectedLanguage === lang ? "bg-blue-600 text-white shadow" : "text-slate-400 hover:text-slate-200"}`}>
+                  {lang === "en" ? "EN" : "ಕನ್ನಡ"}
+                </button>
+              ))}
             </div>
 
-            {/* Active Security Clearance Selector */}
-            <div className="flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 px-2.5 py-1 rounded-lg shrink-0">
+            <div className="flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/60 px-2.5 py-1.5 rounded-lg shrink-0">
               <Lock className="w-3 h-3 text-slate-500" />
-              <span className="text-[10px] text-slate-400 font-semibold mr-0.5">Clearance:</span>
-              <select
-                value={activeRole}
-                onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-                className="bg-transparent text-[10px] font-bold text-blue-400 focus:outline-none cursor-pointer"
-              >
+              <select value={activeRole} onChange={(e) => handleRoleChange(e.target.value as UserRole)}
+                className="bg-transparent text-micro font-semibold text-blue-400 focus:outline-none cursor-pointer">
                 <option value="Investigator" className="bg-slate-900 text-slate-300">Investigator (L1)</option>
-                <option value="Analyst" className="bg-slate-900 text-slate-300">Analyst (L2)</option>
-                <option value="Supervisor" className="bg-slate-900 text-slate-300">Supervisor (L3)</option>
-                <option value="Policymaker" className="bg-slate-900 text-slate-300">Policymaker (L4)</option>
+                <option value="Analyst"      className="bg-slate-900 text-slate-300">Analyst (L2)</option>
+                <option value="Supervisor"   className="bg-slate-900 text-slate-300">Supervisor (L3)</option>
+                <option value="Policymaker"  className="bg-slate-900 text-slate-300">Policymaker (L4)</option>
               </select>
             </div>
 
-            {/* Tactical Warn Beacon Button linking to Forecasting */}
-            <button
-              onClick={() => handleTabChange("forecasting")}
-              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 py-1.5 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition animate-pulse shrink-0"
-              title="Active Warning Beacon Triggered"
-            >
+            <button onClick={() => handleTabChange("forecasting")}
+              className="bg-rose-500/10 hover:bg-rose-500/15 text-rose-400 border border-rose-500/25 py-1.5 px-2.5 rounded-lg text-micro font-semibold flex items-center gap-1.5 transition shrink-0">
               <AlertTriangle className="w-3.5 h-3.5" />
-              Warnings Active (3)
+              <span className="hidden sm:inline">3 Warnings</span>
             </button>
           </div>
         </header>
@@ -693,10 +737,18 @@ export default function App() {
           </AnimatePresence>
 
           {/* Dynamic Panel Canvas - Scaled to fit screen perfectly */}
-          <div className="flex-1 overflow-hidden p-3 sm:p-6 flex flex-col">
-            <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-4 sm:p-6 flex-1 flex flex-col backdrop-blur-md relative overflow-hidden">
+          <div className="flex-1 overflow-hidden p-3 sm:p-5 flex flex-col">
+            <div className="bg-slate-900/20 border border-slate-800/40 rounded-2xl p-4 sm:p-5 flex-1 flex flex-col backdrop-blur-sm relative overflow-hidden">
             
             <AnimatePresence mode="wait">
+              {activeTab === "mission" && (
+                <MissionControl
+                  onNavigate={handleTabChange}
+                  forecasting={forecasting}
+                  trendData={trendData}
+                />
+              )}
+
               {activeTab === "conversational" && (
                 <motion.div
                   key="tab_conversational"
@@ -706,31 +758,23 @@ export default function App() {
                   className="flex flex-col h-full grow gap-4"
                 >
                   {/* Chat header panel */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-700 pb-4 gap-3">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-700/60 pb-4 gap-3">
                     <div>
-                      <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                      <h2 className="section-title">
                         <MessageSquare className="w-5 h-5 text-amber-400" />
-                        Conversational Crime Intelligence Interface
+                        Conversational Crime Intelligence
                       </h2>
-                      <p className="text-xs text-slate-300 mt-1">Scans FIR databases, suspect dossiers, and money flow grids using neural retrieval models</p>
+                      <p className="section-subtitle mt-1">Natural language search across FIR records, suspect dossiers, and financial flows</p>
                     </div>
                     <div className="flex gap-2 shrink-0">
-                      <button
-                        onClick={downloadChatHistory}
-                        className="bg-slate-700 hover:bg-slate-600 border border-slate-500 rounded-lg py-2 px-3 text-xs text-white font-semibold flex items-center gap-1.5 transition"
-                      >
+                      <button onClick={downloadChatHistory}
+                        className="btn btn-secondary btn-sm">
                         <Download className="w-3.5 h-3.5 text-amber-400" />
                         Save History
                       </button>
-                      <button
-                        onClick={toggleSpeakingState}
-                        className={`border rounded-lg py-2 px-3 text-xs font-semibold flex items-center gap-1.5 transition ${
-                          isSpeaking
-                            ? "bg-rose-500/20 border-rose-400/50 text-rose-300"
-                            : "bg-slate-700 hover:bg-slate-600 border-slate-500 text-white"
-                        }`}
-                      >
-                        {isSpeaking ? <VolumeX className="w-3.5 h-3.5 text-rose-300" /> : <Volume2 className="w-3.5 h-3.5 text-amber-400" />}
+                      <button onClick={toggleSpeakingState}
+                        className={`btn btn-sm ${isSpeaking ? "bg-rose-500/15 border-rose-400/40 text-rose-300" : "btn-secondary"}`}>
+                        {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-amber-400" />}
                         Audio: {isSpeaking ? "ON" : "OFF"}
                       </button>
                     </div>
@@ -892,13 +936,15 @@ export default function App() {
 
                       {isChatLoading && (
                         <div className="flex gap-3 max-w-[80%]">
-                          <div className="bg-slate-900 border border-slate-800 text-slate-300 p-2 rounded-lg shrink-0 h-9 w-9 flex items-center justify-center animate-spin">
-                            <RefreshCw className="w-4.5 h-4.5" />
+                          <div className="bg-slate-900 border border-slate-800 text-slate-300 p-2 rounded-lg shrink-0 h-9 w-9 flex items-center justify-center">
+                            <RefreshCw className="w-4 h-4 animate-spin text-blue-400" />
                           </div>
-                          <div className="space-y-1">
-                            <span className="text-[10px] text-slate-500 font-bold">KSP AI CORE SCANNING DATABASE...</span>
-                            <div className="bg-slate-900/50 p-3.5 rounded-2xl rounded-tl-none border border-slate-800 text-xs text-slate-400 italic">
-                              Analyzing cross-references, transaction tables, and network profiles...
+                          <div className="space-y-1.5">
+                            <span className="text-caption text-slate-500 font-semibold uppercase tracking-wider">KSP AI scanning database…</span>
+                            <div className="bg-slate-900/60 p-3.5 rounded-2xl rounded-tl-none border border-slate-800 space-y-2">
+                              <div className="skeleton h-3 w-48 rounded" />
+                              <div className="skeleton h-3 w-36 rounded" />
+                              <div className="skeleton h-3 w-56 rounded" />
                             </div>
                           </div>
                         </div>
@@ -908,31 +954,21 @@ export default function App() {
                     </div>
 
                     {/* Chat input form */}
-                    <form onSubmit={handleSendMessage} className="border-t border-slate-800/80 bg-slate-950 p-3 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={startVoiceInput}
-                        className={`p-2.5 rounded-lg border transition ${
-                          isListening
-                            ? "bg-rose-500/20 border-rose-500/40 text-rose-400 animate-pulse"
-                            : "bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-300"
-                        }`}
-                        title="Voice Input (STT)"
-                      >
-                        <Mic className="w-5 h-5" />
+                    <form onSubmit={handleSendMessage} className="border-t border-slate-800/60 bg-slate-950/80 p-3 flex gap-2">
+                      <button type="button" onClick={startVoiceInput}
+                        className={`p-2.5 rounded-lg border transition shrink-0 ${
+                          isListening ? "bg-rose-500/20 border-rose-500/40 text-rose-400 animate-pulse" : "bg-slate-900 hover:bg-slate-800 border-slate-700 text-slate-400"
+                        }`} title="Voice Input">
+                        <Mic className="w-4.5 h-4.5" />
                       </button>
-                      <input
-                        type="text"
-                        placeholder={selectedLanguage === "kn" ? "ಕರ್ನಾಟಕ ಪೊಲೀಸ್ ದತ್ತಸಂಚಯವನ್ನು ಇಲ್ಲಿ ಪ್ರಶ್ನಿಸಿ..." : "Ask the KSP database (e.g. Ramesh Kumar criminal history...)"}
+                      <input type="text"
+                        placeholder={selectedLanguage === "kn" ? "ಕರ್ನಾಟಕ ಪೊಲೀಸ್ ದತ್ತಸಂಚಯವನ್ನು ಇಲ್ಲಿ ಪ್ರಶ್ನಿಸಿ..." : "Ask the KSP database (e.g. Ramesh Kumar history, phishing trail...)"}
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
-                        className="flex-grow bg-slate-900 border border-slate-800 rounded-lg py-2.5 px-4 text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="input flex-grow text-sm"
                       />
-                      <button
-                        type="submit"
-                        disabled={isChatLoading || !chatInput.trim()}
-                        className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-bold py-2 px-5 rounded-lg text-sm transition"
-                      >
+                      <button type="submit" disabled={isChatLoading || !chatInput.trim()}
+                        className="btn btn-primary shrink-0">
                         Query AI
                       </button>
                     </form>
@@ -994,11 +1030,11 @@ export default function App() {
               >
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800/60 pb-4 gap-2">
                   <div>
-                    <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                    <h2 className="section-title">
                       <Users className="w-5 h-5 text-emerald-400" />
                       Criminal Network & Relationship Analysis
                     </h2>
-                    <p className="text-xs text-slate-400 mt-0.5">Visualization of direct and indirect links between accused, victims, logistics hubs, and financial accounts</p>
+                    <p className="section-subtitle mt-1">Visualization of direct and indirect links between accused, victims, logistics hubs, and financial accounts</p>
                   </div>
                 </div>
 
@@ -1073,11 +1109,11 @@ export default function App() {
               >
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800/60 pb-4 gap-2">
                   <div>
-                    <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                    <h2 className="section-title">
                       <TrendingUp className="w-5 h-5 text-amber-500" />
                       Spatial Hotspots & Trend Analytics
                     </h2>
-                    <p className="text-xs text-slate-400 mt-0.5">District-level registration hot zones, monthly velocity tracking, and classification breakdowns</p>
+                    <p className="section-subtitle mt-1">District-level registration hot zones, monthly velocity tracking, and classification breakdowns</p>
                   </div>
                 </div>
 
@@ -1227,286 +1263,12 @@ export default function App() {
             )}
 
             {activeTab === "sociological" && (
-              <motion.div
-                key="tab_sociological"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                className="flex flex-col h-full grow gap-6 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800"
-              >
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800/60 pb-4 gap-2">
-                  <div>
-                    <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                      <LineChart className="w-5 h-5 text-sky-400" />
-                      Sociological Crime Insights & Correlations
-                    </h2>
-                    <p className="text-xs text-slate-400 mt-0.5">Cross-correlation of demographic, urbanization, migration indices, and economic stress factors against crime patterns</p>
-                  </div>
-                </div>
-
-                {/* Three-panel visualization grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Panel 1: Socio-Economic Factors by District */}
-                  <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-amber-500 mb-4 flex items-center gap-2">
-                      <Activity className="w-4 h-4" />
-                      Socio-Economic Risk Indices
-                    </h3>
-                    <div className="h-[320px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={socioData} margin={{ top: 10, right: 10, bottom: 60, left: 10 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                          <XAxis 
-                            dataKey="districtName" 
-                            stroke="#64748b" 
-                            fontSize={9} 
-                            angle={-45} 
-                            textAnchor="end" 
-                            height={80}
-                          />
-                          <YAxis stroke="#64748b" fontSize={10} label={{ value: 'Index (%)', angle: -90, position: 'insideLeft', style: { fill: '#94a3b8', fontSize: 10 } }} />
-                          <Tooltip 
-                            contentStyle={{ backgroundColor: "#020617", border: "1px solid #334155", borderRadius: "8px" }} 
-                            labelStyle={{ color: '#e2e8f0', fontWeight: 'bold' }}
-                          />
-                          <Legend wrapperStyle={{ fontSize: '10px' }} />
-                          <Bar dataKey="urbanization" fill="#0ea5e9" name="Urbanization %" />
-                          <Bar dataKey="stress" fill="#f59e0b" name="Economic Stress %" />
-                          <Bar dataKey="migration" fill="#8b5cf6" name="Migration %" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                  {/* Panel 2: Crime Distribution by District */}
-                  <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-rose-500 mb-4 flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4" />
-                      Crime Type Distribution
-                    </h3>
-                    <div className="h-[320px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={socioData} margin={{ top: 10, right: 10, bottom: 60, left: 10 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                          <XAxis 
-                            dataKey="districtName" 
-                            stroke="#64748b" 
-                            fontSize={9} 
-                            angle={-45} 
-                            textAnchor="end"
-                            height={80}
-                          />
-                          <YAxis stroke="#64748b" fontSize={10} label={{ value: 'Crime Count', angle: -90, position: 'insideLeft', style: { fill: '#94a3b8', fontSize: 10 } }} />
-                          <Tooltip 
-                            contentStyle={{ backgroundColor: "#020617", border: "1px solid #334155", borderRadius: "8px" }} 
-                            labelStyle={{ color: '#e2e8f0', fontWeight: 'bold' }}
-                          />
-                          <Legend wrapperStyle={{ fontSize: '10px' }} />
-                          <Bar dataKey="propertyCrimes" stackId="a" fill="#f59e0b" name="Property Crimes" />
-                          <Bar dataKey="bodyCrimes" stackId="a" fill="#ef4444" name="Violent Crimes" />
-                          <Bar dataKey="cyberCrimes" stackId="a" fill="#8b5cf6" name="Cyber Fraud" />
-                          <Bar dataKey="drugCrimes" stackId="a" fill="#10b981" name="Narcotics" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                  {/* Panel 3: Correlation Scatter Plot */}
-                  <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-500 mb-1 flex items-center gap-2">
-                      <Sparkles className="w-4 h-4" />
-                      Urbanization × Total Crimes
-                    </h3>
-                    <p className="text-[10px] text-slate-500 mb-4">Each dot = one district. Higher urbanization → higher crime count.</p>
-                    <div className="h-[290px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <ScatterChart margin={{ top: 24, right: 30, bottom: 50, left: 30 }}>
-                          <CartesianGrid stroke="#1e293b" strokeDasharray="4 4" />
-                          <XAxis
-                            type="number"
-                            dataKey="urbanization"
-                            name="Urbanization"
-                            unit="%"
-                            domain={[20, 100]}
-                            stroke="#475569"
-                            tick={{ fill: '#94a3b8', fontSize: 11 }}
-                            tickLine={{ stroke: '#334155' }}
-                            label={{ value: 'Urbanization Index (%)', position: 'insideBottom', offset: -12, fill: '#94a3b8', fontSize: 11 }}
-                          />
-                          <YAxis
-                            type="number"
-                            dataKey="totalCrimes"
-                            name="Total Crimes"
-                            domain={[0, 6]}
-                            stroke="#475569"
-                            tick={{ fill: '#94a3b8', fontSize: 11 }}
-                            tickLine={{ stroke: '#334155' }}
-                            label={{ value: 'Total Cases', angle: -90, position: 'insideLeft', offset: 10, fill: '#94a3b8', fontSize: 11 }}
-                          />
-                          <Tooltip
-                            cursor={{ strokeDasharray: '4 4', stroke: '#10b981' }}
-                            contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #10b981", borderRadius: "10px", padding: "10px 14px" }}
-                            content={({ active, payload }) => {
-                              if (active && payload && payload.length) {
-                                const d = payload[0].payload;
-                                return (
-                                  <div style={{ background: '#0f172a', border: '1px solid #10b981', borderRadius: 10, padding: '10px 14px' }}>
-                                    <p style={{ color: '#10b981', fontWeight: 700, fontSize: 12, marginBottom: 4 }}>{d.districtName}</p>
-                                    <p style={{ color: '#94a3b8', fontSize: 11 }}>Urbanization: <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{d.urbanization}%</span></p>
-                                    <p style={{ color: '#94a3b8', fontSize: 11 }}>Total Cases: <span style={{ color: '#fbbf24', fontWeight: 600 }}>{d.totalCrimes}</span></p>
-                                    <p style={{ color: '#94a3b8', fontSize: 11 }}>Econ. Stress: <span style={{ color: '#f87171', fontWeight: 600 }}>{d.stress}%</span></p>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            }}
-                          />
-                          <Scatter
-                            name="Districts"
-                            data={socioData}
-                            shape={(props: any) => {
-                              const { cx, cy, payload } = props;
-                              const r = 10 + (payload.totalCrimes || 0) * 4;
-                              return (
-                                <g>
-                                  <circle cx={cx} cy={cy} r={r} fill="#10b981" fillOpacity={0.25} stroke="#10b981" strokeWidth={2} />
-                                  <circle cx={cx} cy={cy} r={5} fill="#10b981" />
-                                  <text x={cx} y={cy - r - 5} textAnchor="middle" fill="#e2e8f0" fontSize={10} fontWeight="bold">
-                                    {payload.districtName?.split(' ')[0]}
-                                  </text>
-                                </g>
-                              );
-                            }}
-                          />
-                        </ScatterChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <p className="text-[10px] text-slate-500 mt-2 text-center">Dot size proportional to number of registered cases</p>
-                  </div>
-                </div>
-
-                {/* Detailed Insights Cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Insight 1: High Risk Districts */}
-                  <div className="bg-gradient-to-br from-rose-950/30 to-slate-950/60 border border-rose-800/40 p-5 rounded-xl">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-                      <div>
-                        <h3 className="text-sm font-bold text-rose-300 mb-2">High-Risk Correlation Alert</h3>
-                        <p className="text-xs text-slate-300 leading-relaxed mb-3">
-                          <strong className="text-rose-400">Bengaluru City</strong> shows the highest urbanization (92%) combined with the highest total crime count. 
-                          This validates the <strong>social disorganization theory</strong> — rapid urban growth correlates with increased property and cyber crime.
-                        </p>
-                        <p className="text-xs text-slate-300 leading-relaxed">
-                          <strong className="text-amber-400">Kalaburagi</strong> exhibits the highest economic stress (68%) and lowest education (65%), 
-                          correlating with elevated violent crimes — consistent with <strong>strain theory</strong> in criminology.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Insight 2: Protective Factors */}
-                  <div className="bg-gradient-to-br from-emerald-950/30 to-slate-950/60 border border-emerald-800/40 p-5 rounded-xl">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                      <div>
-                        <h3 className="text-sm font-bold text-emerald-300 mb-2">Protective Factor Analysis</h3>
-                        <p className="text-xs text-slate-300 leading-relaxed mb-3">
-                          <strong className="text-emerald-400">Mangaluru</strong> maintains moderate urbanization (72%) with high education (91%) and shows 
-                          lower violent crime rates — education acts as a protective buffer against crime escalation.
-                        </p>
-                        <p className="text-xs text-slate-300 leading-relaxed">
-                          Districts with <strong>lower migration rates</strong> (Belagavi: 5.1%, Hubballi: 6.8%) show more stable crime patterns, 
-                          suggesting transient populations correlate with increased property crime risk.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Cross-Module Action Panel */}
-                <div className="bg-slate-950/40 border border-sky-800/40 p-4 rounded-xl">
-                  <h4 className="text-xs font-bold text-sky-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <ArrowRight className="w-4 h-4" />
-                    Recommended Investigative Actions
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveTab("hotspots");
-                        logAuditEvent("Cross Link", "Transitioned from Sociological to Hotspot Spatial Analysis.");
-                      }}
-                      className="text-left py-2.5 px-3 bg-blue-600/10 border border-blue-500/30 rounded-lg hover:bg-blue-600/20 text-blue-300 text-xs font-semibold transition flex items-center justify-between group"
-                    >
-                      <span>View Crime Hotspots Map</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveTab("conversational");
-                        setChatInput("Explain the relationship between economic stress and property crimes in Kalaburagi");
-                        logAuditEvent("Cross Link", "Transitioned from Sociological to AI Chat for correlation analysis.");
-                      }}
-                      className="text-left py-2.5 px-3 bg-purple-600/10 border border-purple-500/30 rounded-lg hover:bg-purple-600/20 text-purple-300 text-xs font-semibold transition flex items-center justify-between group"
-                    >
-                      <span>Ask AI for Deep Analysis</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveTab("forecasting");
-                        logAuditEvent("Cross Link", "Transitioned from Sociological to Forecasting & Early Warnings.");
-                      }}
-                      className="text-left py-2.5 px-3 bg-amber-600/10 border border-amber-500/30 rounded-lg hover:bg-amber-600/20 text-amber-300 text-xs font-semibold transition flex items-center justify-between group"
-                    >
-                      <span>Check Risk Predictions</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* District Detail Table */}
-                <div className="bg-slate-950/40 border border-slate-800/80 rounded-xl overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
-                        <th className="p-3 font-bold">District</th>
-                        <th className="p-3 text-center">Urban%</th>
-                        <th className="p-3 text-center">Migr%</th>
-                        <th className="p-3 text-center">Stress%</th>
-                        <th className="p-3 text-center">Edu%</th>
-                        <th className="p-3 text-center">Density</th>
-                        <th className="p-3 text-right">Property</th>
-                        <th className="p-3 text-right">Violent</th>
-                        <th className="p-3 text-right">Cyber</th>
-                        <th className="p-3 text-right">Drugs</th>
-                        <th className="p-3 text-right font-bold">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/40 text-slate-300">
-                      {socioData.map((d, index) => (
-                        <tr key={index} className="hover:bg-slate-900/30 transition">
-                          <td className="p-3 font-semibold text-slate-200">{d.districtName}</td>
-                          <td className="p-3 text-center text-sky-400">{d.urbanization}%</td>
-                          <td className="p-3 text-center text-purple-400">{d.migration}%</td>
-                          <td className="p-3 text-center text-amber-400">{d.stress}%</td>
-                          <td className="p-3 text-center text-emerald-400">{d.education}%</td>
-                          <td className="p-3 text-center text-slate-400">{d.density}/km²</td>
-                          <td className="p-3 text-right text-amber-400 font-medium">{d.propertyCrimes}</td>
-                          <td className="p-3 text-right text-rose-400 font-medium">{d.bodyCrimes}</td>
-                          <td className="p-3 text-right text-purple-400 font-medium">{d.cyberCrimes}</td>
-                          <td className="p-3 text-right text-emerald-400 font-medium">{d.drugCrimes}</td>
-                          <td className="p-3 text-right font-bold text-slate-100 bg-slate-900/50">{d.totalCrimes}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-              </motion.div>
+              <SociologicalInsights
+                socioData={socioData}
+                onNavigate={handleTabChange}
+                setChatInput={setChatInput}
+                logAuditEvent={logAuditEvent}
+              />
             )}
 
             {activeTab === "profiling" && (
@@ -1518,11 +1280,11 @@ export default function App() {
                 className="space-y-6 flex flex-col h-full grow overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800"
               >
                 <div>
-                  <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                  <h2 className="section-title">
                     <UserCheck className="w-5 h-5 text-emerald-400" />
                     Criminology-Based Offender Profiling & Risk Scoring
                   </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Detailed criminal timeline resolution, behavioral modus operandi, and predictive recidivism danger indices (FR-5)</p>
+                  <p className="section-subtitle mt-1">Detailed criminal timeline resolution, behavioral modus operandi, and predictive recidivism danger indices (FR-5)</p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1647,11 +1409,11 @@ export default function App() {
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                    <h2 className="section-title">
                       <BrainCircuit className="w-5 h-5 text-amber-500" />
                       Investigator Decision Support
                     </h2>
-                    <p className="text-xs text-slate-400 mt-0.5">Automated case narratives, chronological event timelines, MO comparison, and next tactical leads (FR-6)</p>
+                    <p className="section-subtitle mt-1">Automated case narratives, chronological event timelines, MO comparison, and next tactical leads (FR-6)</p>
                   </div>
 
                   {/* Case selector dropdown */}
@@ -1790,11 +1552,11 @@ export default function App() {
                 className="space-y-6 flex flex-col h-full grow overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800"
               >
                 <div>
-                  <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                  <h2 className="section-title">
                     <DollarSign className="w-5 h-5 text-rose-500" />
                     Financial Crime & Transaction Link Analysis
                   </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Automated tracking of suspicious transaction flows, unverified mule accounts, and layering sequences (FR-7)</p>
+                  <p className="section-subtitle mt-1">Automated tracking of suspicious transaction flows, unverified mule accounts, and layering sequences (FR-7)</p>
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -1897,11 +1659,11 @@ export default function App() {
                 className="space-y-6 flex flex-col h-full grow overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800"
               >
                 <div>
-                  <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                  <h2 className="section-title">
                     <AlertTriangle className="w-5 h-5 text-amber-500" />
                     Crime Forecasting & Early Warning Alarms
                   </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Emerging crime patterns, gang cluster modeling, and actionable localized preventive advisories (FR-8)</p>
+                  <p className="section-subtitle mt-1">Emerging crime patterns, gang cluster modeling, and actionable localized preventive advisories (FR-8)</p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1958,11 +1720,11 @@ export default function App() {
                 className="space-y-6 flex flex-col h-full grow overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800"
               >
                 <div>
-                  <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                  <h2 className="section-title">
                     <History className="w-5 h-5 text-emerald-400" />
                     Secure Audit Vault & Data Governance Log
                   </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Role-based access monitoring, full traceability of actions, queries, and cryptographic compliance logs (FR-10)</p>
+                  <p className="section-subtitle mt-1">Role-based access monitoring, full traceability of actions, queries, and cryptographic compliance logs (FR-10)</p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -2040,19 +1802,16 @@ export default function App() {
       </main>
 
       {/* Footer / Status Bar */}
-      <footer className="h-8 bg-slate-900 border-t border-slate-800 flex items-center px-6 justify-between text-[10px] text-slate-500 font-mono shrink-0">
-        <div className="flex gap-4">
-          <span>SESSION: KSP_HQ_882</span>
-          <span>LATENCY: 14ms</span>
-          <span>RESOURCES: CATALYST_CORE_V1</span>
-        </div>
+      <footer className="h-7 bg-slate-900/90 border-t border-slate-800/60 flex items-center px-5 justify-between text-micro text-slate-600 font-mono shrink-0">
         <div className="flex gap-4 items-center">
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-            ENCRYPTION ACTIVE
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            SECURE · ENCRYPTED
           </span>
-          <span className="text-slate-600">© 2026 KARNATAKA STATE POLICE | AI DIVISION</span>
+          <span className="hidden sm:inline">SESSION: KSP_HQ_882</span>
+          <span className="hidden md:inline">CATALYST CORE v1</span>
         </div>
+        <span className="hidden sm:inline text-slate-700">© 2026 KARNATAKA STATE POLICE · AI DIVISION</span>
       </footer>
 
       {/* Dynamic Toast Notifications */}
