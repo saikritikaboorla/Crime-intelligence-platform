@@ -1,20 +1,85 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# KSP Crime Database — Conversational AI & Analytics Platform
 
-# Run and deploy your AI Studio app
+An intelligent conversational AI system built on top of the Karnataka State Police (KSP) Catalyst crime database. Lets investigators, analysts, and policymakers query crime records in natural language (English & Kannada, text or voice), uncover hidden relationships between accused/victims/locations/finances, and get explainable, criminology-grounded insights — without writing a single line of SQL.
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/11fed866-3550-4933-8185-26c7e69888dc
+## What This Project Does
 
-## Run Locally
+- **Ask questions in plain language** — "Who else was involved in similar robberies in Mysuru last month?" — and get an answer, not a dashboard to dig through.
+- **Uncover hidden connections** between accused, victims, locations, and financial transactions using network analysis.
+- **Spot crime trends and hotspots** across time, geography, and modus operandi.
+- **Explain crime patterns sociologically** — linking crime data to demographics and socio-economic indicators.
+- **Profile repeat offenders** with a risk score and the reasoning behind it.
+- **Support investigators** with auto-generated case summaries, similar past cases, and leads.
+- **Forecast emerging hotspots** and send early warnings.
+- **Show its work** — every answer is backed by citations to the exact records used (no hallucinated facts).
+- **Stay secure** — role-based access (Investigator / Analyst / Supervisor / Policymaker) with full audit logging.
 
-**Prerequisites:**  Node.js
+Full requirements, architecture, and design decisions are documented in [`KSP_Crime_AI_Documentation.md`](./KSP_Crime_AI_Documentation.md).
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend / Chat UI | React.js |
+| Backend / API | Python (FastAPI) |
+| AI / Language Understanding | Claude (Anthropic API) |
+| Database (structured data + similarity search) | PostgreSQL + pgvector |
+| Relationship / Network Analysis | Neo4j |
+| Voice Interface | Whisper (speech-to-text) + Coqui TTS (text-to-speech) |
+| Charts & Graph Visuals | Recharts + Cytoscape.js |
+| Deployment | Docker |
+| PDF Export | ReportLab (Python) |
+
+> See Section 7 of the documentation for the reasoning behind each choice.
+
+---
+
+## Project Structure (proposed)
+
+```
+ksp-crime-ai/
+├── backend/
+│   ├── app/
+│   │   ├── api/              # FastAPI routes (chat, auth, export, etc.)
+│   │   ├── ai/                # Claude integration, prompt templates, RAG logic
+│   │   ├── db/                 # PostgreSQL models & Catalyst DB connectors
+│   │   ├── graph/             # Neo4j queries & network analysis logic
+│   │   ├── voice/              # Whisper + Coqui TTS integration
+│   │   ├── analytics/         # Trend, hotspot, and risk-scoring logic
+│   │   └── export/             # PDF export (ReportLab)
+│   ├── requirements.txt
+│   └── Dockerfile
+├── frontend/
+│   ├── src/
+│   │   ├── components/       # Chat UI, charts, network graph viewer
+│   │   ├── i18n/                # English/Kannada translations
+│   │   └── pages/
+│   ├── package.json
+│   └── Dockerfile
+├── docs/
+│   └── KSP_Crime_AI_Documentation.md
+├── docker-compose.yml
+└── README.md
+```
+
+---
 
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `CATALYST_DB_URL` | Connection string for the Catalyst PostgreSQL crime database |
+| `ANTHROPIC_API_KEY` | API key for Claude (LLM) |
+| `NEO4J_URI` / `NEO4J_USER` / `NEO4J_PASSWORD` | Neo4j graph database credentials |
+| `JWT_SECRET` | Secret used for signing auth tokens |
+
+---
+
+## Documentation
+
+Full project documentation — problem understanding, objectives, requirements, architecture, database design, and AI architecture — lives in [`KSP_Crime_AI_Documentation.md`](./KSP_Crime_AI_Documentation.md).
