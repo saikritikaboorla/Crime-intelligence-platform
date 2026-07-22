@@ -33,7 +33,7 @@ function AIBriefCard() {
     weekday: "long", year: "numeric", month: "long", day: "numeric"
   });
   return (
-    <div className="card-elevated rounded-2xl p-5 border border-blue-500/20 bg-gradient-to-br from-slate-900 to-slate-950 col-span-full">
+    <div className="card-elevated rounded-2xl p-5 border border-blue-500/25 bg-gradient-to-br from-slate-900/95 to-slate-950 col-span-full shadow-xl" style={{boxShadow: '0 0 60px rgba(37, 99, 235, 0.06)'}}>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center shrink-0">
@@ -46,6 +46,7 @@ function AIBriefCard() {
         </div>
         <span className="badge badge-blue">CONFIDENTIAL — L1+</span>
       </div>
+      <div className="h-px bg-gradient-to-r from-blue-500/20 via-blue-400/10 to-transparent mt-4 mb-1" />
       <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-body-sm text-slate-300 leading-relaxed">
         <div className="space-y-1">
           <div className="text-caption font-semibold text-slate-400 uppercase tracking-wider">Threat Landscape</div>
@@ -133,7 +134,7 @@ function KPIGrid({ onNavigate }: { onNavigate: (t: string) => void }) {
             <div className="text-body-sm font-semibold text-slate-200">{k.label}</div>
             <div className="text-caption text-slate-500 mt-0.5">{k.sub}</div>
             <div className={`mt-3 text-micro font-semibold ${k.color} flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity`}>
-              View details <ArrowRight className="w-3 h-3" />
+              View details <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
             </div>
           </motion.button>
         );
@@ -171,7 +172,7 @@ function AlertsPanel({ warnings }: { warnings: any[] }) {
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.06 }}
-              className={`flex items-start gap-3 p-3 rounded-xl border ${isHigh ? "border-rose-500/20 bg-rose-500/5" : "border-amber-500/15 bg-amber-500/5"}`}
+              className={`flex items-start gap-3 p-3 rounded-xl border ${isHigh ? "border-rose-500/20 bg-rose-500/5 border-l-2 border-l-rose-500" : "border-amber-500/15 bg-amber-500/5 border-l-2 border-l-amber-400"}`}
             >
               <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${isHigh ? "bg-rose-500" : "bg-amber-400"} animate-pulse`} />
               <div className="min-w-0 flex-1">
@@ -210,7 +211,7 @@ function TrendMiniChart({ data }: { data: any[] }) {
           <div className="section-subtitle">Monthly registration velocity</div>
         </div>
       </div>
-      <div className="h-40">
+      <div className="h-40 bg-gradient-to-b from-transparent to-slate-950/20">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
             <defs>
@@ -269,13 +270,16 @@ function TopCrimesPanel() {
               <span className="text-body-sm text-slate-300 font-medium">{c.name}</span>
               <span className="text-caption text-slate-500 font-mono">{c.count} cases</span>
             </div>
-            <div className="confidence-bar">
-              <motion.div
-                className={`confidence-fill ${c.color}`}
-                initial={{ width: 0 }}
-                animate={{ width: `${c.pct}%` }}
-                transition={{ delay: i * 0.1 + 0.3, duration: 0.6 }}
-              />
+            <div className="flex items-center gap-2">
+              <div className="confidence-bar flex-1">
+                <motion.div
+                  className={`confidence-fill ${c.color}`}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${c.pct}%` }}
+                  transition={{ delay: i * 0.1 + 0.3, duration: 0.6 }}
+                />
+              </div>
+              <span className="text-micro text-slate-600 font-mono">{c.pct}%</span>
             </div>
           </div>
         ))}
@@ -314,7 +318,7 @@ function ActivityTimeline() {
             transition={{ delay: i * 0.07 }}
             className="relative"
           >
-            <span className={`timeline-dot ${dot[e.type]}`} />
+            <span className={`timeline-dot ${dot[e.type]}`} style={e.type === 'critical' ? {boxShadow: '0 0 6px rgba(239, 68, 68, 0.5)'} : undefined} />
             <div className="text-body-sm text-slate-300 font-medium leading-snug">{e.action}</div>
             <div className="text-caption text-slate-500 mt-0.5">{e.time}</div>
           </motion.div>
@@ -333,6 +337,7 @@ function AIRecommendations({ onNavigate }: { onNavigate: (t: string) => void }) 
   ];
   return (
     <div className="card rounded-2xl">
+      <div className="h-0.5 rounded-t-2xl bg-gradient-to-r from-indigo-500/40 via-purple-500/20 to-transparent -mt-0 mb-4" />
       <div className="section-header mb-3">
         <div>
           <div className="section-title text-base">
@@ -387,7 +392,7 @@ function QuickActions({ onNavigate }: { onNavigate: (t: string) => void }) {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.06 }}
               onClick={() => onNavigate(a.tab)}
-              className={`flex flex-col items-center gap-2 p-4 rounded-xl border ${a.border} bg-gradient-to-b ${a.bg} to-transparent group hover:border-opacity-60 transition`}
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border ${a.border} bg-gradient-to-b ${a.bg} to-transparent group hover:border-opacity-60 hover:shadow-lg transition`}
             >
               <div className={`w-10 h-10 rounded-xl border ${a.border} flex items-center justify-center bg-slate-950/60`}>
                 <Icon className={`w-5 h-5 ${a.color}`} />
@@ -466,7 +471,7 @@ export default function MissionControl({ onNavigate, forecasting, trendData }: M
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
-      className="h-full overflow-y-auto pr-1"
+      className="h-full overflow-y-auto pr-1 page-transition"
       style={{ scrollbarWidth: "thin", scrollbarColor: "#334155 transparent" }}
     >
       {/* Page header */}
@@ -481,6 +486,24 @@ export default function MissionControl({ onNavigate, forecasting, trendData }: M
         <div className="flex items-center gap-2 text-caption text-slate-500">
           <RefreshCw className="w-3.5 h-3.5" />
           Last updated {lastRefresh}
+        </div>
+      </div>
+
+      {/* Status banner */}
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800/60">
+        <div>
+          <h1 className="text-heading2 text-slate-100 flex items-center gap-2">
+            <Activity className="w-5 h-5 text-blue-400" />
+            Mission Control
+          </h1>
+          <p className="text-caption text-slate-500 mt-0.5">Karnataka State Police · AI Intelligence Division · Live Monitoring</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-caption text-emerald-400">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            All Systems Operational
+          </div>
+          <span className="badge badge-blue">FY 2026</span>
         </div>
       </div>
 

@@ -400,7 +400,7 @@ export default function App() {
         {/* KSP Header */}
         <div className="p-5 border-b border-slate-800/80">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shrink-0">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center shadow-lg shrink-0" style={{background: 'linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%)'}}>
               <Shield className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
@@ -649,8 +649,8 @@ export default function App() {
             </button>
             <div className="h-5 w-px bg-slate-700 hidden sm:block" />
             <div>
-              <h1 className="text-sm font-semibold text-slate-200 tracking-tight truncate max-w-[140px] sm:max-w-none">Crime Intelligence Hub</h1>
-              <p className="text-micro text-slate-500 hidden sm:block">Karnataka State Police · AI Division</p>
+              <h1 className="text-sm font-semibold text-slate-200 tracking-tight truncate max-w-[140px] sm:max-w-none">KSP Intelligence Platform</h1>
+              <p className="text-micro text-slate-500 hidden sm:block">Karnataka State Police · Secure AI Division</p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -685,7 +685,7 @@ export default function App() {
             </div>
 
             <button onClick={() => handleTabChange("forecasting")}
-              className="bg-rose-500/10 hover:bg-rose-500/15 text-rose-400 border border-rose-500/25 py-1.5 px-2.5 rounded-lg text-micro font-semibold flex items-center gap-1.5 transition shrink-0">
+              className="bg-rose-500/10 hover:bg-rose-500/15 text-rose-400 border border-rose-500/25 py-1.5 px-2.5 rounded-lg text-micro font-semibold flex items-center gap-1.5 transition shrink-0 animate-pulse-ring">
               <AlertTriangle className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">3 Warnings</span>
             </button>
@@ -1115,6 +1115,15 @@ export default function App() {
                     </h2>
                     <p className="section-subtitle mt-1">District-level registration hot zones, monthly velocity tracking, and classification breakdowns</p>
                   </div>
+                </div>
+                <div className="flex items-center gap-2 text-micro text-slate-600 mb-4 overflow-x-auto whitespace-nowrap pb-1">
+                  <span className="text-slate-700">Mission Control</span>
+                  <span className="text-slate-800">›</span>
+                  <span className="text-amber-500/70 font-semibold">Hotspots & Trends</span>
+                  <span className="text-slate-800">›</span>
+                  <span className="text-slate-700">Sociological Insights</span>
+                  <span className="text-slate-800">›</span>
+                  <span className="text-slate-700">Forecasting</span>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 grow min-h-[400px]">

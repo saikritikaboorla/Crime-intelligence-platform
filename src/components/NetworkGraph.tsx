@@ -16,7 +16,11 @@ import {
   ChevronRight,
   Info,
   AlertTriangle,
-  Move
+  Move,
+  Eye,
+  FileText,
+  RotateCcw,
+  Focus
 } from "lucide-react";
 
 interface NetworkGraphProps {
@@ -226,6 +230,27 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
     }
   };
 
+  // Helper: is this node a high-risk suspect?
+  const isHighRisk = (label: string) =>
+    label.includes("Ramesh") || label.includes("Suresh");
+
+  // Format Indian rupee amounts
+  const formatINR = (amount: number) => {
+    return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(amount);
+  };
+
+  // Empty / loading state
+  if (!nodes || nodes.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
+        <Network className="w-12 h-12 text-slate-600" />
+        <div className="text-sm font-bold text-slate-400">Loading Criminal Network</div>
+        <p className="text-xs text-slate-500">Fetching relationship graph from KSP database...</p>
+        <div className="h-1 w-40 rounded bg-slate-800 animate-pulse mt-2" />
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       {/* Sidebar Controls & Refined Details */}
@@ -305,23 +330,23 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
               <div className="grid grid-cols-2 gap-1.5">
                 <button
                   onClick={() => setLayoutMode("circular")}
-                  className={`py-1 px-2 rounded-lg text-center text-[10px] font-bold border transition ${
+                  className={`py-1.5 px-2 rounded-lg text-center text-[10px] font-bold border transition flex items-center justify-center gap-1 ${
                     layoutMode === "circular"
-                      ? "bg-blue-600/10 text-blue-400 border-blue-500/30"
-                      : "bg-slate-950 text-slate-400 border-slate-900 hover:border-slate-800"
+                      ? "bg-blue-600/20 text-blue-300 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)]"
+                      : "bg-slate-950 text-slate-400 border-slate-800 hover:border-blue-500/30 hover:text-slate-300"
                   }`}
                 >
-                  Concentric Circles
+                  <span className="text-base leading-none">⊙</span> Concentric
                 </button>
                 <button
                   onClick={() => setLayoutMode("hierarchy")}
-                  className={`py-1 px-2 rounded-lg text-center text-[10px] font-bold border transition ${
+                  className={`py-1.5 px-2 rounded-lg text-center text-[10px] font-bold border transition flex items-center justify-center gap-1 ${
                     layoutMode === "hierarchy"
-                      ? "bg-blue-600/10 text-blue-400 border-blue-500/30"
-                      : "bg-slate-950 text-slate-400 border-slate-900 hover:border-slate-800"
+                      ? "bg-purple-600/20 text-purple-300 border-purple-500/50 shadow-[0_0_8px_rgba(168,85,247,0.3)]"
+                      : "bg-slate-950 text-slate-400 border-slate-800 hover:border-purple-500/30 hover:text-slate-300"
                   }`}
                 >
-                  Syndicate Hierarchy
+                  <span className="text-base leading-none">⊟</span> Hierarchy
                 </button>
               </div>
             </div>
@@ -341,38 +366,94 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                 className="w-full accent-amber-500 h-1 bg-slate-950 rounded-lg appearance-none cursor-pointer"
               />
             </div>
+
+            {/* Quick-action filter buttons */}
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                onClick={() => setFilterType(filterType === "Suspect" ? "All" : "Suspect")}
+                className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition flex items-center justify-center gap-1 ${
+                  filterType === "Suspect"
+                    ? "bg-emerald-600/20 text-emerald-300 border-emerald-500/50"
+                    : "bg-slate-950 text-slate-400 border-slate-800 hover:border-emerald-500/30 hover:text-slate-300"
+                }`}
+                title="Focus on Suspects only"
+              >
+                <Focus className="w-3 h-3" />
+                Focus Suspects
+              </button>
+              <button
+                onClick={resetPanZoom}
+                className="py-1.5 px-2 rounded-lg text-[10px] font-bold border transition flex items-center justify-center gap-1 bg-slate-950 text-slate-400 border-slate-800 hover:border-amber-500/30 hover:text-amber-400"
+                title="Reset zoom and pan to default"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Reset View
+              </button>
+            </div>
           </div>
         )}
 
         {/* Detailed Relationship Inspector / Panel */}
         <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-4 pt-3 border-t border-slate-800/60 scrollbar-thin scrollbar-thumb-slate-800">
           {selectedNodeId && nodeMap.has(selectedNodeId) ? (
-            <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-3.5 animate-fadeIn">
-              <div className="flex items-center justify-between">
-                <span className={`text-[9px] uppercase px-2 py-0.5 rounded font-extrabold tracking-wider ${
-                  nodeMap.get(selectedNodeId).type === "Suspect" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
-                  nodeMap.get(selectedNodeId).type === "Case" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
-                  nodeMap.get(selectedNodeId).type === "Account" ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" :
-                  "bg-sky-500/10 text-sky-400 border border-sky-500/20"
-                }`}>
-                  {nodeMap.get(selectedNodeId).type}
-                </span>
-                <button
-                  onClick={() => setSelectedNodeId(null)}
-                  className="text-[10px] text-slate-500 hover:text-slate-300 font-bold underline cursor-pointer"
-                >
-                  Dismiss
-                </button>
+            <div className="bg-slate-950/80 rounded-xl border border-slate-800 space-y-3.5 animate-fadeIn overflow-hidden">
+              {/* Colored header bar based on node type */}
+              <div className={`px-4 pt-3 pb-2 border-b ${
+                nodeMap.get(selectedNodeId).type === "Suspect" ? "bg-emerald-950/40 border-emerald-800/40" :
+                nodeMap.get(selectedNodeId).type === "Case"    ? "bg-amber-950/40 border-amber-800/40" :
+                nodeMap.get(selectedNodeId).type === "Account" ? "bg-rose-950/40 border-rose-800/40" :
+                "bg-sky-950/40 border-sky-800/40"
+              }`}>
+                <div className="flex items-center justify-between">
+                  <span className={`text-[9px] uppercase px-2 py-0.5 rounded font-extrabold tracking-wider ${
+                    nodeMap.get(selectedNodeId).type === "Suspect" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                    nodeMap.get(selectedNodeId).type === "Case"    ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
+                    nodeMap.get(selectedNodeId).type === "Account" ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" :
+                    "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                  }`}>
+                    {nodeMap.get(selectedNodeId).type}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {/* HIGH RISK badge for suspects named Ramesh/Suresh */}
+                    {nodeMap.get(selectedNodeId).type === "Suspect" && isHighRisk(nodeMap.get(selectedNodeId).label) && (
+                      <span className="flex items-center gap-0.5 text-[8px] bg-red-500/15 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded font-extrabold tracking-wide animate-pulse">
+                        <AlertTriangle className="w-2.5 h-2.5" />
+                        HIGH RISK
+                      </span>
+                    )}
+                    {/* FLAGGED badge for mule/crypto accounts */}
+                    {nodeMap.get(selectedNodeId).type === "Account" &&
+                      (selectedNodeId.includes("MULE") || selectedNodeId.includes("CRYPTO")) && (
+                      <span className="flex items-center gap-0.5 text-[8px] bg-rose-500/15 text-rose-400 border border-rose-500/30 px-1.5 py-0.5 rounded font-extrabold tracking-wide animate-pulse">
+                        <AlertTriangle className="w-2.5 h-2.5" />
+                        FLAGGED
+                      </span>
+                    )}
+                    <button
+                      onClick={() => setSelectedNodeId(null)}
+                      className="text-[10px] text-slate-500 hover:text-slate-300 font-bold underline cursor-pointer"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-2">
+                  <h4 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
+                    {renderIcon(nodeMap.get(selectedNodeId).type, nodeMap.get(selectedNodeId).isSuspicious)}
+                    {nodeMap.get(selectedNodeId).label}
+                  </h4>
+                  {/* FIR number prominent for cases */}
+                  {nodeMap.get(selectedNodeId).type === "Case" && nodeMap.get(selectedNodeId).crimeNo && (
+                    <p className="text-[11px] font-mono font-bold text-amber-400 mt-0.5">
+                      FIR: {nodeMap.get(selectedNodeId).crimeNo}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-slate-500 font-mono mt-0.5">ID: {selectedNodeId}</p>
+                </div>
               </div>
 
-              <div>
-                <h4 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-                  {renderIcon(nodeMap.get(selectedNodeId).type, nodeMap.get(selectedNodeId).isSuspicious)}
-                  {nodeMap.get(selectedNodeId).label}
-                </h4>
-                <p className="text-[10px] text-slate-500 font-mono mt-0.5">ID: {selectedNodeId}</p>
-              </div>
-
+              <div className="px-4 space-y-3.5">
               {/* Entity-specific contextual metadata */}
               <div className="text-xs space-y-2 bg-slate-900/30 p-2.5 rounded-lg border border-slate-800/60 text-slate-300">
                 {nodeMap.get(selectedNodeId).type === "Suspect" && (
@@ -417,31 +498,47 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                 <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 block">Direct Syndicate Connections ({directLinks.length})</span>
                 {directLinks.length > 0 ? (
                   <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin">
-                    {directLinks.map((link) => (
-                      <button
-                        key={link.edgeId}
-                        onClick={() => handleNodeSelect(link.node.id)}
-                        className="w-full flex items-center justify-between text-left p-1.5 bg-slate-900/60 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-900 rounded-lg transition-all group cursor-pointer"
-                      >
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <Link2 className="w-3 h-3 text-amber-500 shrink-0 group-hover:rotate-12 transition-transform" />
-                          <div className="truncate">
-                            <p className="text-[11px] font-bold text-slate-200 truncate">{link.node.label}</p>
-                            <span className="text-[9px] text-slate-500 font-medium">
-                              {link.relation.replace("_", " ")} {link.amount ? `(₹${(link.amount/1000).toFixed(0)}k)` : ""}
-                            </span>
+                    {directLinks.map((link) => {
+                      // Relation badge colors
+                      const relColor =
+                        link.relation === "ASSOCIATE_OF"  ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                        link.relation === "ACCUSED_IN"    ? "bg-rose-500/10 text-rose-400 border-rose-500/20" :
+                        link.relation === "VICTIM_IN"     ? "bg-sky-500/10 text-sky-400 border-sky-500/20" :
+                        link.relation === "TRANSACTIONS"  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                        "bg-slate-700/20 text-slate-400 border-slate-700/30";
+
+                      return (
+                        <button
+                          key={link.edgeId}
+                          onClick={() => handleNodeSelect(link.node.id)}
+                          className="w-full flex items-center justify-between text-left p-1.5 bg-slate-900/60 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-900 rounded-lg transition-all group cursor-pointer"
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <ArrowRight className="w-3 h-3 text-slate-600 shrink-0 group-hover:text-amber-400 transition-colors" />
+                            <div className="truncate">
+                              <p className="text-[11px] font-bold text-slate-200 truncate">{link.node.label}</p>
+                              <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                                <span className={`text-[8px] px-1 py-0.5 rounded border font-bold ${relColor}`}>
+                                  {link.relation.replace(/_/g, " ")}
+                                </span>
+                                {link.amount ? (
+                                  <span className="text-[8px] text-emerald-400 font-mono">₹{formatINR(link.amount)}</span>
+                                ) : null}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <ChevronRight className="w-3 h-3 text-slate-600 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-                      </button>
-                    ))}
+                          <ChevronRight className="w-3 h-3 text-slate-600 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-[10px] text-slate-500 italic">No direct connections mapped inside current filters.</p>
                 )}
               </div>
 
-              <div className="pt-2">
+              {/* Cross-module action buttons */}
+              <div className="space-y-1.5 pt-1">
                 <button
                   onClick={() => onSelectNode(nodeMap.get(selectedNodeId))}
                   className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2 px-3 rounded-lg text-xs flex items-center justify-center gap-1.5 transition active:scale-[0.98]"
@@ -449,6 +546,25 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                   <span>Request Full Case Sync</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
+                {nodeMap.get(selectedNodeId).type === "Suspect" && (
+                  <button
+                    onClick={() => onSelectNode({ ...nodeMap.get(selectedNodeId), _action: "view_profile" })}
+                    className="w-full bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 font-bold py-1.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1.5 transition"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    View Offender Profile
+                  </button>
+                )}
+                {nodeMap.get(selectedNodeId).type === "Case" && (
+                  <button
+                    onClick={() => onSelectNode({ ...nodeMap.get(selectedNodeId), _action: "view_decision_support" })}
+                    className="w-full bg-amber-600/10 hover:bg-amber-600/20 text-amber-400 border border-amber-500/30 font-bold py-1.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1.5 transition"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    View Decision Support
+                  </button>
+                )}
+              </div>
               </div>
             </div>
           ) : (

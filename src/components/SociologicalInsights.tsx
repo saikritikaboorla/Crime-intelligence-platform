@@ -8,7 +8,8 @@ import {
 } from "recharts";
 import {
   Activity, TrendingUp, Sparkles, AlertTriangle, CheckCircle,
-  ArrowRight, BookOpen, Target, Lightbulb, Shield
+  ArrowRight, BookOpen, Target, Lightbulb, Shield, LineChart,
+  MessageSquare
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -73,7 +74,7 @@ function AIInsightCard({ observation, trend, whyMatters, action, accentClass = "
           <Sparkles className="w-3.5 h-3.5 text-blue-400" />
           AI Insight
         </span>
-        <span className="text-slate-500 text-micro group-hover:text-slate-300 transition">{open ? "▲ hide" : "▼ show"}</span>
+        <span className="text-slate-500 text-micro group-hover:text-slate-300 transition">{open ? "▴ Hide" : "▾ Show Insight"}</span>
       </button>
       {open && (
         <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -148,6 +149,7 @@ function SocioRiskChart({ data }: { data: SocioRow[] }) {
 
   return (
     <div className="card rounded-2xl">
+      <div className="h-1 rounded-t-2xl bg-gradient-to-r from-sky-500 to-blue-600 -mt-[1.25rem] mb-4 mx-[-1.25rem] rounded-tl-2xl rounded-tr-2xl" />
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-1">
         <div>
@@ -244,6 +246,7 @@ function CrimeDistributionChart({ data }: { data: SocioRow[] }) {
 
   return (
     <div className="card rounded-2xl">
+      <div className="h-1 rounded-t-2xl bg-gradient-to-r from-rose-500 to-orange-600 -mt-[1.25rem] mb-4 mx-[-1.25rem] rounded-tl-2xl rounded-tr-2xl" />
       <div className="flex items-start justify-between gap-3 mb-1">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -332,6 +335,7 @@ function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
 
   return (
     <div className="card rounded-2xl">
+      <div className="h-1 rounded-t-2xl bg-gradient-to-r from-emerald-500 to-teal-600 -mt-[1.25rem] mb-4 mx-[-1.25rem] rounded-tl-2xl rounded-tr-2xl" />
       <div className="flex items-start gap-3 mb-1">
         <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0 mt-0.5">
           <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
@@ -456,6 +460,7 @@ function DistrictRadarChart({ data }: { data: SocioRow[] }) {
 
   return (
     <div className="card rounded-2xl">
+      <div className="h-1 rounded-t-2xl bg-gradient-to-r from-indigo-500 to-purple-600 -mt-[1.25rem] mb-4 mx-[-1.25rem] rounded-tl-2xl rounded-tr-2xl" />
       <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
         <div>
           <div className="flex items-center gap-2 mb-1">
