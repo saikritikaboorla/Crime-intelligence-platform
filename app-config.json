@@ -1,0 +1,13 @@
+{
+	"command": "node dist/server.cjs",
+	"build_path": ".",
+	"stack": "node20",
+	"env_variables": {
+		"NODE_ENV": "production"
+	},
+	"memory": 256,
+	"scripts": {
+		"preserve": "npm install && npm run build"
+	},
+	"platform": "node"
+}
