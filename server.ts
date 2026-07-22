@@ -55,7 +55,7 @@ function getGeminiClient(): GoogleGenAI | null {
     apiKey: apiKey,
     httpOptions: {
       headers: {
-        "User-Agent": "aistudio-build"
+        "User-Agent": "ksp-crime-intel-platform"
       }
     }
   });
@@ -622,7 +622,7 @@ if (process.env.NODE_ENV === "development") {
   app.get("*", (req, res) => {
     res.sendFile(path.join(distPath, "index.html"));
   });
-  app.listen(PORT, () => {
+  app.listen(Number(PORT), () => {
     console.log(`Production Server running on port ${PORT}`);
   });
 }
@@ -634,7 +634,7 @@ async function startVite() {
   });
   app.use(vite.middlewares);
 
-  app.listen(PORT, "0.0.0.0", () => {
+  app.listen(Number(PORT), "0.0.0.0", () => {
     console.log(`Development Server running on http://localhost:${PORT}`);
   });
 }

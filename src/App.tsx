@@ -89,6 +89,7 @@ export default function App() {
   const speechSynthRef = useRef<SpeechSynthesis | null>(null);
 
   useEffect(() => {
+    document.title = "Crime Intelligence";
     speechSynthRef.current = window.speechSynthesis;
     // Initial fetch of analytical components
     fetchTrends();
@@ -705,132 +706,132 @@ export default function App() {
                   className="flex flex-col h-full grow gap-4"
                 >
                   {/* Chat header panel */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800/60 pb-4 gap-2">
-                  <div>
-                    <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5 text-amber-500" />
-                      Conversational Crime Intelligence Interface
-                    </h2>
-                    <p className="text-xs text-slate-400 mt-0.5">Scans FIR databases, suspect dossiers, and money flow grids using neural retrieval models</p>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-700 pb-4 gap-3">
+                    <div>
+                      <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                        <MessageSquare className="w-5 h-5 text-amber-400" />
+                        Conversational Crime Intelligence Interface
+                      </h2>
+                      <p className="text-xs text-slate-300 mt-1">Scans FIR databases, suspect dossiers, and money flow grids using neural retrieval models</p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        onClick={downloadChatHistory}
+                        className="bg-slate-700 hover:bg-slate-600 border border-slate-500 rounded-lg py-2 px-3 text-xs text-white font-semibold flex items-center gap-1.5 transition"
+                      >
+                        <Download className="w-3.5 h-3.5 text-amber-400" />
+                        Save History
+                      </button>
+                      <button
+                        onClick={toggleSpeakingState}
+                        className={`border rounded-lg py-2 px-3 text-xs font-semibold flex items-center gap-1.5 transition ${
+                          isSpeaking
+                            ? "bg-rose-500/20 border-rose-400/50 text-rose-300"
+                            : "bg-slate-700 hover:bg-slate-600 border-slate-500 text-white"
+                        }`}
+                      >
+                        {isSpeaking ? <VolumeX className="w-3.5 h-3.5 text-rose-300" /> : <Volume2 className="w-3.5 h-3.5 text-amber-400" />}
+                        Audio: {isSpeaking ? "ON" : "OFF"}
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <button
-                      onClick={downloadChatHistory}
-                      className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg py-1.5 px-3 text-xs text-slate-300 font-semibold flex items-center gap-1.5 transition"
-                    >
-                      <Download className="w-3.5 h-3.5 text-amber-500" />
-                      Save History (PDF/Print)
-                    </button>
-                    <button
-                      onClick={toggleSpeakingState}
-                      className={`border rounded-lg py-1.5 px-3 text-xs font-semibold flex items-center gap-1.5 transition ${
-                        isSpeaking
-                          ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
-                          : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300"
-                      }`}
-                    >
-                      {isSpeaking ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-amber-500" />}
-                      Audio Feedback: {isSpeaking ? "ACTIVE" : "OFF"}
-                    </button>
-                  </div>
-                </div>
 
-                {/* Main conversation sandbox */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 grow min-h-[400px]">
-                  {/* Left Column: Operational Intel Dossier (Fulfills explaining every single thing + cross-linking) */}
-                  <div className="bg-slate-950/70 border border-slate-800/80 p-4 rounded-xl space-y-5 flex flex-col justify-between">
-                    <div className="space-y-4">
-                      <div className="border-b border-slate-800 pb-2">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-amber-500">
-                          Operational Intel Dossier
-                        </h3>
-                        <p className="text-[9px] text-slate-500 uppercase font-mono mt-1">MODULE: CHAT_CORES_GROUNDED</p>
-                      </div>
+                  {/* Main conversation sandbox */}
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 grow min-h-[400px]">
+                    {/* Left Column: Operational Intel Dossier */}
+                    <div className="bg-slate-950/70 border border-slate-800/80 p-4 rounded-xl space-y-5 flex flex-col justify-between">
+                      <div className="space-y-4">
+                        <div className="border-b border-slate-800 pb-2">
+                          <h3 className="text-xs font-black uppercase tracking-widest text-amber-500">
+                            Operational Intel Dossier
+                          </h3>
+                          <p className="text-[9px] text-slate-500 uppercase font-mono mt-1">MODULE: CHAT_CORES_GROUNDED</p>
+                        </div>
 
-                      {/* Purpose and Utility */}
-                      <div className="space-y-1.5">
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Crime-Solver Purpose</h4>
-                        <p className="text-[11px] text-slate-300 leading-relaxed">
-                          This module translates natural language queries into grounded retrieval calls. Investigators use this to search raw case narratives, victim files, and suspicious account nodes to verify active timelines.
-                        </p>
-                      </div>
+                        {/* Purpose and Utility */}
+                        <div className="space-y-1.5">
+                          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Crime-Solver Purpose</h4>
+                          <p className="text-[11px] text-slate-300 leading-relaxed">
+                            This module translates natural language queries into grounded retrieval calls. Investigators use this to search raw case narratives, victim files, and suspicious account nodes to verify active timelines.
+                          </p>
+                        </div>
 
-                      {/* Schema Variable Directory */}
-                      <div className="space-y-2 pt-2 border-t border-slate-800">
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Database Variables Mapped</h4>
-                        <div className="space-y-1.5 font-mono text-[9px]">
-                          <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
-                            <span className="text-blue-400">FIRNo</span>
-                            <span className="text-slate-500">Case Unique Identifier</span>
+                        {/* Schema Variable Directory */}
+                        <div className="space-y-2 pt-2 border-t border-slate-800">
+                          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Database Variables Mapped</h4>
+                          <div className="space-y-1.5 font-mono text-[9px]">
+                            <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
+                              <span className="text-blue-400">FIRNo</span>
+                              <span className="text-slate-500">Case Unique Identifier</span>
+                            </div>
+                            <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
+                              <span className="text-blue-400">BriefFacts</span>
+                              <span className="text-slate-500">Incident Narrative Text</span>
+                            </div>
+                            <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
+                              <span className="text-blue-400">Citations</span>
+                              <span className="text-slate-500">Factual Grounding Docs</span>
+                            </div>
                           </div>
-                          <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
-                            <span className="text-blue-400">BriefFacts</span>
-                            <span className="text-slate-500">Incident Narrative Text</span>
-                          </div>
-                          <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
-                            <span className="text-blue-400">Citations</span>
-                            <span className="text-slate-500">Factual Grounding Docs</span>
+                        </div>
+
+                        {/* Quick Suggested Inputs */}
+                        <div className="space-y-2 pt-2 border-t border-slate-800">
+                          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Suggested Queries</h4>
+                          <div className="space-y-1.5 text-[10px]">
+                            {[
+                              { text: "Who are the repeat offenders in property theft?", lang: "en" },
+                              { text: "ರಮೇಶ್ ಕುಮಾರ್ ಅವರ ಅಪರಾಧ ಇತಿಹಾಸವೇನು?", lang: "kn" },
+                              { text: "Analyze the cyber phishing flow", lang: "en" }
+                            ].map((q, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedLanguage(q.lang as any);
+                                  setChatInput(q.text);
+                                }}
+                                className="w-full text-left p-1.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 transition truncate"
+                              >
+                                {q.text}
+                              </button>
+                            ))}
                           </div>
                         </div>
                       </div>
 
-                      {/* Quick Suggested Inputs */}
-                      <div className="space-y-2 pt-2 border-t border-slate-800">
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Suggested Queries</h4>
-                        <div className="space-y-1.5 text-[10px]">
-                          {[
-                            { text: "Who are the repeat offenders in property theft?", lang: "en" },
-                            { text: "ರಮೇಶ್ ಕುಮಾರ್ ಅವರ ಅಪರಾಧ ಇತಿಹಾಸವೇನು?", lang: "kn" },
-                            { text: "Analyze the cyber phishing flow", lang: "en" }
-                          ].map((q, idx) => (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => {
-                                setSelectedLanguage(q.lang as any);
-                                setChatInput(q.text);
-                              }}
-                              className="w-full text-left p-1.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 transition truncate"
-                            >
-                              {q.text}
-                            </button>
-                          ))}
+                      {/* Cross-Module Actions */}
+                      <div className="pt-3 border-t border-slate-800 space-y-2">
+                        <h4 className="text-[10px] font-bold text-amber-500/80 uppercase tracking-wider">Cross-Module Actions</h4>
+                        <div className="space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTab("network");
+                              logAuditEvent("Cross Link", "Transitioned from Chat to Network Map.");
+                            }}
+                            className="w-full text-left py-1.5 px-2 bg-blue-600/10 border border-blue-500/20 rounded hover:bg-blue-600/20 text-blue-400 text-[10px] font-bold transition flex items-center justify-between"
+                          >
+                            <span>Accused Link Map</span>
+                            <span>&rarr;</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTab("profiling");
+                              logAuditEvent("Cross Link", "Transitioned from Chat to Offender Profiling.");
+                            }}
+                            className="w-full text-left py-1.5 px-2 bg-blue-600/10 border border-blue-500/20 rounded hover:bg-blue-600/20 text-blue-400 text-[10px] font-bold transition flex items-center justify-between"
+                          >
+                            <span>Offender dossiers</span>
+                            <span>&rarr;</span>
+                          </button>
                         </div>
                       </div>
                     </div>
 
-                    {/* INTER-LINK WORKFLOW CONTROLS (Fulfills all links properly linked to each other) */}
-                    <div className="pt-3 border-t border-slate-800 space-y-2">
-                      <h4 className="text-[10px] font-bold text-amber-500/80 uppercase tracking-wider">Cross-Module Actions</h4>
-                      <div className="space-y-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTab("network");
-                            logAuditEvent("Cross Link", "Transitioned from Chat to Network Map.");
-                          }}
-                          className="w-full text-left py-1.5 px-2 bg-blue-600/10 border border-blue-500/20 rounded hover:bg-blue-600/20 text-blue-400 text-[10px] font-bold transition flex items-center justify-between"
-                        >
-                          <span>Accused Link Map</span>
-                          <span>&rarr;</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTab("profiling");
-                            logAuditEvent("Cross Link", "Transitioned from Chat to Offender Profiling.");
-                          }}
-                          className="w-full text-left py-1.5 px-2 bg-blue-600/10 border border-blue-500/20 rounded hover:bg-blue-600/20 text-blue-400 text-[10px] font-bold transition flex items-center justify-between"
-                        >
-                          <span>Offender dossiers</span>
-                          <span>&rarr;</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Dynamic Messages scroll window */}
-                  <div className="lg:col-span-3 flex flex-col bg-slate-950/40 border border-slate-800/60 rounded-xl overflow-hidden h-[450px]">
+                    {/* Right Column: Dynamic Messages scroll window */}
+                    <div className="lg:col-span-3 flex flex-col bg-slate-950/40 border border-slate-800/60 rounded-xl overflow-hidden h-[450px]">
                     
                     <div className="flex-grow p-4 overflow-y-auto space-y-4">
                       {messages.map((m) => (
@@ -936,10 +937,10 @@ export default function App() {
                       </button>
                     </form>
 
+                    </div>
                   </div>
-                </div>
 
-                {/* Modal for Citation Details */}
+                  {/* Modal for Citation Details */}
                 {currentCitation && (
                   <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
                     <div className="bg-slate-900 border border-slate-700 max-w-lg w-full rounded-2xl p-6 space-y-4 shadow-2xl animate-scaleIn">
@@ -1239,127 +1240,266 @@ export default function App() {
                       <LineChart className="w-5 h-5 text-sky-400" />
                       Sociological Crime Insights & Correlations
                     </h2>
-                    <p className="text-xs text-slate-400 mt-0.5">Cross-correlation of demographic, urbanization, migration indices, and local unemployment stresses against crime heads</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Cross-correlation of demographic, urbanization, migration indices, and economic stress factors against crime patterns</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 grow min-h-[400px]">
-                  {/* Left Column: Sociological Intel Dossier (Fulfills explaining every single thing + cross-linking) */}
-                  <div className="bg-slate-950/70 border border-slate-800/80 p-4 rounded-xl space-y-4 flex flex-col justify-between">
-                    <div className="space-y-4">
-                      <div className="border-b border-slate-800 pb-2">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-sky-400">
-                          Socio Intel Dossier
-                        </h3>
-                        <p className="text-[9px] text-slate-500 uppercase font-mono mt-1">MODULE: SOCIOLOGICAL_FACTORS_MAP</p>
-                      </div>
-
-                      {/* Purpose */}
-                      <div className="space-y-1">
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Crime-Solver Purpose</h4>
-                        <p className="text-[11px] text-slate-300 leading-relaxed">
-                          This model computes Pearson correlations between environmental stress factors and registered crime heads. Use these indices to isolate core criminological root-causes instead of just reacting to incidents.
-                        </p>
-                      </div>
-
-                      {/* Schema Variable Directory */}
-                      <div className="space-y-2 pt-2 border-t border-slate-800">
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Demographic Variables</h4>
-                        <div className="space-y-1 font-mono text-[9px]">
-                          <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
-                            <span className="text-sky-400">Urbanization %</span>
-                            <span className="text-slate-500">Infrastructure growth density</span>
-                          </div>
-                          <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
-                            <span className="text-sky-400">Econ Stress %</span>
-                            <span className="text-slate-500">Unemployment & daily wage levels</span>
-                          </div>
-                          <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
-                            <span className="text-sky-400">Migration %</span>
-                            <span className="text-slate-500">Temporary labor inflows</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* INTER-LINK WORKFLOW CONTROLS */}
-                    <div className="pt-3 border-t border-slate-800 space-y-2">
-                      <h4 className="text-[10px] font-bold text-sky-400 uppercase tracking-wider">Cross-Module Actions</h4>
-                      <div className="space-y-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTab("hotspots");
-                            logAuditEvent("Cross Link", "Transitioned from Sociological to Hotspot Spatial Tracking.");
-                          }}
-                          className="w-full text-left py-1.5 px-2 bg-blue-600/10 border border-blue-500/20 rounded hover:bg-blue-600/20 text-blue-400 text-[10px] font-bold transition flex items-center justify-between"
-                        >
-                          <span>Track Spatial Hotspots</span>
-                          <span>&rarr;</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTab("conversational");
-                            setChatInput("Summarize how economic stress and urbanization correlate to cyber phishing scams");
-                            logAuditEvent("Cross Link", "Transitioned from Sociological to Chat with socio query.");
-                          }}
-                          className="w-full text-left py-1.5 px-2 bg-blue-600/10 border border-blue-500/20 rounded hover:bg-blue-600/20 text-blue-400 text-[10px] font-bold transition flex items-center justify-between"
-                        >
-                          <span>Ask AI for Socio-analysis</span>
-                          <span>&rarr;</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Scatter plot and details */}
-                  <div className="lg:col-span-3 bg-slate-950/60 border border-slate-800 p-5 rounded-xl">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-amber-500 mb-4">Correlation: Urbanization Index vs. Total Case Registry Count</h3>
-                    <div className="h-[250px] w-full">
+                {/* Three-panel visualization grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Panel 1: Socio-Economic Factors by District */}
+                  <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-amber-500 mb-4 flex items-center gap-2">
+                      <Activity className="w-4 h-4" />
+                      Socio-Economic Risk Indices
+                    </h3>
+                    <div className="h-[320px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                          <CartesianGrid stroke="#1e293b" />
-                          <XAxis type="number" dataKey="urbanization" name="Urbanization" unit="%" stroke="#64748b" fontSize={11} label={{ value: 'Urbanization Index (%)', position: 'insideBottom', offset: -5 }} />
-                          <YAxis type="number" dataKey="totalCrimes" name="Total Incidents" stroke="#64748b" fontSize={11} label={{ value: 'Incidents Count', angle: -90, position: 'insideLeft' }} />
-                          <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ backgroundColor: "#020617", border: "1px solid #334155" }} />
-                          <Scatter name="Districts" data={socioData} fill="#0ea5e9">
-                            <LabelList dataKey="districtName" position="top" style={{ fill: '#e2e8f0', fontSize: 10, fontWeight: 'bold' }} />
-                          </Scatter>
-                        </ScatterChart>
+                        <BarChart data={socioData} margin={{ top: 10, right: 10, bottom: 60, left: 10 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                          <XAxis 
+                            dataKey="districtName" 
+                            stroke="#64748b" 
+                            fontSize={9} 
+                            angle={-45} 
+                            textAnchor="end" 
+                            height={80}
+                          />
+                          <YAxis stroke="#64748b" fontSize={10} label={{ value: 'Index (%)', angle: -90, position: 'insideLeft', style: { fill: '#94a3b8', fontSize: 10 } }} />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: "#020617", border: "1px solid #334155", borderRadius: "8px" }} 
+                            labelStyle={{ color: '#e2e8f0', fontWeight: 'bold' }}
+                          />
+                          <Legend wrapperStyle={{ fontSize: '10px' }} />
+                          <Bar dataKey="urbanization" fill="#0ea5e9" name="Urbanization %" />
+                          <Bar dataKey="stress" fill="#f59e0b" name="Economic Stress %" />
+                          <Bar dataKey="migration" fill="#8b5cf6" name="Migration %" />
+                        </BarChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
+
+                  {/* Panel 2: Crime Distribution by District */}
+                  <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-rose-500 mb-4 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      Crime Type Distribution
+                    </h3>
+                    <div className="h-[320px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={socioData} margin={{ top: 10, right: 10, bottom: 60, left: 10 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                          <XAxis 
+                            dataKey="districtName" 
+                            stroke="#64748b" 
+                            fontSize={9} 
+                            angle={-45} 
+                            textAnchor="end"
+                            height={80}
+                          />
+                          <YAxis stroke="#64748b" fontSize={10} label={{ value: 'Crime Count', angle: -90, position: 'insideLeft', style: { fill: '#94a3b8', fontSize: 10 } }} />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: "#020617", border: "1px solid #334155", borderRadius: "8px" }} 
+                            labelStyle={{ color: '#e2e8f0', fontWeight: 'bold' }}
+                          />
+                          <Legend wrapperStyle={{ fontSize: '10px' }} />
+                          <Bar dataKey="propertyCrimes" stackId="a" fill="#f59e0b" name="Property Crimes" />
+                          <Bar dataKey="bodyCrimes" stackId="a" fill="#ef4444" name="Violent Crimes" />
+                          <Bar dataKey="cyberCrimes" stackId="a" fill="#8b5cf6" name="Cyber Fraud" />
+                          <Bar dataKey="drugCrimes" stackId="a" fill="#10b981" name="Narcotics" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Panel 3: Correlation Scatter Plot */}
+                  <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-500 mb-1 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      Urbanization × Total Crimes
+                    </h3>
+                    <p className="text-[10px] text-slate-500 mb-4">Each dot = one district. Higher urbanization → higher crime count.</p>
+                    <div className="h-[290px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ScatterChart margin={{ top: 24, right: 30, bottom: 50, left: 30 }}>
+                          <CartesianGrid stroke="#1e293b" strokeDasharray="4 4" />
+                          <XAxis
+                            type="number"
+                            dataKey="urbanization"
+                            name="Urbanization"
+                            unit="%"
+                            domain={[20, 100]}
+                            stroke="#475569"
+                            tick={{ fill: '#94a3b8', fontSize: 11 }}
+                            tickLine={{ stroke: '#334155' }}
+                            label={{ value: 'Urbanization Index (%)', position: 'insideBottom', offset: -12, fill: '#94a3b8', fontSize: 11 }}
+                          />
+                          <YAxis
+                            type="number"
+                            dataKey="totalCrimes"
+                            name="Total Crimes"
+                            domain={[0, 6]}
+                            stroke="#475569"
+                            tick={{ fill: '#94a3b8', fontSize: 11 }}
+                            tickLine={{ stroke: '#334155' }}
+                            label={{ value: 'Total Cases', angle: -90, position: 'insideLeft', offset: 10, fill: '#94a3b8', fontSize: 11 }}
+                          />
+                          <Tooltip
+                            cursor={{ strokeDasharray: '4 4', stroke: '#10b981' }}
+                            contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #10b981", borderRadius: "10px", padding: "10px 14px" }}
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                const d = payload[0].payload;
+                                return (
+                                  <div style={{ background: '#0f172a', border: '1px solid #10b981', borderRadius: 10, padding: '10px 14px' }}>
+                                    <p style={{ color: '#10b981', fontWeight: 700, fontSize: 12, marginBottom: 4 }}>{d.districtName}</p>
+                                    <p style={{ color: '#94a3b8', fontSize: 11 }}>Urbanization: <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{d.urbanization}%</span></p>
+                                    <p style={{ color: '#94a3b8', fontSize: 11 }}>Total Cases: <span style={{ color: '#fbbf24', fontWeight: 600 }}>{d.totalCrimes}</span></p>
+                                    <p style={{ color: '#94a3b8', fontSize: 11 }}>Econ. Stress: <span style={{ color: '#f87171', fontWeight: 600 }}>{d.stress}%</span></p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Scatter
+                            name="Districts"
+                            data={socioData}
+                            shape={(props: any) => {
+                              const { cx, cy, payload } = props;
+                              const r = 10 + (payload.totalCrimes || 0) * 4;
+                              return (
+                                <g>
+                                  <circle cx={cx} cy={cy} r={r} fill="#10b981" fillOpacity={0.25} stroke="#10b981" strokeWidth={2} />
+                                  <circle cx={cx} cy={cy} r={5} fill="#10b981" />
+                                  <text x={cx} y={cy - r - 5} textAnchor="middle" fill="#e2e8f0" fontSize={10} fontWeight="bold">
+                                    {payload.districtName?.split(' ')[0]}
+                                  </text>
+                                </g>
+                              );
+                            }}
+                          />
+                        </ScatterChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-2 text-center">Dot size proportional to number of registered cases</p>
+                  </div>
                 </div>
 
-                {/* District breakdown matrix table */}
+                {/* Detailed Insights Cards */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Insight 1: High Risk Districts */}
+                  <div className="bg-gradient-to-br from-rose-950/30 to-slate-950/60 border border-rose-800/40 p-5 rounded-xl">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                      <div>
+                        <h3 className="text-sm font-bold text-rose-300 mb-2">High-Risk Correlation Alert</h3>
+                        <p className="text-xs text-slate-300 leading-relaxed mb-3">
+                          <strong className="text-rose-400">Bengaluru City</strong> shows the highest urbanization (92%) combined with the highest total crime count. 
+                          This validates the <strong>social disorganization theory</strong> — rapid urban growth correlates with increased property and cyber crime.
+                        </p>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          <strong className="text-amber-400">Kalaburagi</strong> exhibits the highest economic stress (68%) and lowest education (65%), 
+                          correlating with elevated violent crimes — consistent with <strong>strain theory</strong> in criminology.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Insight 2: Protective Factors */}
+                  <div className="bg-gradient-to-br from-emerald-950/30 to-slate-950/60 border border-emerald-800/40 p-5 rounded-xl">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                      <div>
+                        <h3 className="text-sm font-bold text-emerald-300 mb-2">Protective Factor Analysis</h3>
+                        <p className="text-xs text-slate-300 leading-relaxed mb-3">
+                          <strong className="text-emerald-400">Mangaluru</strong> maintains moderate urbanization (72%) with high education (91%) and shows 
+                          lower violent crime rates — education acts as a protective buffer against crime escalation.
+                        </p>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          Districts with <strong>lower migration rates</strong> (Belagavi: 5.1%, Hubballi: 6.8%) show more stable crime patterns, 
+                          suggesting transient populations correlate with increased property crime risk.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cross-Module Action Panel */}
+                <div className="bg-slate-950/40 border border-sky-800/40 p-4 rounded-xl">
+                  <h4 className="text-xs font-bold text-sky-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <ArrowRight className="w-4 h-4" />
+                    Recommended Investigative Actions
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab("hotspots");
+                        logAuditEvent("Cross Link", "Transitioned from Sociological to Hotspot Spatial Analysis.");
+                      }}
+                      className="text-left py-2.5 px-3 bg-blue-600/10 border border-blue-500/30 rounded-lg hover:bg-blue-600/20 text-blue-300 text-xs font-semibold transition flex items-center justify-between group"
+                    >
+                      <span>View Crime Hotspots Map</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab("conversational");
+                        setChatInput("Explain the relationship between economic stress and property crimes in Kalaburagi");
+                        logAuditEvent("Cross Link", "Transitioned from Sociological to AI Chat for correlation analysis.");
+                      }}
+                      className="text-left py-2.5 px-3 bg-purple-600/10 border border-purple-500/30 rounded-lg hover:bg-purple-600/20 text-purple-300 text-xs font-semibold transition flex items-center justify-between group"
+                    >
+                      <span>Ask AI for Deep Analysis</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab("forecasting");
+                        logAuditEvent("Cross Link", "Transitioned from Sociological to Forecasting & Early Warnings.");
+                      }}
+                      className="text-left py-2.5 px-3 bg-amber-600/10 border border-amber-500/30 rounded-lg hover:bg-amber-600/20 text-amber-300 text-xs font-semibold transition flex items-center justify-between group"
+                    >
+                      <span>Check Risk Predictions</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* District Detail Table */}
                 <div className="bg-slate-950/40 border border-slate-800/80 rounded-xl overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
-                        <th className="p-3">District</th>
-                        <th className="p-3 text-center">Urbanization</th>
-                        <th className="p-3 text-center">Migration</th>
-                        <th className="p-3 text-center">Econ. Stress</th>
-                        <th className="p-3 text-center">Literacy</th>
+                        <th className="p-3 font-bold">District</th>
+                        <th className="p-3 text-center">Urban%</th>
+                        <th className="p-3 text-center">Migr%</th>
+                        <th className="p-3 text-center">Stress%</th>
+                        <th className="p-3 text-center">Edu%</th>
                         <th className="p-3 text-center">Density</th>
-                        <th className="p-3 text-right">Property Crimes</th>
-                        <th className="p-3 text-right">Cyber Fraud</th>
-                        <th className="p-3 text-right">Total Cases</th>
+                        <th className="p-3 text-right">Property</th>
+                        <th className="p-3 text-right">Violent</th>
+                        <th className="p-3 text-right">Cyber</th>
+                        <th className="p-3 text-right">Drugs</th>
+                        <th className="p-3 text-right font-bold">Total</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/40 text-slate-300">
                       {socioData.map((d, index) => (
-                        <tr key={index} className="hover:bg-slate-900/30">
+                        <tr key={index} className="hover:bg-slate-900/30 transition">
                           <td className="p-3 font-semibold text-slate-200">{d.districtName}</td>
-                          <td className="p-3 text-center">{d.urbanization}%</td>
-                          <td className="p-3 text-center">{d.migration}%</td>
-                          <td className="p-3 text-center">{d.stress}%</td>
-                          <td className="p-3 text-center">{d.education}%</td>
-                          <td className="p-3 text-center">{d.density}/km²</td>
+                          <td className="p-3 text-center text-sky-400">{d.urbanization}%</td>
+                          <td className="p-3 text-center text-purple-400">{d.migration}%</td>
+                          <td className="p-3 text-center text-amber-400">{d.stress}%</td>
+                          <td className="p-3 text-center text-emerald-400">{d.education}%</td>
+                          <td className="p-3 text-center text-slate-400">{d.density}/km²</td>
                           <td className="p-3 text-right text-amber-400 font-medium">{d.propertyCrimes}</td>
-                          <td className="p-3 text-right text-rose-400 font-medium">{d.cyberCrimes}</td>
-                          <td className="p-3 text-right font-bold text-slate-100">{d.totalCrimes}</td>
+                          <td className="p-3 text-right text-rose-400 font-medium">{d.bodyCrimes}</td>
+                          <td className="p-3 text-right text-purple-400 font-medium">{d.cyberCrimes}</td>
+                          <td className="p-3 text-right text-emerald-400 font-medium">{d.drugCrimes}</td>
+                          <td className="p-3 text-right font-bold text-slate-100 bg-slate-900/50">{d.totalCrimes}</td>
                         </tr>
                       ))}
                     </tbody>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Police badge shield shape -->
+  <path d="M32 4 L54 14 L54 34 C54 46 44 56 32 60 C20 56 10 46 10 34 L10 14 Z"
+        fill="#1a3a6b" stroke="#c9a84c" stroke-width="2.5"/>
+  <!-- Inner shield border -->
+  <path d="M32 10 L49 18 L49 34 C49 43 42 51 32 55 C22 51 15 43 15 34 L15 18 Z"
+        fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+  <!-- Star badge outline -->
+  <polygon points="32,16 34.5,24 43,24 36.5,29 39,37 32,32 25,37 27.5,29 21,24 29.5,24"
+           fill="#c9a84c" stroke="#1a3a6b" stroke-width="0.5"/>
+  <!-- Center circle -->
+  <circle cx="32" cy="27" r="4" fill="#1a3a6b"/>
+  <!-- KSP text -->
+  <text x="32" y="48" text-anchor="middle" font-family="Arial, sans-serif"
+        font-size="7" font-weight="bold" fill="#c9a84c" letter-spacing="1">KSP</text>
+</svg>
