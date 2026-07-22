@@ -74,7 +74,3 @@ ksp-crime-ai/
 ## Documentation
 
 Full project documentation — problem understanding, objectives, requirements, architecture, database design, and AI architecture — lives in [`KSP_Crime_AI_Documentation.md`](./KSP_Crime_AI_Documentation.md).
-
-## License & Data Sensitivity
-
-⚠️ This project handles sensitive law-enforcement data. Do not commit real crime records, credentials, or PII to version control. Follow your organization's data governance and classification policies at all times.
