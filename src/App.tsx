@@ -1542,7 +1542,7 @@ export default function App() {
                     <p className="section-subtitle mt-1">Automated case narratives, chronological event timelines, MO comparison, and next tactical leads (FR-6)</p>
                   </div>
 
-                  {/* Case selector dropdown */}
+                  {/* Case selector dropdown — populated dynamically from trendData hotspots */}
                   <div className="bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg flex items-center gap-2">
                     <span className="text-xs text-slate-400 font-bold">Case Master Record:</span>
                     <select
@@ -1554,11 +1554,14 @@ export default function App() {
                       }}
                       className="bg-transparent text-xs text-amber-400 font-bold focus:outline-none cursor-pointer"
                     >
-                      <option value={1001}>FIR 202600001 (Koramangala Theft)</option>
-                      <option value={1002}>FIR 202600002 (Cubbon Park Narcotics)</option>
-                      <option value={1003}>FIR 202600003 (Mysuru Burglary)</option>
-                      <option value={1004}>FIR 202600004 (Mangaluru Phishing)</option>
-                      <option value={1005}>FIR 202600005 (Koramangala Murder)</option>
+                      {trendData.hotspots && trendData.hotspots.length > 0
+                        ? trendData.hotspots.map((h: any) => (
+                            <option key={h.caseId} value={h.caseId}>
+                              FIR {h.firNo.slice(-9)} — {h.crimeType ?? h.station}
+                            </option>
+                          ))
+                        : <option value={1001}>FIR 202600001</option>
+                      }
                     </select>
                   </div>
                 </div>
@@ -1589,9 +1592,10 @@ export default function App() {
                         <div className="pt-2">
                           <span className="text-xs text-slate-400 font-bold block mb-2">Accused Listed in Case:</span>
                           <div className="flex flex-wrap gap-2">
-                            {decisionSupport.accusedList.map((a: string, idx: number) => (
-                              <span key={idx} className="bg-slate-900 border border-slate-800 text-slate-200 px-2.5 py-1 rounded-lg text-xs font-semibold">
-                                {a}
+                            {decisionSupport.accusedList.map((a: any, idx: number) => (
+                              <span key={idx} className={`border px-2.5 py-1 rounded-lg text-xs font-semibold ${a.isRepeat ? "bg-red-900/30 border-red-700/50 text-red-300" : "bg-slate-900 border-slate-800 text-slate-200"}`}>
+                                {typeof a === "string" ? a : a.name}
+                                {a.isRepeat && <span className="ml-1 text-[9px] text-red-400 font-bold uppercase">REPEAT</span>}
                               </span>
                             ))}
                           </div>
