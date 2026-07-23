@@ -33,7 +33,7 @@ function AIBriefCard() {
     weekday: "long", year: "numeric", month: "long", day: "numeric"
   });
   return (
-    <div className="card-elevated rounded-2xl p-5 border border-blue-500/25 bg-gradient-to-br from-slate-900/95 to-slate-950 col-span-full shadow-xl" style={{boxShadow: '0 0 60px rgba(37, 99, 235, 0.06)'}}>
+    <div className="card-hero col-span-full">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center shrink-0">
@@ -380,7 +380,7 @@ function QuickActions({ onNavigate }: { onNavigate: (t: string) => void }) {
     { icon: FileText,      label: "Case Reports",    sub: "Decision support",       tab: "decision",       color: "text-indigo-400", bg: "from-indigo-500/10", border: "border-indigo-500/25" },
   ];
   return (
-    <div className="card-elevated rounded-2xl col-span-full">
+    <div className="card-elevated col-span-full rounded-2xl">
       <div className="text-label text-slate-400 mb-4">Quick Actions</div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {actions.map((a, i) => {
@@ -474,63 +474,54 @@ export default function MissionControl({ onNavigate, forecasting, trendData }: M
       className="h-full overflow-y-auto pr-1 page-transition"
       style={{ scrollbarWidth: "thin", scrollbarColor: "#334155 transparent" }}
     >
-      {/* Page header */}
-      <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-        <div>
-          <h1 className="text-heading1 text-slate-100 flex items-center gap-3">
-            <Shield className="w-7 h-7 text-blue-400 shrink-0" />
-            Mission Control
-          </h1>
-          <p className="text-body-sm text-slate-400 mt-1">Executive Intelligence Dashboard — Karnataka State Police</p>
-        </div>
-        <div className="flex items-center gap-2 text-caption text-slate-500">
-          <RefreshCw className="w-3.5 h-3.5" />
-          Last updated {lastRefresh}
-        </div>
-      </div>
-
-      {/* Status banner */}
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800/60">
-        <div>
-          <h1 className="text-heading2 text-slate-100 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-blue-400" />
-            Mission Control
-          </h1>
-          <p className="text-caption text-slate-500 mt-0.5">Karnataka State Police · AI Intelligence Division · Live Monitoring</p>
+      {/* Page header — single, unified */}
+      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap pb-4 border-b border-slate-800/50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/25 flex items-center justify-center shrink-0">
+            <Shield className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h1 className="text-heading2 text-slate-100 leading-tight">Mission Control</h1>
+            <p className="text-caption text-slate-500 mt-0.5">Karnataka State Police · AI Intelligence Division · Live Monitoring</p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-caption text-emerald-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             All Systems Operational
           </div>
           <span className="badge badge-blue">FY 2026</span>
+          <div className="flex items-center gap-1.5 text-caption text-slate-500">
+            <RefreshCw className="w-3 h-3" />
+            {lastRefresh}
+          </div>
         </div>
       </div>
 
       {/* Row 1: AI Brief (full width) */}
-      <div className="grid grid-cols-1 gap-4 mb-4">
+      <div className="grid grid-cols-1 gap-4 mb-5">
         <AIBriefCard />
       </div>
 
       {/* Row 2: KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4 stagger-children">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5 stagger-children">
         <KPIGrid onNavigate={onNavigate} />
       </div>
 
       {/* Row 3: Quick actions (full width) */}
-      <div className="grid grid-cols-1 gap-4 mb-4">
+      <div className="grid grid-cols-1 gap-4 mb-5">
         <QuickActions onNavigate={onNavigate} />
       </div>
 
       {/* Row 4: Alerts | Trend chart | District risk */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
         <AlertsPanel warnings={forecasting?.warnings ?? []} />
         <TrendMiniChart data={trendData?.crimeByMonth ?? []} />
         <DistrictRiskTable hotspotsRisk={forecasting?.hotspotsRisk ?? []} />
       </div>
 
       {/* Row 5: Top crimes | AI recs | Timeline */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-6">
         <TopCrimesPanel />
         <AIRecommendations onNavigate={onNavigate} />
         <ActivityTimeline />

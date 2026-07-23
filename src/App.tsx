@@ -27,16 +27,22 @@ import {
   Eye,
   RefreshCw,
   Menu,
-  X
+  X,
+  LogOut
 } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ScatterChart, Scatter, LabelList } from "recharts";
 import { Message, UserRole, AuditLog } from "./types";
 import NetworkGraph from "./components/NetworkGraph";
 import MissionControl from "./components/MissionControl";
 import SociologicalInsights from "./components/SociologicalInsights";
+import LoginPage from "./components/LoginPage";
 import { mockFinancialTransactions } from "./mockData";
 
 export default function App() {
+  // Auth gate
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
   // Roles and clearance states
   const [activeRole, setActiveRole] = useState<UserRole>("Investigator");
   const [selectedLanguage, setSelectedLanguage] = useState<"en" | "kn">("en");
@@ -392,11 +398,57 @@ export default function App() {
     printWindow.document.close();
   };
 
+  // Handle login: map demo role to platform role
+  const handleLogin = (demoRole: { id: string; title: string }) => {
+    const roleMap: Record<string, UserRole> = {
+      admin:       "Policymaker",
+      analyst:     "Analyst",
+      investigator:"Investigator",
+      senior:      "Supervisor",
+    };
+    setActiveRole(roleMap[demoRole.id] ?? "Investigator");
+    setIsAuthenticated(true);
+    logAuditEvent("Login", `Authenticated as ${demoRole.title}`);
+  };
+
+  // Handle logout: clear session and return to login
+  const handleLogout = () => {
+    logAuditEvent("Logout", `Session terminated by ${activeRole}.`);
+    setShowLogoutConfirm(false);
+    setIsAuthenticated(false);
+    setActiveTab("mission");
+    setMessages([{
+      id: "msg_init",
+      sender: "bot",
+      text: "KSP Crime Intelligence core active. Ready to assist, Investigator. Ask about FIR status, suspect records (e.g., 'Ramesh Kumar'), cyber phishing trails, or location analysis. Support is bilingual (English/ಕನ್ನಡ).",
+      timestamp: new Date().toLocaleTimeString(),
+      language: "en"
+    }]);
+  };
+
   return (
-    <div className="flex h-screen w-screen bg-slate-950 font-sans text-slate-200 overflow-hidden" style={{fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif"}}>
+    <AnimatePresence mode="wait">
+      {!isAuthenticated ? (
+        <motion.div
+          key="login"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          transition={{ duration: 0.35, ease: "easeInOut" }}
+          style={{ position: "fixed", inset: 0, zIndex: 100 }}
+        >
+          <LoginPage onLogin={handleLogin} />
+        </motion.div>
+      ) : (
+    <motion.div
+      key="app"
+      initial={{ opacity: 0, scale: 1.01 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
+    <div className="flex h-screen w-screen bg-slate-950 font-sans text-slate-300 overflow-hidden" style={{fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif", background: '#060d1f'}}>
       
       {/* Sidebar: Navigation - Desktop (hidden on mobile) */}
-      <nav className="hidden lg:flex w-64 bg-slate-900 border-r border-slate-800/80 flex-col shrink-0 h-full z-20 overflow-y-auto">
+      <nav className="hidden lg:flex w-64 flex-col shrink-0 h-full z-20 overflow-y-auto" style={{background: '#0d1526', borderRight: '1px solid rgba(15,23,42,0.95)'}}>
         {/* KSP Header */}
         <div className="p-5 border-b border-slate-800/80">
           <div className="flex items-center gap-3">
@@ -496,15 +548,28 @@ export default function App() {
           })}
         </div>
 
-        {/* Operator Profile */}
-        <div className="p-3 border-t border-slate-800/80 shrink-0">
-          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
-            <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center font-bold text-xs text-blue-400 shrink-0">IP</div>
-            <div className="truncate min-w-0">
-              <div className="text-body-sm font-semibold text-slate-300">Insp. Meera Bai</div>
-              <div className="text-micro text-slate-500 font-mono uppercase">KGID: KSP-2026882</div>
+        {/* Operator Profile + Logout */}
+        <div className="p-3 border-t border-slate-800/50 shrink-0 space-y-1.5">
+          <div className="sidebar-profile">
+            <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center font-bold text-xs text-blue-400 shrink-0">
+              {activeRole === "Policymaker" ? "SA" : activeRole === "Analyst" ? "CA" : activeRole === "Supervisor" ? "SP" : "IO"}
             </div>
+            <div className="truncate min-w-0 flex-1">
+              <div className="text-body-sm font-semibold text-slate-300 truncate">
+                {activeRole === "Policymaker" ? "Administrator" : activeRole === "Analyst" ? "Crime Analyst" : activeRole === "Supervisor" ? "Sr. Police Officer" : "Insp. Meera Bai"}
+              </div>
+              <div className="text-micro text-slate-600 font-mono uppercase truncate">KGID: KSP-2026882</div>
+            </div>
+            <span className="operator-role-badge shrink-0">{activeRole.slice(0,4)}</span>
           </div>
+          <button
+            onClick={() => setShowLogoutConfirm(true)}
+            className="logout-btn-sidebar"
+            aria-label="Sign out"
+          >
+            <div className="logout-icon"><LogOut className="w-4 h-4" /></div>
+            <span>Sign Out</span>
+          </button>
         </div>
       </nav>
 
@@ -621,14 +686,26 @@ export default function App() {
                 })}
               </div>
 
-              <div className="p-3 border-t border-slate-800/80 shrink-0">
-                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
-                  <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center font-bold text-xs text-blue-400 shrink-0">IP</div>
-                  <div className="truncate min-w-0">
-                    <div className="text-body-sm font-semibold text-slate-300">Insp. Meera Bai</div>
-                    <div className="text-micro text-slate-500 font-mono uppercase">KGID: KSP-2026882</div>
+              <div className="p-3 border-t border-slate-800/50 shrink-0 space-y-1.5">
+                <div className="sidebar-profile">
+                  <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center font-bold text-xs text-blue-400 shrink-0">
+                    {activeRole === "Policymaker" ? "SA" : activeRole === "Analyst" ? "CA" : activeRole === "Supervisor" ? "SP" : "IO"}
+                  </div>
+                  <div className="truncate min-w-0 flex-1">
+                    <div className="text-body-sm font-semibold text-slate-300 truncate">
+                      {activeRole === "Policymaker" ? "Administrator" : activeRole === "Analyst" ? "Crime Analyst" : activeRole === "Supervisor" ? "Sr. Police Officer" : "Insp. Meera Bai"}
+                    </div>
+                    <div className="text-micro text-slate-600 font-mono uppercase">KGID: KSP-2026882</div>
                   </div>
                 </div>
+                <button
+                  onClick={() => { setIsSidebarOpen(false); setShowLogoutConfirm(true); }}
+                  className="logout-btn-sidebar"
+                  aria-label="Sign out"
+                >
+                  <div className="logout-icon"><LogOut className="w-4 h-4" /></div>
+                  <span>Sign Out</span>
+                </button>
               </div>
             </motion.nav>
           </>
@@ -638,7 +715,7 @@ export default function App() {
       {/* Main Layout Area */}
       <div className="flex-1 flex flex-col overflow-hidden h-full">
         {/* Top Header Command Bar */}
-        <header className="h-14 bg-slate-900/95 border-b border-slate-800/80 flex items-center justify-between px-4 lg:px-5 shadow-sm z-10 shrink-0 backdrop-blur-md">
+        <header className="h-14 border-b flex items-center justify-between px-4 lg:px-5 shadow-sm z-10 shrink-0 backdrop-blur-md" style={{background: 'rgba(13,21,38,0.97)', borderBottomColor: 'rgba(15,23,42,0.95)'}}>
           <div className="flex items-center gap-2 lg:gap-3">
             <button
               onClick={() => setIsSidebarOpen(true)}
@@ -689,11 +766,22 @@ export default function App() {
               <AlertTriangle className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">3 Warnings</span>
             </button>
+
+            {/* Header logout — desktop only, compact */}
+            <button
+              onClick={() => setShowLogoutConfirm(true)}
+              className="hidden sm:flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg border border-slate-700/50 bg-slate-800/40 text-slate-500 hover:text-rose-400 hover:border-rose-500/25 hover:bg-rose-500/8 transition text-micro font-semibold shrink-0"
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Sign Out</span>
+            </button>
           </div>
         </header>
 
         {/* Main Workspace Layout */}
-        <main className="flex-1 overflow-hidden flex flex-col bg-slate-950">
+        <main className="flex-1 overflow-hidden flex flex-col" style={{background: '#060d1f'}}>
           
           {/* Interactive Help & Schema Guide Overlay (Fulfills explaining every single thing) */}
           <AnimatePresence>
@@ -738,7 +826,7 @@ export default function App() {
 
           {/* Dynamic Panel Canvas - Scaled to fit screen perfectly */}
           <div className="flex-1 overflow-hidden p-3 sm:p-5 flex flex-col">
-            <div className="bg-slate-900/20 border border-slate-800/40 rounded-2xl p-4 sm:p-5 flex-1 flex flex-col backdrop-blur-sm relative overflow-hidden">
+            <div className="bg-slate-900/10 border border-slate-800/30 rounded-2xl p-4 sm:p-5 flex-1 flex flex-col relative overflow-hidden" style={{backdropFilter: 'blur(4px)'}}>
             
             <AnimatePresence mode="wait">
               {activeTab === "mission" && (
@@ -783,46 +871,46 @@ export default function App() {
                   {/* Main conversation sandbox */}
                   <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 grow min-h-[400px]">
                     {/* Left Column: Operational Intel Dossier */}
-                    <div className="bg-slate-950/70 border border-slate-800/80 p-4 rounded-xl space-y-5 flex flex-col justify-between">
+                    <div className="dossier-panel">
                       <div className="space-y-4">
-                        <div className="border-b border-slate-800 pb-2">
-                          <h3 className="text-xs font-black uppercase tracking-widest text-amber-500">
+                        <div className="pb-3 border-b border-slate-800/70">
+                          <h3 className="text-label text-amber-500/90">
                             Operational Intel Dossier
                           </h3>
-                          <p className="text-[9px] text-slate-500 uppercase font-mono mt-1">MODULE: CHAT_CORES_GROUNDED</p>
+                          <p className="text-micro text-slate-600 font-mono mt-1 uppercase">MODULE: CHAT_CORES_GROUNDED</p>
                         </div>
 
                         {/* Purpose and Utility */}
                         <div className="space-y-1.5">
-                          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Crime-Solver Purpose</h4>
-                          <p className="text-[11px] text-slate-300 leading-relaxed">
-                            This module translates natural language queries into grounded retrieval calls. Investigators use this to search raw case narratives, victim files, and suspicious account nodes to verify active timelines.
+                          <h4 className="dossier-label text-slate-500">Crime-Solver Purpose</h4>
+                          <p className="text-caption text-slate-400 leading-relaxed">
+                            Translates natural language queries into grounded retrieval calls. Search raw case narratives, victim files, and suspicious account nodes to verify active timelines.
                           </p>
                         </div>
 
                         {/* Schema Variable Directory */}
-                        <div className="space-y-2 pt-2 border-t border-slate-800">
-                          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Database Variables Mapped</h4>
-                          <div className="space-y-1.5 font-mono text-[9px]">
-                            <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
+                        <div className="space-y-1.5 pt-2 border-t border-slate-800/50">
+                          <h4 className="dossier-label text-slate-500">Database Variables</h4>
+                          <div className="space-y-1 font-mono text-micro">
+                            <div className="dossier-var-row">
                               <span className="text-blue-400">FIRNo</span>
-                              <span className="text-slate-500">Case Unique Identifier</span>
+                              <span className="text-slate-600">Case Identifier</span>
                             </div>
-                            <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
+                            <div className="dossier-var-row">
                               <span className="text-blue-400">BriefFacts</span>
-                              <span className="text-slate-500">Incident Narrative Text</span>
+                              <span className="text-slate-600">Incident Narrative</span>
                             </div>
-                            <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
+                            <div className="dossier-var-row">
                               <span className="text-blue-400">Citations</span>
-                              <span className="text-slate-500">Factual Grounding Docs</span>
+                              <span className="text-slate-600">Grounding Docs</span>
                             </div>
                           </div>
                         </div>
 
                         {/* Quick Suggested Inputs */}
-                        <div className="space-y-2 pt-2 border-t border-slate-800">
-                          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Suggested Queries</h4>
-                          <div className="space-y-1.5 text-[10px]">
+                        <div className="space-y-1.5 pt-2 border-t border-slate-800/50">
+                          <h4 className="dossier-label text-slate-500">Suggested Queries</h4>
+                          <div className="space-y-1.5 text-caption">
                             {[
                               { text: "Who are the repeat offenders in property theft?", lang: "en" },
                               { text: "ರಮೇಶ್ ಕುಮಾರ್ ಅವರ ಅಪರಾಧ ಇತಿಹಾಸವೇನು?", lang: "kn" },
@@ -835,7 +923,7 @@ export default function App() {
                                   setSelectedLanguage(q.lang as any);
                                   setChatInput(q.text);
                                 }}
-                                className="w-full text-left p-1.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 transition truncate"
+                                className="w-full text-left p-2 rounded-lg border border-slate-800/60 hover:border-slate-700 bg-slate-900/40 text-slate-400 hover:text-slate-200 transition text-left leading-snug"
                               >
                                 {q.text}
                               </button>
@@ -845,32 +933,30 @@ export default function App() {
                       </div>
 
                       {/* Cross-Module Actions */}
-                      <div className="pt-3 border-t border-slate-800 space-y-2">
-                        <h4 className="text-[10px] font-bold text-amber-500/80 uppercase tracking-wider">Cross-Module Actions</h4>
-                        <div className="space-y-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveTab("network");
-                              logAuditEvent("Cross Link", "Transitioned from Chat to Network Map.");
-                            }}
-                            className="w-full text-left py-1.5 px-2 bg-blue-600/10 border border-blue-500/20 rounded hover:bg-blue-600/20 text-blue-400 text-[10px] font-bold transition flex items-center justify-between"
-                          >
-                            <span>Accused Link Map</span>
-                            <span>&rarr;</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveTab("profiling");
-                              logAuditEvent("Cross Link", "Transitioned from Chat to Offender Profiling.");
-                            }}
-                            className="w-full text-left py-1.5 px-2 bg-blue-600/10 border border-blue-500/20 rounded hover:bg-blue-600/20 text-blue-400 text-[10px] font-bold transition flex items-center justify-between"
-                          >
-                            <span>Offender dossiers</span>
-                            <span>&rarr;</span>
-                          </button>
-                        </div>
+                      <div className="pt-3 border-t border-slate-800/50 space-y-1.5">
+                        <h4 className="dossier-label text-amber-500/70">Cross-Module Actions</h4>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveTab("network");
+                            logAuditEvent("Cross Link", "Transitioned from Chat to Network Map.");
+                          }}
+                          className="cross-action-btn"
+                        >
+                          <span>Accused Link Map</span>
+                          <span>→</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveTab("profiling");
+                            logAuditEvent("Cross Link", "Transitioned from Chat to Offender Profiling.");
+                          }}
+                          className="cross-action-btn"
+                        >
+                          <span>Offender Dossiers</span>
+                          <span>→</span>
+                        </button>
                       </div>
                     </div>
 
@@ -1127,71 +1213,67 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 grow min-h-[400px]">
-                  {/* Left Column: Operational Intel Dossier (Fulfills explaining every single thing + cross-linking) */}
-                  <div className="bg-slate-950/70 border border-slate-800/80 p-4 rounded-xl space-y-4 flex flex-col justify-between">
+                  {/* Left Column: Operational Intel Dossier */}
+                  <div className="dossier-panel">
                     <div className="space-y-4">
-                      <div className="border-b border-slate-800 pb-2">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-amber-500">
-                          Hotspot Intel Dossier
-                        </h3>
-                        <p className="text-[9px] text-slate-500 uppercase font-mono mt-1">MODULE: HOTZONE_SPATIAL_VELOCITY</p>
+                      <div className="pb-3 border-b border-slate-800/70">
+                        <h3 className="text-label text-amber-500/90">Hotspot Intel Dossier</h3>
+                        <p className="text-micro text-slate-600 font-mono mt-1 uppercase">MODULE: HOTZONE_SPATIAL_VELOCITY</p>
                       </div>
 
                       {/* Purpose */}
-                      <div className="space-y-1">
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Crime-Solver Purpose</h4>
-                        <p className="text-[11px] text-slate-300 leading-relaxed">
-                          This dashboard computes real-time geographical crime velocity. Use this matrix to schedule police beats, dispatch warning alerts, and compare spatial trends against local demographic factors.
+                      <div className="space-y-1.5">
+                        <h4 className="dossier-label text-slate-500">Crime-Solver Purpose</h4>
+                        <p className="text-caption text-slate-400 leading-relaxed">
+                          Computes geographical crime velocity. Use to schedule police beats, dispatch warning alerts, and compare spatial trends against demographic factors.
                         </p>
                       </div>
 
                       {/* Schema Variable Directory */}
-                      <div className="space-y-2 pt-2 border-t border-slate-800">
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Database Variables Mapped</h4>
-                        <div className="space-y-1.5 font-mono text-[9px]">
-                          <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
+                      <div className="space-y-1.5 pt-2 border-t border-slate-800/50">
+                        <h4 className="dossier-label text-slate-500">Database Variables</h4>
+                        <div className="space-y-1 font-mono text-micro">
+                          <div className="dossier-var-row">
                             <span className="text-amber-500">Hotspot risk</span>
-                            <span className="text-slate-500">Spatial cluster percentage</span>
+                            <span className="text-slate-600">Cluster %</span>
                           </div>
-                          <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
+                          <div className="dossier-var-row">
                             <span className="text-amber-500">Velocity</span>
-                            <span className="text-slate-500">Incident growth rate</span>
+                            <span className="text-slate-600">Growth rate</span>
                           </div>
-                          <div className="bg-slate-900 px-2 py-1 rounded border border-slate-800 flex justify-between">
+                          <div className="dossier-var-row">
                             <span className="text-amber-500">Class head</span>
-                            <span className="text-slate-500">IPC Statutory Category</span>
+                            <span className="text-slate-600">IPC Category</span>
                           </div>
                         </div>
                       </div>
                     </div>
 
                     {/* INTER-LINK WORKFLOW CONTROLS */}
-                    <div className="pt-3 border-t border-slate-800 space-y-2">
-                      <h4 className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Cross-Module Actions</h4>
-                      <div className="space-y-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTab("sociological");
-                            logAuditEvent("Cross Link", "Transitioned from Hotspots to Sociological correlation analysis.");
-                          }}
-                          className="w-full text-left py-1.5 px-2 bg-blue-600/10 border border-blue-500/20 rounded hover:bg-blue-600/20 text-blue-400 text-[10px] font-bold transition flex items-center justify-between"
-                        >
-                          <span>Compare Socio-drivers</span>
-                          <span>&rarr;</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTab("forecasting");
-                            logAuditEvent("Cross Link", "Transitioned from Hotspots to Predictive Forecasting warnings.");
-                          }}
-                          className="w-full text-left py-1.5 px-2 bg-blue-600/10 border border-blue-500/20 rounded hover:bg-blue-600/20 text-blue-400 text-[10px] font-bold transition flex items-center justify-between"
-                        >
-                          <span>Review Dispatch Beats</span>
-                          <span>&rarr;</span>
-                        </button>
-                      </div>
+                    <div className="pt-3 border-t border-slate-800/50 space-y-1.5">
+                      <h4 className="dossier-label text-amber-500/70">Cross-Module Actions</h4>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab("sociological");
+                          logAuditEvent("Cross Link", "Transitioned from Hotspots to Sociological correlation analysis.");
+                        }}
+                        className="cross-action-btn"
+                      >
+                        <span>Compare Socio-drivers</span>
+                        <span>→</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab("forecasting");
+                          logAuditEvent("Cross Link", "Transitioned from Hotspots to Predictive Forecasting warnings.");
+                        }}
+                        className="cross-action-btn"
+                      >
+                        <span>Review Dispatch Beats</span>
+                        <span>→</span>
+                      </button>
                     </div>
                   </div>
 
@@ -1298,28 +1380,28 @@ export default function App() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Left: Repeat Offender list */}
-                  <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-xl space-y-3 col-span-1">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">Habitual Suspect Roster</h3>
+                  <div className="card col-span-1 space-y-3">
+                    <h3 className="text-label text-emerald-400">Habitual Suspect Roster</h3>
                     
                     <div className="space-y-2">
                       {offenders.map((off, idx) => {
                         const isSel = selectedOffender?.personId === off.personId;
-                        const lvlColor = off.riskLevel === "CRITICAL" ? "bg-rose-500/10 text-rose-400 border-rose-500/30" : off.riskLevel === "HIGH" ? "bg-amber-500/10 text-amber-400 border-amber-500/30" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+                        const lvlColor = off.riskLevel === "CRITICAL" ? "badge-red" : off.riskLevel === "HIGH" ? "badge-amber" : "badge-green";
                         return (
                           <button
                             key={idx}
                             onClick={() => setSelectedOffender(off)}
-                            className={`w-full p-3.5 rounded-lg border text-left flex items-start justify-between gap-2 transition ${
-                              isSel ? "bg-slate-900 border-emerald-500/50" : "bg-slate-950 border-slate-900 hover:border-slate-800"
+                            className={`w-full p-3.5 rounded-xl border text-left flex items-start justify-between gap-2 transition ${
+                              isSel ? "border-emerald-500/30 bg-emerald-500/5" : "border-slate-800/50 bg-slate-900/30 hover:border-slate-700/70"
                             }`}
                           >
                             <div>
-                              <div className="text-xs font-bold text-slate-200">{off.name}</div>
-                              <div className="text-[10px] text-slate-500 mt-0.5">PersonID: {off.personId}</div>
-                              <div className="text-[10px] text-slate-400 font-bold mt-1.5">{off.totalOffences} Registered Offenses</div>
+                              <div className="text-body-sm font-semibold text-slate-200">{off.name}</div>
+                              <div className="text-micro text-slate-600 mt-0.5 font-mono">PersonID: {off.personId}</div>
+                              <div className="text-caption text-slate-400 font-semibold mt-1.5">{off.totalOffences} Registered Offenses</div>
                             </div>
-                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider shrink-0 ${lvlColor}`}>
-                              {off.riskLevel} ({off.riskScore})
+                            <span className={`badge shrink-0 ${lvlColor}`}>
+                              {off.riskLevel}
                             </span>
                           </button>
                         );
@@ -1606,37 +1688,33 @@ export default function App() {
                   {/* Right Transaction Table logs */}
                   <div className="xl:col-span-2 bg-slate-950/60 border border-slate-800 p-5 rounded-xl space-y-4">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-amber-500">Audit Ledger: Flagged Illicit Cashflows</h3>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs">
+                    <div className="overflow-x-auto rounded-xl border border-slate-800/60">
+                      <table className="table-enterprise w-full">
                         <thead>
-                          <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
-                            <th className="p-3">Tx ID</th>
-                            <th className="p-3">From Account</th>
-                            <th className="p-3">To Account</th>
-                            <th className="p-3 text-right">Amount</th>
-                            <th className="p-3">Sender Name</th>
-                            <th className="p-3">Recipient Name</th>
-                            <th className="p-3">Risk Assessment</th>
+                          <tr>
+                            <th className="text-left">Tx ID</th>
+                            <th className="text-left">From Account</th>
+                            <th className="text-left">To Account</th>
+                            <th className="text-right">Amount</th>
+                            <th className="text-left">Sender</th>
+                            <th className="text-left">Recipient</th>
+                            <th className="text-center">Status</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/40 text-slate-300">
+                        <tbody>
                           {mockFinancialTransactions.map((tx, idx) => (
-                            <tr key={idx} className="hover:bg-slate-900/30">
-                              <td className="p-3 font-semibold text-slate-400">TX_{tx.TransactionID}</td>
-                              <td className="p-3 font-mono">{tx.FromAccount}</td>
-                              <td className="p-3 font-mono text-amber-400">{tx.ToAccount}</td>
-                              <td className="p-3 text-right font-bold text-rose-400">₹{tx.Amount.toLocaleString()}</td>
-                              <td className="p-3 text-slate-400">{tx.SenderName}</td>
-                              <td className="p-3 font-semibold text-slate-200">{tx.RecipientName}</td>
-                              <td className="p-3">
+                            <tr key={idx}>
+                              <td className="font-mono text-caption text-slate-500">TX_{tx.TransactionID}</td>
+                              <td className="font-mono text-caption">{tx.FromAccount}</td>
+                              <td className="font-mono text-caption text-amber-400/80">{tx.ToAccount}</td>
+                              <td className="text-right font-bold text-rose-400">₹{tx.Amount.toLocaleString()}</td>
+                              <td className="text-slate-500 text-caption">{tx.SenderName}</td>
+                              <td className="font-medium text-slate-300">{tx.RecipientName}</td>
+                              <td className="text-center">
                                 {tx.IsSuspicious ? (
-                                  <span className="bg-rose-500/10 text-rose-400 border border-rose-500/20 py-0.5 px-2 rounded-full text-[10px] font-bold block text-center animate-pulse">
-                                    Flagged
-                                  </span>
+                                  <span className="badge badge-red">Flagged</span>
                                 ) : (
-                                  <span className="bg-slate-800 text-slate-500 py-0.5 px-2 rounded-full text-[10px] block text-center">
-                                    Passed
-                                  </span>
+                                  <span className="badge badge-slate">Passed</span>
                                 )}
                               </td>
                             </tr>
@@ -1775,23 +1853,23 @@ export default function App() {
                       </button>
                     </div>
 
-                    <div className="space-y-2.5 max-h-[350px] overflow-y-auto pr-1">
+                    <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
                       {auditLogs.map((log) => (
-                        <div key={log.id} className="bg-slate-900 border border-slate-850 p-3.5 rounded-xl space-y-1.5 text-xs border-l-2 border-l-emerald-500">
+                        <div key={log.id} className="bg-slate-900/60 border border-slate-800/50 border-l-2 border-l-emerald-500/60 p-3.5 rounded-xl space-y-1.5">
                           <div className="flex justify-between items-center">
-                            <span className="font-bold text-slate-300 uppercase tracking-widest text-[9px] bg-slate-950 border border-slate-800 px-2 py-0.5 rounded">
-                              {log.userRole} Clearance
+                            <span className="badge badge-slate text-micro">
+                              {log.userRole}
                             </span>
-                            <span className="text-[10px] text-slate-500 font-semibold">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                            <span className="text-micro text-slate-600 font-mono">{new Date(log.timestamp).toLocaleTimeString()}</span>
                           </div>
                           
-                          <div className="flex items-center gap-1.5 font-bold text-slate-200">
-                            <span className="text-emerald-400 font-bold">{log.actionType}:</span>
-                            <span>{log.details}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-caption font-bold text-emerald-400">{log.actionType}:</span>
+                            <span className="text-caption text-slate-300">{log.details}</span>
                           </div>
 
                           {log.query && (
-                            <p className="bg-slate-950 p-2 rounded border border-slate-900 text-slate-400 text-[11px] font-mono whitespace-nowrap overflow-x-auto">
+                            <p className="bg-slate-950/80 p-2 rounded-lg border border-slate-800/60 text-micro text-slate-500 font-mono">
                               Query: "{log.query}"
                             </p>
                           )}
@@ -1811,7 +1889,7 @@ export default function App() {
       </main>
 
       {/* Footer / Status Bar */}
-      <footer className="h-7 bg-slate-900/90 border-t border-slate-800/60 flex items-center px-5 justify-between text-micro text-slate-600 font-mono shrink-0">
+      <footer className="h-7 border-t flex items-center px-5 justify-between text-micro text-slate-700 font-mono shrink-0" style={{background: 'rgba(13,21,38,0.95)', borderTopColor: 'rgba(15,23,42,0.95)'}}>
         <div className="flex gap-4 items-center">
           <span className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -1822,6 +1900,75 @@ export default function App() {
         </div>
         <span className="hidden sm:inline text-slate-700">© 2026 KARNATAKA STATE POLICE · AI DIVISION</span>
       </footer>
+
+      {/* Logout Confirmation Modal */}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <motion.div
+            key="logout-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="logout-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="logout-title"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="logout-card"
+            >
+              {/* Icon */}
+              <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-5">
+                <LogOut className="w-5 h-5 text-rose-400" />
+              </div>
+
+              {/* Text */}
+              <h2 id="logout-title" className="text-heading3 text-slate-100 mb-2">Sign out of Intelligence Hub?</h2>
+              <p className="text-body-sm text-slate-500 leading-relaxed mb-6">
+                Your session will be terminated. All unsaved query history will be cleared.
+                You will be returned to the login screen.
+              </p>
+
+              {/* Session info */}
+              <div className="flex items-center gap-2.5 p-3 rounded-xl mb-6"
+                style={{ background: "rgba(6,13,31,0.7)", border: "1px solid rgba(15,23,42,0.9)" }}>
+                <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/25 flex items-center justify-center font-bold text-xs text-blue-400 shrink-0">
+                  {activeRole === "Policymaker" ? "SA" : activeRole === "Analyst" ? "CA" : activeRole === "Supervisor" ? "SP" : "IO"}
+                </div>
+                <div>
+                  <div className="text-body-sm font-semibold text-slate-300">
+                    {activeRole === "Policymaker" ? "Administrator" : activeRole === "Analyst" ? "Crime Analyst" : activeRole === "Supervisor" ? "Sr. Police Officer" : "Insp. Meera Bai"}
+                  </div>
+                  <div className="text-micro text-slate-600 font-mono uppercase">{activeRole} Clearance · KGID: KSP-2026882</div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="btn btn-secondary flex-1"
+                  autoFocus
+                >
+                  Stay Signed In
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="btn btn-danger flex-1 flex items-center justify-center gap-2"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Sign Out
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Dynamic Toast Notifications */}
       <AnimatePresence>
@@ -1846,5 +1993,8 @@ export default function App() {
 
     </div>
   </div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

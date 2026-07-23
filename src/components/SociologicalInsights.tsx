@@ -149,7 +149,7 @@ function SocioRiskChart({ data }: { data: SocioRow[] }) {
 
   return (
     <div className="card rounded-2xl">
-      <div className="h-1 rounded-t-2xl bg-gradient-to-r from-sky-500 to-blue-600 -mt-[1.25rem] mb-4 mx-[-1.25rem] rounded-tl-2xl rounded-tr-2xl" />
+      <div className="h-0.5 rounded-t-2xl bg-gradient-to-r from-sky-500 to-blue-600 -mt-[1.375rem] mb-4 mx-[-1.5rem] rounded-tl-2xl rounded-tr-2xl" />
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-1">
         <div>
@@ -246,7 +246,7 @@ function CrimeDistributionChart({ data }: { data: SocioRow[] }) {
 
   return (
     <div className="card rounded-2xl">
-      <div className="h-1 rounded-t-2xl bg-gradient-to-r from-rose-500 to-orange-600 -mt-[1.25rem] mb-4 mx-[-1.25rem] rounded-tl-2xl rounded-tr-2xl" />
+      <div className="h-0.5 rounded-t-2xl bg-gradient-to-r from-rose-500 to-orange-600 -mt-[1.375rem] mb-4 mx-[-1.5rem] rounded-tl-2xl rounded-tr-2xl" />
       <div className="flex items-start justify-between gap-3 mb-1">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -335,7 +335,7 @@ function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
 
   return (
     <div className="card rounded-2xl">
-      <div className="h-1 rounded-t-2xl bg-gradient-to-r from-emerald-500 to-teal-600 -mt-[1.25rem] mb-4 mx-[-1.25rem] rounded-tl-2xl rounded-tr-2xl" />
+      <div className="h-0.5 rounded-t-2xl bg-gradient-to-r from-emerald-500 to-teal-600 -mt-[1.375rem] mb-4 mx-[-1.5rem] rounded-tl-2xl rounded-tr-2xl" />
       <div className="flex items-start gap-3 mb-1">
         <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0 mt-0.5">
           <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
@@ -460,7 +460,7 @@ function DistrictRadarChart({ data }: { data: SocioRow[] }) {
 
   return (
     <div className="card rounded-2xl">
-      <div className="h-1 rounded-t-2xl bg-gradient-to-r from-indigo-500 to-purple-600 -mt-[1.25rem] mb-4 mx-[-1.25rem] rounded-tl-2xl rounded-tr-2xl" />
+      <div className="h-0.5 rounded-t-2xl bg-gradient-to-r from-indigo-500 to-purple-600 -mt-[1.375rem] mb-4 mx-[-1.5rem] rounded-tl-2xl rounded-tr-2xl" />
       <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -624,7 +624,7 @@ function TheoryCards({ data }: { data: SocioRow[] }) {
 // ─── District Detail Table ────────────────────────────────────────────────────
 function DistrictTable({ data }: { data: SocioRow[] }) {
   return (
-    <div className="card rounded-2xl overflow-hidden p-0">
+    <div className="card rounded-2xl overflow-hidden p-0" style={{padding: 0}}>
       <div className="px-5 py-4 border-b border-slate-800/60">
         <div className="flex items-center gap-2">
           <Shield className="w-4.5 h-4.5 text-slate-400" />
@@ -722,7 +722,7 @@ function CrossModulePanel({ onNavigate, setChatInput, logAuditEvent }: Pick<Prop
   ];
 
   return (
-    <div className="card rounded-2xl border-sky-500/15">
+    <div className="card rounded-2xl" style={{borderColor: 'rgba(14,165,233,0.12)'}}>
       <div className="flex items-center gap-2 mb-4">
         <Lightbulb className="w-4.5 h-4.5 text-sky-400" />
         <h3 className="text-heading3 text-slate-200">Recommended Investigative Actions</h3>
@@ -787,7 +787,7 @@ export default function SociologicalInsights({ socioData, onNavigate, setChatInp
             Data-grounded analysis of urbanization, economic stress, migration, and education indices across 6 Karnataka districts — derived exclusively from the KSP FIR ER Dataset
           </p>
         </div>
-        <span className="badge badge-blue shrink-0">6 Districts · 8 FIRs · Live Data</span>
+        <span className="badge badge-blue shrink-0">6 Districts · 8 FIRs</span>
       </div>
 
       {/* Row 1: Socio-Economic Indices + Crime Distribution */}

@@ -254,7 +254,7 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       {/* Sidebar Controls & Refined Details */}
-      <div className="bg-slate-900/60 backdrop-blur-md p-5 border border-slate-800 rounded-xl flex flex-col space-y-5 h-full">
+      <div className="dossier-panel h-full space-y-5">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold tracking-wider uppercase text-amber-500 flex items-center gap-2">
             <Sliders className="w-4 h-4" />
@@ -297,7 +297,8 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                 placeholder="e.g. Ramesh, SBI, Case..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-9 pr-3 text-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 placeholder-slate-600"
+                className="input pl-9 text-caption"
+                style={{paddingLeft: '2.25rem'}}
               />
             </div>
           </div>
