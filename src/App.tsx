@@ -284,10 +284,24 @@ export default function App() {
   };
 
   // Speech to Text (STT) voice recording
+  const recognitionRef = useRef<any>(null);
+
   const startVoiceInput = () => {
+    // If already listening, stop the current session
+    if (isListening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    // Don't start if AI is already processing
+    if (isChatLoading) {
+      showToast("Please wait for the current query to complete.", "info");
+      return;
+    }
+
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      showToast("Voice recognition is not supported in this browser environment.", "error");
+      showToast("Voice recognition is not supported in this browser. Try Chrome or Edge.", "error");
       return;
     }
 
@@ -295,6 +309,8 @@ export default function App() {
     recognition.lang = selectedLanguage === "kn" ? "kn-IN" : "en-IN";
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
+    recognition.continuous = false;
+    recognitionRef.current = recognition;
 
     recognition.onstart = () => {
       setIsListening(true);
@@ -304,19 +320,38 @@ export default function App() {
     recognition.onresult = (event: any) => {
       const speechToText = event.results[0][0].transcript;
       setChatInput(speechToText);
+      setIsListening(false);
+      recognitionRef.current = null;
       handleSendMessage(undefined, speechToText);
     };
 
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error", event.error);
       setIsListening(false);
+      recognitionRef.current = null;
+      if (event.error === "not-allowed" || event.error === "permission-denied") {
+        showToast("Microphone access denied. Please allow microphone permissions and try again.", "error");
+      } else if (event.error === "no-speech") {
+        showToast("No speech detected. Please try again and speak clearly.", "info");
+      } else if (event.error === "network") {
+        showToast("Network error during voice recognition. Please check your connection.", "error");
+      } else if (event.error !== "aborted") {
+        showToast("Voice recognition error. Please try again.", "error");
+      }
     };
 
     recognition.onend = () => {
       setIsListening(false);
+      recognitionRef.current = null;
     };
 
-    recognition.start();
+    try {
+      recognition.start();
+    } catch (err) {
+      setIsListening(false);
+      recognitionRef.current = null;
+      showToast("Could not start voice recognition. Please try again.", "error");
+    }
   };
 
   // Text to Speech (TTS) reading
@@ -1044,7 +1079,7 @@ export default function App() {
                       <button type="button" onClick={startVoiceInput}
                         className={`p-2.5 rounded-lg border transition shrink-0 ${
                           isListening ? "bg-rose-500/20 border-rose-500/40 text-rose-400 animate-pulse" : "bg-slate-900 hover:bg-slate-800 border-slate-700 text-slate-400"
-                        }`} title="Voice Input">
+                        }`} title={isListening ? "Tap to stop recording" : "Voice Input (tap to start)"} aria-label={isListening ? "Stop voice recording" : "Start voice recording"}>
                         <Mic className="w-4.5 h-4.5" />
                       </button>
                       <input type="text"

@@ -1,0 +1,51 @@
+VictimMasterID,CaseMasterID,VictimName,AgeYear,GenderID,VictimPolice
+4001,1001,Venkatesh Prasad,41,1,0
+4002,1002,Society (Public at Large),0,1,0
+4003,1003,Nisha Srinivas,35,2,0
+4004,1004,K. Raghunath,67,1,0
+4005,1005,Devraj Gowda,32,1,0
+4006,1006,Rajamma Hegde,62,2,0
+4007,1007,Mohan Das (Security Guard),55,1,0
+4008,1008,Praveen Kumar,21,1,0
+4009,1008,Rakesh Nayak,20,1,0
+4010,1008,Suraj Biradar,22,1,0
+4011,1009,Pooja Verma,24,2,0
+4012,1010,Ramakrishna Shenoy,45,1,0
+4013,1011,Society (Drug Harm),0,1,0
+4014,1012,Savitha Kulkarni,32,2,0
+4015,1013,Pradeep Fernandes,52,1,0
+4016,1014,Chandrakant Desai,49,1,0
+4017,1015,Mohan Gowda,28,1,0
+4018,1016,Anjali Menon,27,2,0
+4019,1017,Ramesh Gowda,30,1,0
+4020,1017,Shivappa Nayak,28,1,0
+4021,1017,Imtiaz Khan,34,1,0
+4022,1018,Lokesh Nayak (Shopkeeper),38,1,0
+4023,1018,Prakash Kamble (Shopkeeper),42,1,0
+4024,1019,Sunil Kumar Jain,50,1,0
+4025,1020,Keerthi Shetty,29,2,0
+4026,1021,Basavanna Hosamani,55,1,0
+4027,1022,Girish Patil,33,1,0
+4028,1023,State / Public Exchequer,0,1,0
+4029,1024,Divya Naik,20,2,0
+4030,1025,Fatima Begum,40,2,0
+4031,1025,Child of Fatima Begum,8,2,0
+4032,1026,Vikram Reddy,45,1,0
+4033,1027,Minor Girl (Age Withheld),13,2,0
+4034,1028,State / Society,0,1,0
+4035,1029,Ramu Belur,28,1,0
+4036,1029,Shiva Belur,25,1,0
+4037,1030,Hameed Khan (Vendor),45,1,0
+4038,1030,Maria D Souza (Pedestrian),38,2,0
+4039,1030,Constable Ravi Kumar,32,1,1
+4040,1031,Narayan Rao,55,1,0
+4041,1031,Savitha R,38,2,0
+4042,1032,Shantadevi Patil,48,2,0
+4043,1033,Rekha Hegde,24,2,0
+4044,1034,Ganesh Belagali,26,1,0
+4045,1035,Suresh Poojary,48,1,0
+4046,1036,Society (Drug Harm),0,1,0
+4047,1037,Police Personnel (On Duty),35,1,1
+4048,1038,Mallikarjun Swamy,60,1,0
+4049,1039,Asha Kamath,31,2,0
+4050,1040,Venkatesh Murthy,58,1,0

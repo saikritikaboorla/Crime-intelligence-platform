@@ -213,7 +213,7 @@ Respond using the guidelines. Address the question fully. If you need to transla
     }
 
     const response = await activeClient.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-2.0-flash",
       contents: chatHistory,
       config: {
         systemInstruction: serializedSchema,

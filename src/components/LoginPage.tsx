@@ -430,12 +430,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <div className="text-label text-slate-500 mb-2.5">Select Clearance Level</div>
             <div className="space-y-1.5" role="radiogroup" aria-label="Clearance level">
               {DEMO_ROLES.map(role => (
-                <RoleCard
-                  key={role.id}
-                  role={role}
-                  isActive={selectedRole.id === role.id}
-                  onSelect={() => { setSelectedRole(role); setError(""); }}
-                />
+                <React.Fragment key={role.id}>
+                  <RoleCard
+                    role={role}
+                    isActive={selectedRole.id === role.id}
+                    onSelect={() => { setSelectedRole(role); setError(""); }}
+                  />
+                </React.Fragment>
               ))}
             </div>
           </div>

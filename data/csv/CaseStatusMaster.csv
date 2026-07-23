@@ -1,0 +1,13 @@
+CaseStatusID,CaseStatusName
+1,Registered
+2,Under Investigation
+3,Charge Sheeted
+4,Final Report Filed
+5,Closed - True Case
+6,Closed - False Case
+7,Closed - Undetected
+8,Stayed by Court
+9,Referred to CBI
+10,Pending Trial
+11,Convicted
+12,Acquitted
