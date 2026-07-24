@@ -12,7 +12,6 @@ import {
   Search,
   Network,
   List,
-  Link2,
   ChevronRight,
   Info,
   AlertTriangle,
@@ -20,7 +19,9 @@ import {
   Eye,
   FileText,
   RotateCcw,
-  Focus
+  Focus,
+  Layers,
+  Sparkles
 } from "lucide-react";
 
 interface NetworkGraphProps {
@@ -35,10 +36,12 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
   const [filterType, setFilterType] = useState<string>("All");
   const [viewTab, setViewTab] = useState<"graph" | "directory">("graph");
   const [layoutMode, setLayoutMode] = useState<"circular" | "hierarchy">("circular");
-  const [spacingFactor, setSpacingFactor] = useState<number>(1.0);
+  const [spacingFactor, setSpacingFactor] = useState<number>(1.3);
 
-  const [zoom, setZoom] = useState<number>(1.6);
-  const [pan, setPan] = useState<{ x: number; y: number }>({ x: -400, y: -250 });
+  // Increased default zoom to 2.0 for high clarity
+  const [zoom, setZoom] = useState<number>(2.0);
+  // Pan coordinates centered for 2800x1800 viewBox canvas at 2.0 zoom
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: -1400, y: -900 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
@@ -87,7 +90,7 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
     return { nodeIds: connectedNodeIds, edgeIds: connectedEdgeIds };
   }, [selectedNodeId, edges]);
 
-  // Hover highlight connections (similar to relatedConnections but for hoveredNodeId)
+  // Hover highlight connections
   const hoveredConnections = useMemo(() => {
     if (!hoveredNodeId) return { nodeIds: new Set<string>(), edgeIds: new Set<string>() };
     const connectedNodeIds = new Set<string>([hoveredNodeId]);
@@ -106,11 +109,11 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
     return { nodeIds: connectedNodeIds, edgeIds: connectedEdgeIds };
   }, [hoveredNodeId, edges]);
 
-  // Render SVG Node positions dynamically
+  // Render SVG Node positions dynamically with enhanced spacing and label staggering
   const positionedNodes = useMemo(() => {
-    const width = 2200;
-    const height = 1400;
-    const center = { x: 1100, y: 700 };
+    const width = 2800;
+    const height = 1800;
+    const center = { x: 1400, y: 900 };
 
     if (layoutMode === "circular") {
       const byType: Record<string, any[]> = { Case: [], Suspect: [], Victim: [], Account: [] };
@@ -119,35 +122,41 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
         byType[key].push(n);
       });
 
-      // Larger ring radii to reduce crowding on 2200×1400 canvas
+      // Expanded ring radii & radial staggering to prevent label/node overlaps on 2800x1800 canvas
       const ringRadius: Record<string, number> = {
-        Case:    150 * spacingFactor,
-        Suspect: 380 * spacingFactor,
-        Victim:  600 * spacingFactor,
-        Account: 780 * spacingFactor,
+        Case:    240 * spacingFactor,
+        Suspect: 560 * spacingFactor,
+        Victim:  920 * spacingFactor,
+        Account: 1280 * spacingFactor,
       };
 
       return nodes.map(node => {
         const group = byType[node.type] ?? byType.Account;
         const idx = group.findIndex((n: any) => n.id === node.id);
         const count = group.length;
-        const r = ringRadius[node.type] ?? 400 * spacingFactor;
+        const baseRadius = ringRadius[node.type] ?? 500 * spacingFactor;
+        
+        // Alternating radial distance (+60px / -60px) to prevent node overlap in rings
+        const radialStagger = (idx % 2 === 1 ? 60 : -60) * Math.min(spacingFactor, 1.4);
+        const r = baseRadius + radialStagger;
+
         // Offset start angle per type so labels don't stack at 0°
         const offsets: Record<string, number> = { Case: 0, Suspect: Math.PI / 8, Victim: Math.PI / 4, Account: Math.PI / 3 };
         const startAngle = offsets[node.type] ?? 0;
         const angle = startAngle + (count > 1 ? (idx / count) * 2 * Math.PI : 0);
-        // Jitter: alternate ±20px y-offset for odd-indexed nodes to prevent label overlap
-        const jitter = idx % 2 === 1 ? 20 : -20;
-        const jitterY = count > 3 ? jitter : 0;
+        
+        // Alternating vertical jitter
+        const jitterY = count > 3 ? (idx % 2 === 1 ? 30 : -30) : 0;
+
         return {
           ...node,
+          idx,
           x: center.x + r * Math.cos(angle),
           y: center.y + r * Math.sin(angle) + jitterY,
         };
       });
     } else {
       // Hierarchy: Cases top → Suspects → Victims → Accounts bottom
-      // Increased vertical spacing to spread nodes on taller canvas
       const cases    = nodes.filter(n => n.type === "Case");
       const suspects = nodes.filter(n => n.type === "Suspect");
       const victims  = nodes.filter(n => n.type === "Victim");
@@ -156,16 +165,17 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
       const placeRow = (group: any[], y: number) =>
         group.map((node, idx) => ({
           ...node,
+          idx,
           x: (width / (group.length + 1)) * (idx + 1),
-          // Horizontal jitter for alternating nodes
-          y: y + (idx % 2 === 1 ? 20 : -20),
+          // Horizontal & vertical jitter for alternating nodes
+          y: y + (idx % 2 === 1 ? 35 : -35),
         }));
 
       return [
-        ...placeRow(cases,    150),
-        ...placeRow(suspects, 420),
-        ...placeRow(victims,  700),
-        ...placeRow(accounts, 980),
+        ...placeRow(cases,    220),
+        ...placeRow(suspects, 600),
+        ...placeRow(victims,  1000),
+        ...placeRow(accounts, 1420),
       ].map(node => ({
         ...node,
         x: center.x + (node.x - center.x) * spacingFactor,
@@ -180,27 +190,24 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
     return map;
   }, [positionedNodes]);
 
-  // Progressive visibility: show Case/Suspect always; others only when connected to selected/hovered/expanded
+  // Progressive visibility: show Case/Suspect always; others when connected to selected/hovered/expanded
   const visibleNodeIds = useMemo(() => {
     const ids = new Set<string>();
     positionedNodes.forEach(n => {
       if (n.type === "Case" || n.type === "Suspect") ids.add(n.id);
     });
-    // Also show nodes connected to selected node
     if (selectedNodeId) {
       edges.forEach(e => {
         if (e.source === selectedNodeId) ids.add(e.target);
         if (e.target === selectedNodeId) ids.add(e.source);
       });
     }
-    // Also show nodes connected to hovered node
     if (hoveredNodeId) {
       edges.forEach(e => {
         if (e.source === hoveredNodeId) ids.add(e.target);
         if (e.target === hoveredNodeId) ids.add(e.source);
       });
     }
-    // Also show nodes that have been manually expanded
     expandedNodes.forEach(nid => {
       edges.forEach(e => {
         if (e.source === nid) ids.add(e.target);
@@ -210,7 +217,7 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
     return ids;
   }, [positionedNodes, edges, selectedNodeId, hoveredNodeId, expandedNodes]);
 
-  // Interactive direct connections list for selected node details traversal
+  // Direct connections list for selected node details
   const directLinks = useMemo(() => {
     if (!selectedNodeId) return [];
     return edges
@@ -230,20 +237,71 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
       .filter(link => link.node !== undefined);
   }, [selectedNodeId, edges, nodeMap]);
 
-  // Auto-focus selected node in directory list or center it
-  const handleNodeSelect = (nodeId: string) => {
+  // Select node & center graph
+  const handleNodeSelect = (nodeId: string, options?: { expandRelations?: boolean; zoomLevel?: number }) => {
+    // Expand connected relationships
+    if (options?.expandRelations !== false) {
+      const connected = new Set<string>([nodeId]);
+      edges.forEach(e => {
+        if (e.source === nodeId) connected.add(e.target);
+        if (e.target === nodeId) connected.add(e.source);
+      });
+      setExpandedNodes(prev => new Set([...prev, ...connected]));
+    }
+
     setSelectedNodeId(nodeId);
-    setExpandedNodes(prev => new Set([...prev, nodeId]));
     const node = nodeMap.get(nodeId);
     if (node) {
       onSelectNode(node);
-      // Recenter pan around node coordinates to put it visually center
-      setPan({ x: 400 - node.x * zoom, y: 250 - node.y * zoom });
+      const activeZoom = options?.zoomLevel ?? (zoom < 1.8 ? 2.0 : zoom);
+      if (options?.zoomLevel || zoom < 1.8) setZoom(activeZoom);
+
+      // Recenter pan around node coordinates to put it visually in canvas center (1400, 900)
+      setPan({
+        x: 1400 - node.x * activeZoom,
+        y: 900 - node.y * activeZoom
+      });
     }
   };
 
+  // Directory Interaction: Clicking any entity inside Synicade Directory
+  // - Does NOT open a separate page
+  // - Centers the graph on the selected node
+  // - Highlights the selected node
+  // - Expands connected relationships
+  // - Displays the information directly inside the existing graph view
+  const handleDirectoryEntityClick = (nodeId: string) => {
+    // 1. Expand connected relationships
+    const connected = new Set<string>([nodeId]);
+    edges.forEach(e => {
+      if (e.source === nodeId) connected.add(e.target);
+      if (e.target === nodeId) connected.add(e.source);
+    });
+    setExpandedNodes(prev => new Set([...prev, ...connected]));
+
+    // 2. Highlight/Select node
+    setSelectedNodeId(nodeId);
+
+    // 3. Switch to existing graph view
+    setViewTab("graph");
+
+    // 4. Center graph on selected node & notify parent
+    setTimeout(() => {
+      const n = nodeMap.get(nodeId);
+      if (n) {
+        onSelectNode(n);
+        const activeZoom = zoom < 1.8 ? 2.0 : zoom;
+        if (zoom < 1.8) setZoom(activeZoom);
+        setPan({
+          x: 1400 - n.x * activeZoom,
+          y: 900 - n.y * activeZoom
+        });
+      }
+    }, 40);
+  };
+
   const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (e.button !== 0) return; // Only left click drags
+    if (e.button !== 0) return;
     setIsDragging(true);
     setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
   };
@@ -264,12 +322,12 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
     e.preventDefault();
     const zoomFactor = 1.1;
     const nextZoom = e.deltaY < 0 ? zoom * zoomFactor : zoom / zoomFactor;
-    setZoom(Math.max(0.3, Math.min(3.0, nextZoom)));
+    setZoom(Math.max(0.4, Math.min(3.5, nextZoom)));
   };
 
   const resetPanZoom = () => {
-    setZoom(1.6);
-    setPan({ x: -400, y: -250 });
+    setZoom(2.0);
+    setPan({ x: -1400, y: -900 });
   };
 
   const renderIcon = (type: string, isSuspicious?: boolean) => {
@@ -288,7 +346,6 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
     }
   };
 
-  // Keyboard accessibility handler for nodes
   const handleKeyDown = (e: React.KeyboardEvent, nodeId: string) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -296,20 +353,17 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
     }
   };
 
-  // Helper: is this node a high-risk suspect?
   const isHighRisk = (label: string) =>
     label.includes("Ramesh") || label.includes("Suresh");
 
-  // Format Indian rupee amounts
   const formatINR = (amount: number) => {
     return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(amount);
   };
 
-  // Empty / loading state
   if (!nodes || nodes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
-        <Network className="w-12 h-12 text-slate-600" />
+        <Network className="w-12 h-12 text-slate-600 animate-pulse" />
         <div className="text-sm font-bold text-slate-400">Loading Criminal Network</div>
         <p className="text-xs text-slate-500">Fetching relationship graph from KSP database...</p>
         <div className="h-1 w-40 rounded bg-slate-800 animate-pulse mt-2" />
@@ -319,8 +373,8 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* Sidebar Controls & Refined Details — FULL PANEL SCROLL */}
-      <div className="bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden flex flex-col" style={{ height: '600px', minHeight: '600px' }}>
+      {/* Sidebar Controls & Refined Details — ENHANCED SCROLL PANEL */}
+      <div className="bg-slate-950/70 border border-slate-800 rounded-xl overflow-hidden flex flex-col min-h-[750px] lg:h-[800px]">
         {/* Fixed Header */}
         <div className="flex-shrink-0 p-4 border-b border-slate-800/60 bg-slate-900/40">
           <h3 className="text-xs font-bold tracking-wider uppercase text-amber-500 flex items-center gap-2 mb-3">
@@ -338,18 +392,18 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
             title="Interactive Graph View"
           >
             <Network className="w-4 h-4" />
-            <span>Graph</span>
+            <span>Interactive Graph</span>
           </button>
         </div>
 
-        {/* SCROLLABLE CONTENT AREA — wraps everything below the fixed header */}
+        {/* SCROLLABLE CONTENT AREA */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
 
         {/* Syndicate Directory — prominent full-width button */}
         <div>
           <button
             onClick={() => setViewTab("directory")}
-            className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border transition ${
+            className={`w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl text-xs font-bold border transition ${
               viewTab === "directory"
                 ? "bg-blue-500/20 text-blue-300 border-blue-500/50 shadow-[0_0_16px_rgba(59,130,246,0.4)]"
                 : "bg-slate-900/80 text-blue-400 border-blue-500/30 hover:bg-blue-900/20 hover:border-blue-400/50"
@@ -357,8 +411,8 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
             title="Syndicate Relationship Directory"
           >
             <div className="flex items-center gap-2">
-              <List className="w-4 h-4" />
-              <span>Syndicate Directory</span>
+              <List className="w-4.5 h-4.5" />
+              <span className="font-extrabold">Syndicate Directory</span>
             </div>
             <ChevronRight className="w-4 h-4 shrink-0" />
           </button>
@@ -434,12 +488,12 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-[11px] text-slate-400 font-medium">Node Layout Spacing</label>
-                <span className="text-[10px] text-slate-500 font-bold">{(spacingFactor * 100).toFixed(0)}%</span>
+                <span className="text-[10px] text-amber-400 font-bold">{(spacingFactor * 100).toFixed(0)}%</span>
               </div>
               <input
                 type="range"
-                min="0.5"
-                max="1.8"
+                min="0.8"
+                max="2.2"
                 step="0.1"
                 value={spacingFactor}
                 onChange={(e) => setSpacingFactor(parseFloat(e.target.value))}
@@ -523,7 +577,6 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                     {renderIcon(nodeMap.get(selectedNodeId).type, nodeMap.get(selectedNodeId).isSuspicious)}
                     {nodeMap.get(selectedNodeId).label}
                   </h4>
-                  {/* FIR number prominent for cases */}
                   {nodeMap.get(selectedNodeId).type === "Case" && nodeMap.get(selectedNodeId).crimeNo && (
                     <p className="text-[11px] font-mono font-bold text-amber-400 mt-0.5">
                       FIR: {nodeMap.get(selectedNodeId).crimeNo}
@@ -533,8 +586,8 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                 </div>
               </div>
 
-              <div className="px-4 space-y-3.5">
-              {/* Entity-specific contextual metadata */}
+              <div className="px-4 space-y-3.5 pb-3">
+              {/* Contextual metadata */}
               <div className="text-xs space-y-2 bg-slate-900/30 p-2.5 rounded-lg border border-slate-800/60 text-slate-300">
                 {nodeMap.get(selectedNodeId).type === "Suspect" && (
                   <>
@@ -573,13 +626,12 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                 )}
               </div>
 
-              {/* Dynamic Action Hop Links to Traverse Network */}
+              {/* Dynamic Action Hop Links */}
               <div className="space-y-2">
                 <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 block">Direct Syndicate Connections ({directLinks.length})</span>
                 {directLinks.length > 0 ? (
-                  <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin">
+                  <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin">
                     {directLinks.map((link) => {
-                      // Relation badge colors
                       const relColor =
                         link.relation === "ASSOCIATE_OF"  ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
                         link.relation === "ACCUSED_IN"    ? "bg-rose-500/10 text-rose-400 border-rose-500/20" :
@@ -590,7 +642,7 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                       return (
                         <button
                           key={link.edgeId}
-                          onClick={() => handleNodeSelect(link.node.id)}
+                          onClick={() => handleNodeSelect(link.node.id, { expandRelations: true })}
                           className="w-full flex items-center justify-between text-left p-1.5 bg-slate-900/60 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-900 rounded-lg transition-all group cursor-pointer"
                         >
                           <div className="flex items-center gap-1.5 min-w-0">
@@ -648,87 +700,81 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center text-center p-4 border border-dashed border-slate-800 rounded-xl bg-slate-900/10 text-slate-500 min-h-[120px]">
+            <div className="flex flex-col items-center justify-center text-center p-4 border border-dashed border-slate-800 rounded-xl bg-slate-900/10 text-slate-500 min-h-[140px]">
               <Info className="w-6 h-6 text-slate-600 mb-2" />
               <p className="text-xs font-semibold">Inspector Inactive</p>
-              <p className="text-[10px] text-slate-600 mt-1 max-w-[200px]">Click any node or register entry to deeply explore active intelligence connections</p>
+              <p className="text-[10px] text-slate-600 mt-1 max-w-[200px]">Click any node or directory entry to deeply explore active intelligence connections</p>
             </div>
           )}
-        </div>{/* END inspector wrapper */}
-        </div>{/* END scrollable content */}
-      </div>{/* END sidebar container */}
+        </div>
+        </div>
+      </div>
 
-      {/* Main Presentation Pane (Interactive SVG Canvas OR Registry Table) */}
-      <div className="lg:col-span-3 flex flex-col h-[600px] bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden relative">
+      {/* Main Presentation Pane — EXPANDED CANVAS SIZE (800px Height) */}
+      <div className="lg:col-span-3 flex flex-col min-h-[750px] lg:h-[800px] bg-slate-950/70 border border-slate-800 rounded-xl overflow-hidden relative">
         {/* Dynamic Dual Tab Render */}
         {viewTab === "graph" ? (
           <>
             {/* Background Aesthetic Grids */}
-            <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:20px_20px] opacity-40 pointer-events-none" />
 
             {/* Quick Action Overlay & Status Alerts */}
             <div className="absolute top-3 left-4 right-4 z-10 flex items-center justify-between pointer-events-none gap-2">
-              <div className="bg-slate-900/90 backdrop-blur-md py-1 px-3 rounded-full border border-slate-800 text-[10px] text-slate-400 flex items-center gap-1.5 shadow-lg pointer-events-auto">
-                <Move className="w-3 h-3 text-amber-500" />
-                <span>Drag to pan | Scroll to zoom | Tab to select nodes</span>
+              <div className="bg-slate-900/90 backdrop-blur-md py-1.5 px-3.5 rounded-full border border-slate-800 text-[11px] text-slate-300 flex items-center gap-2 shadow-lg pointer-events-auto">
+                <Move className="w-3.5 h-3.5 text-amber-500" />
+                <span>Drag canvas to pan | Scroll to zoom | Click nodes to inspect &amp; center</span>
               </div>
-              <div className="bg-slate-900/90 backdrop-blur-md py-1 px-3 rounded-full border border-slate-800 text-[10px] font-bold text-slate-300 flex items-center gap-1.5 shadow-lg pointer-events-auto">
-                <span>Zoom Scale:</span>
-                <span className="text-amber-400">{(zoom * 100).toFixed(0)}%</span>
+              <div className="bg-slate-900/90 backdrop-blur-md py-1.5 px-3.5 rounded-full border border-slate-800 text-[11px] font-bold text-slate-300 flex items-center gap-2 shadow-lg pointer-events-auto">
+                <span>Zoom Level:</span>
+                <span className="text-amber-400 font-mono">{(zoom * 100).toFixed(0)}%</span>
                 <span className="text-slate-600 mx-1">|</span>
-                <span className="text-slate-400">{visibleNodeIds.size} / {positionedNodes.length} nodes</span>
+                <span className="text-slate-300">{visibleNodeIds.size} / {positionedNodes.length} nodes</span>
               </div>
             </div>
 
             {/* Float Tactile Zoom Controls */}
-            <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-1.5 bg-slate-900/80 backdrop-blur-md p-1.5 rounded-xl border border-slate-800 shadow-xl">
+            <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-1.5 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-800 shadow-xl">
               <button
-                onClick={() => setZoom(z => Math.min(3.0, z + 0.1))}
-                className="p-2 bg-slate-950 hover:bg-slate-800 text-slate-300 rounded-lg border border-slate-800 transition active:scale-95"
+                onClick={() => setZoom(z => Math.min(3.5, z + 0.25))}
+                className="p-2.5 bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-amber-400 rounded-lg border border-slate-800 transition active:scale-95 cursor-pointer"
                 title="Zoom In"
               >
                 <ZoomIn className="w-4 h-4" />
               </button>
               <button
-                onClick={() => setZoom(z => Math.max(0.3, z - 0.1))}
-                className="p-2 bg-slate-950 hover:bg-slate-800 text-slate-300 rounded-lg border border-slate-800 transition active:scale-95"
+                onClick={() => setZoom(z => Math.max(0.4, z - 0.25))}
+                className="p-2.5 bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-amber-400 rounded-lg border border-slate-800 transition active:scale-95 cursor-pointer"
                 title="Zoom Out"
               >
                 <ZoomOut className="w-4 h-4" />
               </button>
               <button
                 onClick={resetPanZoom}
-                className="p-2 bg-slate-950 hover:bg-slate-800 text-slate-300 rounded-lg border border-slate-800 transition active:scale-95"
-                title="Recenter and Fit"
+                className="p-2.5 bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-amber-400 rounded-lg border border-slate-800 transition active:scale-95 cursor-pointer"
+                title="Recenter and Fit View"
               >
                 <Maximize2 className="w-4 h-4" />
               </button>
-              {/* Toggle: Show All Nodes / Collapse to Primary Only */}
               <button
                 onClick={() => {
-                  const allPrimary = positionedNodes.every(
-                    n => n.type === "Case" || n.type === "Suspect" || !expandedNodes.has(n.id)
-                  );
                   if (expandedNodes.size > positionedNodes.filter(n => n.type === "Case" || n.type === "Suspect").length) {
-                    // Collapse back to primary only (Case + Suspect)
                     const primary = new Set<string>();
                     positionedNodes.forEach(n => {
                       if (n.type === "Case" || n.type === "Suspect") primary.add(n.id);
                     });
                     setExpandedNodes(primary);
                   } else {
-                    // Expand all nodes
                     setExpandedNodes(new Set(positionedNodes.map(n => n.id)));
                   }
                 }}
-                className="p-2 bg-slate-950 hover:bg-slate-800 text-slate-300 rounded-lg border border-slate-800 transition active:scale-95"
-                title="Toggle: Show All / Primary Only"
+                className="p-2.5 bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-amber-400 rounded-lg border border-slate-800 transition active:scale-95 cursor-pointer"
+                title="Toggle: Expand All Nodes / Primary Only"
               >
                 <Eye className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Main Interactive Canvas */}
+            {/* EXPANDED SVG CANVAS (2800x1800 ViewBox) */}
             <svg
               ref={svgRef}
               className="w-full h-full cursor-grab active:cursor-grabbing outline-none select-none relative"
@@ -737,17 +783,16 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
               onWheel={handleWheel}
-              viewBox="0 0 2200 1400"
+              viewBox="0 0 2800 1800"
             >
-              {/* Transform Group carrying the zoom and panning offsets */}
+              {/* Transform Group carrying zoom and pan offsets */}
               <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
 
-                {/* 1. RENDER RELATIONSHIP EDGES — only between visible nodes */}
+                {/* 1. RENDER RELATIONSHIP EDGES */}
                 {edges.map((edge) => {
                   const srcNode = nodeMap.get(edge.source);
                   const tgtNode = nodeMap.get(edge.target);
                   if (!srcNode || !tgtNode) return null;
-                  // Progressive: hide edges whose nodes are not in both visible AND filtered sets
                   if (!filteredNodeIds.has(edge.source) || !filteredNodeIds.has(edge.target)) return null;
                   if (!visibleNodeIds.has(edge.source) || !visibleNodeIds.has(edge.target)) return null;
 
@@ -764,26 +809,25 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
 
                   if (isDimmed) return (
                     <line key={edge.id} x1={srcNode.x} y1={srcNode.y} x2={tgtNode.x} y2={tgtNode.y}
-                      stroke="rgba(30,41,59,0.3)" strokeWidth={0.5} />
+                      stroke="rgba(30,41,59,0.25)" strokeWidth={0.5} />
                   );
 
-                  let stroke = "#334155"; let strokeWidth = 1; let dash = "";
-                  if (edge.relation === "ASSOCIATE_OF")  { stroke = "rgba(16,185,129,0.45)"; dash = "5,4"; }
-                  else if (edge.relation === "TRANSACTIONS") { stroke = edge.amount > 100000 ? "rgba(239,68,68,0.7)" : "rgba(239,68,68,0.4)"; strokeWidth = edge.amount > 100000 ? 2.5 : 1.5; }
-                  else if (edge.relation === "ACCUSED_IN")   { stroke = "rgba(245,158,11,0.45)"; }
-                  else if (edge.relation === "VICTIM_IN")    { stroke = "rgba(56,189,248,0.45)"; }
-                  else if (edge.relation === "LINKED_TO_CASE") { stroke = "rgba(168,85,247,0.35)"; dash = "3,5"; }
+                  let stroke = "#334155"; let strokeWidth = 1.2; let dash = "";
+                  if (edge.relation === "ASSOCIATE_OF")  { stroke = "rgba(16,185,129,0.55)"; dash = "6,4"; }
+                  else if (edge.relation === "TRANSACTIONS") { stroke = edge.amount > 100000 ? "rgba(239,68,68,0.85)" : "rgba(239,68,68,0.5)"; strokeWidth = edge.amount > 100000 ? 3 : 2; }
+                  else if (edge.relation === "ACCUSED_IN")   { stroke = "rgba(245,158,11,0.55)"; }
+                  else if (edge.relation === "VICTIM_IN")    { stroke = "rgba(56,189,248,0.55)"; }
+                  else if (edge.relation === "LINKED_TO_CASE") { stroke = "rgba(168,85,247,0.45)"; dash = "4,5"; }
 
-                  if (isHighlighted) { strokeWidth += 1.5; stroke = stroke.replace(/0\.\d+\)/, "0.95)"); }
+                  if (isHighlighted) { strokeWidth += 2; stroke = stroke.replace(/0\.\d+\)/, "0.95)"); }
 
-                  // Curved edges to reduce overlap — use quadratic bezier
+                  // Quadratic bezier curve calculation to prevent overlapping edge lines
                   const mx = (srcNode.x + tgtNode.x) / 2;
                   const my = (srcNode.y + tgtNode.y) / 2;
-                  // Curve offset perpendicular to edge direction
                   const dx = tgtNode.x - srcNode.x;
                   const dy = tgtNode.y - srcNode.y;
                   const len = Math.sqrt(dx * dx + dy * dy) || 1;
-                  const curve = 30;
+                  const curve = 40;
                   const cx = mx - (dy / len) * curve;
                   const cy = my + (dx / len) * curve;
 
@@ -797,24 +841,22 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                         strokeDasharray={dash}
                         className="transition-all duration-300"
                       />
-                      {/* Financial amount label — only when highlighted */}
-                      {edge.relation === "TRANSACTIONS" && isHighlighted && (
+                      {/* Financial amount badge on transactions */}
+                      {edge.relation === "TRANSACTIONS" && (isHighlighted || edge.amount > 100000) && (
                         <g transform={`translate(${cx}, ${cy})`}>
-                          <rect x="-24" y="-8" width="48" height="16" rx="4" fill="rgba(2,6,23,0.92)" stroke="rgba(51,65,85,0.8)" strokeWidth="0.5" />
-                          <text fill="#f87171" fontSize="9" fontWeight="bold" textAnchor="middle" y="4">₹{(edge.amount/1000).toFixed(0)}k</text>
+                          <rect x="-28" y="-9" width="56" height="18" rx="5" fill="rgba(2,6,23,0.95)" stroke="rgba(239,68,68,0.6)" strokeWidth="0.8" />
+                          <text fill="#f87171" fontSize="10" fontWeight="bold" textAnchor="middle" y="4">₹{(edge.amount/1000).toFixed(0)}k</text>
                         </g>
                       )}
                     </g>
                   );
                 })}
 
-                {/* 2. RENDER NODES — with progressive label visibility */}
+                {/* 2. RENDER NODES WITH GUARANTEED NON-OVERLAPPING LABELS */}
                 {positionedNodes.map((node) => {
-                  // Node is visible only if it passes both the search/filter AND progressive visibility
                   if (!filteredNodeIds.has(node.id)) return null;
                   if (!visibleNodeIds.has(node.id)) return null;
 
-                  // Combined selected + hovered highlight/dim logic
                   const isHighlighted = selectedNodeId
                     ? relatedConnections.nodeIds.has(node.id)
                     : hoveredNodeId
@@ -827,24 +869,25 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                       : false;
                   const isSelected = node.id === selectedNodeId;
 
-                  // Always show labels — graph must be fully readable at all zoom levels
-                  const showLabel = true;
-
-                  let size = 14;
+                  let size = 16;
                   let fill = "#1e293b"; let stroke = "#64748b";
-                  if (node.type === "Suspect") { fill = "rgba(6,78,59,0.9)";  stroke = isHighlighted ? "#34d399" : "#10b981"; size = 24; }
-                  else if (node.type === "Case")    { fill = "rgba(120,53,15,0.9)"; stroke = isHighlighted ? "#fcd34d" : "#f59e0b"; size = 28; }
-                  else if (node.type === "Account") { fill = node.isSuspicious ? "rgba(127,29,29,0.9)" : "rgba(15,23,42,0.9)"; stroke = node.isSuspicious ? "#f87171" : "#475569"; size = 20; }
-                  else if (node.type === "Victim")  { fill = "rgba(7,89,133,0.9)";  stroke = isHighlighted ? "#7dd3fc" : "#38bdf8"; size = 21; }
-                  if (isSelected) { size += 6; stroke = "#fbbf24"; }
+                  if (node.type === "Suspect") { fill = "rgba(6,78,59,0.95)";  stroke = isHighlighted ? "#34d399" : "#10b981"; size = 26; }
+                  else if (node.type === "Case")    { fill = "rgba(120,53,15,0.95)"; stroke = isHighlighted ? "#fcd34d" : "#f59e0b"; size = 30; }
+                  else if (node.type === "Account") { fill = node.isSuspicious ? "rgba(127,29,29,0.95)" : "rgba(15,23,42,0.95)"; stroke = node.isSuspicious ? "#f87171" : "#475569"; size = 22; }
+                  else if (node.type === "Victim")  { fill = "rgba(7,89,133,0.95)";  stroke = isHighlighted ? "#7dd3fc" : "#38bdf8"; size = 23; }
+                  if (isSelected) { size += 7; stroke = "#fbbf24"; }
+
+                  // Alternating top / bottom label offset based on node index to eliminate label collisions
+                  const isLabelAbove = (node.idx !== undefined ? node.idx : 0) % 2 === 1;
+                  const labelYOffset = isLabelAbove ? -(size + 20) : (size + 20);
 
                   return (
                     <g
                       key={node.id}
                       transform={`translate(${node.x}, ${node.y})`}
-                      style={{ opacity: isDimmed ? 0.15 : 1, transition: "opacity 0.25s, transform 0.25s" }}
+                      style={{ opacity: isDimmed ? 0.12 : 1, transition: "opacity 0.25s, transform 0.25s" }}
                       className="cursor-pointer group outline-none"
-                      onClick={() => handleNodeSelect(node.id)}
+                      onClick={() => handleNodeSelect(node.id, { expandRelations: true })}
                       onMouseEnter={() => setHoveredNodeId(node.id)}
                       onMouseLeave={() => setHoveredNodeId(null)}
                       onKeyDown={(e) => handleKeyDown(e, node.id)}
@@ -854,12 +897,12 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                     >
                       <title>{`${node.type}: ${node.label}${node.age ? ` | Age: ${node.age}` : ""}${node.crimeNo ? ` | FIR: ${node.crimeNo}` : ""}${node.owner ? ` | ${node.owner}` : ""}`}</title>
 
-                      {/* Selection ring */}
-                      {isSelected && <circle r={size + 8} fill="none" stroke="rgba(251,191,36,0.3)" strokeWidth="2" className="animate-ping" />}
-                      {isHighlighted && <circle r={size + 5} fill="none" stroke={stroke} strokeWidth="1" opacity="0.4" />}
+                      {/* Selection ring animation */}
+                      {isSelected && <circle r={size + 10} fill="none" stroke="rgba(251,191,36,0.4)" strokeWidth="2.5" className="animate-ping" />}
+                      {isHighlighted && <circle r={size + 6} fill="none" stroke={stroke} strokeWidth="1.5" opacity="0.6" />}
 
-                      {/* Node body */}
-                      <circle r={size} fill={fill} stroke={stroke} strokeWidth={isSelected ? 2.5 : isHighlighted ? 2 : 1.5}
+                      {/* Node body circle */}
+                      <circle r={size} fill={fill} stroke={stroke} strokeWidth={isSelected ? 3 : isHighlighted ? 2.5 : 2}
                         className="group-hover:stroke-amber-400 transition-all duration-200" />
 
                       {/* Icon inside node */}
@@ -869,20 +912,26 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                         </div>
                       </foreignObject>
 
-                      {/* Label — always visible, crisp and readable */}
-                      <g transform={`translate(0, ${size + 16})`}
-                         style={{ opacity: 1 }}
-                         className="pointer-events-none">
+                      {/* Crisp, Highly Readable Node Label Badge */}
+                      <g transform={`translate(0, ${labelYOffset})`} className="pointer-events-none">
                         <rect
-                          x={-(Math.min(node.label.length, 20) * 3.8 + 10)}
-                          y="-9" rx="4"
-                          width={(Math.min(node.label.length, 20) * 7.6 + 20)}
-                          height="18"
-                          fill="rgba(2,6,23,0.95)" stroke="rgba(71,85,105,0.8)" strokeWidth="0.8"
+                          x={-(Math.min(node.label.length, 22) * 4.2 + 12)}
+                          y="-10" rx="6"
+                          width={(Math.min(node.label.length, 22) * 8.4 + 24)}
+                          height="20"
+                          fill="rgba(2, 6, 23, 0.96)"
+                          stroke={isSelected ? "#fbbf24" : isHighlighted ? stroke : "rgba(71,85,105,0.8)"}
+                          strokeWidth={isSelected ? "1.5" : "1"}
                         />
-                        <text fill={isSelected ? "#fbbf24" : isHighlighted ? "#e2e8f0" : "#cbd5e1"} fontSize="11" fontWeight="700"
-                          textAnchor="middle" y="4" className="pointer-events-none">
-                          {node.label.length > 20 ? node.label.substring(0, 18) + "…" : node.label}
+                        <text
+                          fill={isSelected ? "#fbbf24" : isHighlighted ? "#ffffff" : "#f1f5f9"}
+                          fontSize="12"
+                          fontWeight="700"
+                          textAnchor="middle"
+                          y="4"
+                          className="pointer-events-none"
+                        >
+                          {node.label.length > 22 ? node.label.substring(0, 20) + "…" : node.label}
                         </text>
                       </g>
                     </g>
@@ -892,57 +941,59 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
             </svg>
           </>
         ) : (
-          /* ACCESSIBLE INTERACTIVE RELATIONSHIP DIRECTORY */
-          <div className="flex-1 flex flex-col min-h-0 bg-slate-950/80 p-5 overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
+          /* ACCESSIBLE INTERACTIVE RELATIONSHIP DIRECTORY (SYNICADE DIRECTORY) */
+          <div className="flex-1 flex flex-col min-h-0 bg-slate-950/90 p-5 overflow-hidden">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800/80">
               <div>
-                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-                  <List className="w-4 h-4 text-amber-500" />
+                <h3 className="text-base font-extrabold text-slate-100 flex items-center gap-2">
+                  <List className="w-5 h-5 text-amber-500" />
                   Syndicate Relationship Directory
                 </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">Fully accessible relationship register of all mapped law enforcement entities</p>
+                <p className="text-xs text-slate-400 mt-0.5">Click any entity row to center, highlight, expand relationships, and inspect directly in graph view</p>
               </div>
-              <span className="text-[10px] text-slate-500 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800">
-                Count: {filteredNodes.length} visible
+              <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
+                {filteredNodes.length} Entities Found
               </span>
             </div>
 
             {/* Filtered Records Grid */}
-            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 border border-slate-800/80 rounded-xl bg-slate-950">
+            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 border border-slate-800/80 rounded-xl bg-slate-950">
               {filteredNodes.length > 0 ? (
                 <div className="divide-y divide-slate-900">
                   {filteredNodes.map((node) => {
-                    // Gather this node's direct edges
                     const nodeEdges = edges.filter(e => e.source === node.id || e.target === node.id);
 
                     return (
                       <div
                         key={node.id}
-                        className={`p-3 hover:bg-slate-900/40 transition flex flex-col md:flex-row md:items-center justify-between gap-3 ${
-                          selectedNodeId === node.id ? "bg-amber-500/5 border-l-2 border-amber-500" : ""
+                        onClick={() => handleDirectoryEntityClick(node.id)}
+                        className={`p-3.5 hover:bg-slate-900/80 transition flex flex-col md:flex-row md:items-center justify-between gap-3 cursor-pointer group ${
+                          selectedNodeId === node.id ? "bg-amber-500/10 border-l-4 border-amber-500" : ""
                         }`}
                       >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[8px] uppercase px-1.5 py-0.5 rounded font-extrabold ${
-                              node.type === "Suspect" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
-                              node.type === "Case" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
-                              node.type === "Account" ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" :
-                              "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-[9px] uppercase px-2 py-0.5 rounded font-extrabold tracking-wider ${
+                              node.type === "Suspect" ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" :
+                              node.type === "Case" ? "bg-amber-500/15 text-amber-400 border border-amber-500/30" :
+                              node.type === "Account" ? "bg-rose-500/15 text-rose-400 border border-rose-500/30" :
+                              "bg-sky-500/15 text-sky-400 border border-sky-500/30"
                             }`}>
                               {node.type}
                             </span>
-                            <span className="text-xs font-bold text-slate-100">{node.label}</span>
+                            <span className="text-sm font-bold text-slate-100 group-hover:text-amber-400 transition-colors">
+                              {node.label}
+                            </span>
                             {node.isSuspicious && (
-                              <span className="flex items-center gap-0.5 text-[8px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-1 rounded animate-pulse font-bold">
-                                <AlertTriangle className="w-2 h-2" />
+                              <span className="flex items-center gap-1 text-[9px] bg-rose-500/15 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded-full animate-pulse font-extrabold">
+                                <AlertTriangle className="w-2.5 h-2.5" />
                                 HIGH RISK
                               </span>
                             )}
                           </div>
                           
                           {/* Attribute row */}
-                          <p className="text-[11px] text-slate-400">
+                          <p className="text-xs text-slate-400">
                             {node.type === "Suspect" && `Demographics: ${node.age} yr old, Gender: ${node.gender}`}
                             {node.type === "Case" && `FIR Reference: ${node.crimeNo} | Registered: ${node.registeredDate}`}
                             {node.type === "Account" && `Bank Owner: ${node.owner} | Flagged: ${node.isSuspicious ? "Yes" : "No"}`}
@@ -951,37 +1002,36 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
 
                           {/* Link tags */}
                           <div className="flex flex-wrap gap-1.5 pt-1">
-                            <span className="text-[9px] text-slate-500 font-bold self-center">Connections:</span>
-                            {nodeEdges.slice(0, 4).map(e => {
+                            <span className="text-[10px] text-slate-500 font-bold self-center">Connections:</span>
+                            {nodeEdges.slice(0, 5).map(e => {
                               const relatedId = e.source === node.id ? e.target : e.source;
                               const matchedLabel = nodes.find(n => n.id === relatedId)?.label || "Unknown";
                               return (
                                 <span
                                   key={e.id}
-                                  className="text-[9px] bg-slate-900 border border-slate-800 text-slate-400 px-1.5 py-0.5 rounded flex items-center gap-1"
+                                  className="text-[9px] bg-slate-900 border border-slate-800 text-slate-300 px-2 py-0.5 rounded flex items-center gap-1 font-mono"
                                 >
-                                  <span className="w-1 h-1 rounded-full bg-slate-500"></span>
-                                  {e.relation.replace("_", " ")}: {matchedLabel}
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500/80"></span>
+                                  {e.relation.replace(/_/g, " ")}: {matchedLabel}
                                 </span>
                               );
                             })}
-                            {nodeEdges.length > 4 && (
-                              <span className="text-[9px] text-slate-600 self-center font-semibold">+{nodeEdges.length - 4} more</span>
+                            {nodeEdges.length > 5 && (
+                              <span className="text-[9px] text-slate-500 self-center font-bold">+{nodeEdges.length - 5} more</span>
                             )}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                           <button
-                            onClick={() => {
-                              setViewTab("graph");
-                              // Small delay to let graph render before centering on node
-                              setTimeout(() => handleNodeSelect(node.id), 60);
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDirectoryEntityClick(node.id);
                             }}
-                            className="px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 hover:text-amber-300 border border-amber-500/30 hover:border-amber-500/60 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-[0_0_8px_rgba(251,191,36,0.15)]"
+                            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-xs transition flex items-center gap-1.5 cursor-pointer shadow-[0_0_12px_rgba(251,191,36,0.3)] active:scale-95"
                           >
-                            <Network className="w-3.5 h-3.5" />
-                            <span>Show in Graph</span>
+                            <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
+                            <span>Center &amp; View in Graph</span>
                           </button>
                         </div>
                       </div>
