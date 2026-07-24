@@ -28,9 +28,12 @@ import {
   RefreshCw,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Search,
+  Filter,
+  Layers
 } from "lucide-react";
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ScatterChart, Scatter, LabelList } from "recharts";
+import { AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ScatterChart, Scatter, LabelList } from "recharts";
 import { Message, UserRole, AuditLog } from "./types";
 import NetworkGraph from "./components/NetworkGraph";
 import MissionControl from "./components/MissionControl";
@@ -86,6 +89,13 @@ export default function App() {
   const [showHelp, setShowHelp] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
+  // Financial Trace Page interactive states
+  const [finRiskFilter, setFinRiskFilter] = useState<"ALL" | "SUSPICIOUS" | "NORMAL">("ALL");
+  const [finViewMode, setFinViewMode] = useState<"AGGREGATED" | "DETAILED">("AGGREGATED");
+  const [finSearchQuery, setFinSearchQuery] = useState<string>("");
+  const [finHoveredNode, setFinHoveredNode] = useState<string | null>(null);
+  const [finHoveredEdge, setFinHoveredEdge] = useState<any | null>(null);
 
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
     setToast({ message, type });
@@ -1734,160 +1744,717 @@ export default function App() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
-                className="space-y-6 flex flex-col h-full grow overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800"
+                className="space-y-8 flex flex-col h-full grow overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-800 pb-12"
               >
-                {/* ── Header ── */}
-                <div>
-                  <h2 className="section-title">
-                    <DollarSign className="w-5 h-5 text-rose-500" />
-                    Financial Crime & Transaction Link Analysis
-                  </h2>
-                  <p className="section-subtitle mt-1">Automated tracking of suspicious transaction flows, unverified mule accounts, and layering sequences (FR-7)</p>
+                {/* ── Header & Control Bar ── */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-950/90 border border-slate-800 p-5 rounded-xl">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2.5">
+                      <DollarSign className="w-6 h-6 text-rose-500" />
+                      Financial Crime & Transaction Link Analysis
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Automated tracking of suspicious transaction flows, unverified mule accounts, and layering sequences (FR-7)
+                    </p>
+                  </div>
+
+                  {/* Filter & View Mode Controls */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Search Input */}
+                    <div className="relative min-w-[200px]">
+                      <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="Search account / person..."
+                        value={finSearchQuery}
+                        onChange={(e) => setFinSearchQuery(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:border-sky-500/50"
+                      />
+                    </div>
+
+                    {/* Risk Filter */}
+                    <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs">
+                      <button
+                        onClick={() => setFinRiskFilter("ALL")}
+                        className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                          finRiskFilter === "ALL" ? "bg-sky-500/20 text-sky-300 border border-sky-500/30" : "text-slate-400 hover:text-slate-200"
+                        }`}
+                      >
+                        All
+                      </button>
+                      <button
+                        onClick={() => setFinRiskFilter("SUSPICIOUS")}
+                        className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                          finRiskFilter === "SUSPICIOUS" ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" : "text-slate-400 hover:text-slate-200"
+                        }`}
+                      >
+                        Flagged Only
+                      </button>
+                      <button
+                        onClick={() => setFinRiskFilter("NORMAL")}
+                        className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                          finRiskFilter === "NORMAL" ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "text-slate-400 hover:text-slate-200"
+                        }`}
+                      >
+                        Passed
+                      </button>
+                    </div>
+
+                    {/* View Mode Toggle */}
+                    <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs">
+                      <button
+                        onClick={() => setFinViewMode("AGGREGATED")}
+                        className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                          finViewMode === "AGGREGATED" ? "bg-purple-500/20 text-purple-300 border border-purple-500/30" : "text-slate-400 hover:text-slate-200"
+                        }`}
+                        title="Aggregate multiple flows between account pairs to prevent overlapping lines"
+                      >
+                        Aggregated
+                      </button>
+                      <button
+                        onClick={() => setFinViewMode("DETAILED")}
+                        className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                          finViewMode === "DETAILED" ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" : "text-slate-400 hover:text-slate-200"
+                        }`}
+                        title="Show all individual transaction flows"
+                      >
+                        Detailed
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* ── KPI Summary Cards ── */}
                 {(() => {
-                  const suspicious = mockFinancialTransactions.filter(t => t.IsSuspicious);
+                  const filtered = mockFinancialTransactions.filter((t) => {
+                    if (finRiskFilter === "SUSPICIOUS" && !t.IsSuspicious) return false;
+                    if (finRiskFilter === "NORMAL" && t.IsSuspicious) return false;
+                    if (finSearchQuery) {
+                      const q = finSearchQuery.toLowerCase();
+                      const match =
+                        t.FromAccount.toLowerCase().includes(q) ||
+                        t.ToAccount.toLowerCase().includes(q) ||
+                        t.SenderName.toLowerCase().includes(q) ||
+                        t.RecipientName.toLowerCase().includes(q) ||
+                        (t.RiskReason && t.RiskReason.toLowerCase().includes(q)) ||
+                        String(t.TransactionID).includes(q);
+                      if (!match) return false;
+                    }
+                    return true;
+                  });
+
+                  const suspicious = filtered.filter((t) => t.IsSuspicious);
+                  const totalVolume = filtered.reduce((sum, t) => sum + t.Amount, 0);
                   const totalFlaggedAmount = suspicious.reduce((sum, t) => sum + t.Amount, 0);
                   const uniqueAccounts = new Set([
-                    ...mockFinancialTransactions.map(t => t.FromAccount),
-                    ...mockFinancialTransactions.map(t => t.ToAccount),
+                    ...filtered.map((t) => t.FromAccount),
+                    ...filtered.map((t) => t.ToAccount),
                   ]).size;
+
                   const kpis = [
                     {
-                      label: "Total Transactions",
-                      value: mockFinancialTransactions.length,
-                      icon: <DollarSign className="w-5 h-5 text-sky-400" />,
-                      color: "border-sky-500/30 bg-sky-500/5",
+                      label: "Total Cashflow Volume",
+                      value: `₹${(totalVolume / 100000).toFixed(2)} Lakh`,
+                      subText: `${filtered.length} transactions recorded`,
+                      icon: <DollarSign className="w-6 h-6 text-sky-400" />,
+                      color: "border-sky-500/30 bg-sky-500/5 hover:border-sky-500/50",
                       valueClass: "text-sky-300",
                     },
                     {
-                      label: "Flagged / Suspicious",
+                      label: "Flagged Transactions",
                       value: suspicious.length,
-                      icon: <AlertTriangle className="w-5 h-5 text-rose-400" />,
-                      color: "border-rose-500/30 bg-rose-500/5",
+                      subText: `${((suspicious.length / Math.max(filtered.length, 1)) * 100).toFixed(0)}% suspicious rate`,
+                      icon: <AlertTriangle className="w-6 h-6 text-rose-400" />,
+                      color: "border-rose-500/30 bg-rose-500/5 hover:border-rose-500/50",
                       valueClass: "text-rose-300",
                     },
                     {
                       label: "Total Flagged Amount",
-                      value: `₹${(totalFlaggedAmount / 100000).toFixed(2)} lakh`,
-                      icon: <TrendingUp className="w-5 h-5 text-amber-400" />,
-                      color: "border-amber-500/30 bg-amber-500/5",
+                      value: `₹${(totalFlaggedAmount / 100000).toFixed(2)} Lakh`,
+                      subText: "Requires freeze & recovery action",
+                      icon: <TrendingUp className="w-6 h-6 text-amber-400" />,
+                      color: "border-amber-500/30 bg-amber-500/5 hover:border-amber-500/50",
                       valueClass: "text-amber-300",
                     },
                     {
-                      label: "Unique Accounts",
+                      label: "Active Accounts Monitored",
                       value: uniqueAccounts,
-                      icon: <Users className="w-5 h-5 text-emerald-400" />,
-                      color: "border-emerald-500/30 bg-emerald-500/5",
+                      subText: "Source & mule bank accounts",
+                      icon: <Users className="w-6 h-6 text-emerald-400" />,
+                      color: "border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/50",
                       valueClass: "text-emerald-300",
                     },
                   ];
+
                   return (
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                       {kpis.map((kpi, i) => (
-                        <div key={i} className={`rounded-xl border p-4 space-y-2 ${kpi.color}`}>
+                        <div key={i} className={`rounded-xl border p-5 space-y-3 transition-all ${kpi.color}`}>
                           <div className="flex items-center justify-between">
-                            {kpi.icon}
-                            <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">{kpi.label}</span>
+                            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">{kpi.label}</span>
+                            <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">{kpi.icon}</div>
                           </div>
-                          <div className={`text-2xl font-bold tabular-nums ${kpi.valueClass}`}>{kpi.value}</div>
+                          <div>
+                            <div className={`text-3xl font-extrabold tabular-nums tracking-tight ${kpi.valueClass}`}>{kpi.value}</div>
+                            <p className="text-xs text-slate-400 mt-1">{kpi.subText}</p>
+                          </div>
                         </div>
                       ))}
                     </div>
                   );
                 })()}
 
-                {/* ── Money-Laundering Flow Diagram ── */}
-                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-5 space-y-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-rose-500">Money-Laundering Chain: 3-Phase Flow</h3>
-                  <p className="text-[11px] text-slate-500">Animated flow shows fund movement from victim source → mule account → layering account → crypto integration</p>
-                  <div className="overflow-x-auto">
-                    <svg viewBox="0 0 700 130" className="w-full max-w-3xl mx-auto" style={{ minWidth: 520 }}>
-                      {/* ── Node boxes ── */}
-                      {/* Box 0: Victim/Source – slate */}
-                      <rect x="20" y="28" width="120" height="52" rx="8" ry="8" fill="#0f172a" stroke="#475569" strokeWidth="1.5" />
-                      <text x="80" y="50" textAnchor="middle" fill="#94a3b8" fontSize="9" fontWeight="bold">VICTIM / SOURCE</text>
-                      <text x="80" y="63" textAnchor="middle" fill="#64748b" fontSize="8">ICICI-7741</text>
-                      <text x="80" y="75" textAnchor="middle" fill="#f87171" fontSize="8" fontWeight="bold">₹2.60L</text>
+                {/* ── Money-Laundering Chain: 3-Phase Flow ── */}
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-6 space-y-4 shadow-xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                    <div>
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-rose-400 flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-rose-500" />
+                        Money-Laundering Chain: 3-Phase Flow Analysis
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Automated detection of placement → layering → integration sequences in criminal proceeds
+                      </p>
+                    </div>
+                    {/* Visual Legend */}
+                    <div className="flex items-center gap-4 text-xs font-semibold">
+                      <span className="flex items-center gap-1.5 text-slate-300">
+                        <span className="w-3 h-3 rounded-full bg-slate-700 border border-slate-500"></span> Source
+                      </span>
+                      <span className="flex items-center gap-1.5 text-rose-400">
+                        <span className="w-3 h-3 rounded-full bg-rose-500/30 border border-rose-500"></span> Placement
+                      </span>
+                      <span className="flex items-center gap-1.5 text-amber-400">
+                        <span className="w-3 h-3 rounded-full bg-amber-500/30 border border-amber-500"></span> Layering
+                      </span>
+                      <span className="flex items-center gap-1.5 text-emerald-400">
+                        <span className="w-3 h-3 rounded-full bg-emerald-500/30 border border-emerald-500"></span> Integration
+                      </span>
+                    </div>
+                  </div>
 
-                      {/* Box 1: Mule SBI-8822 – red flagged */}
-                      <rect x="190" y="28" width="130" height="52" rx="8" ry="8" fill="#1a0a0a" stroke="#ef4444" strokeWidth="1.5" />
-                      <text x="255" y="50" textAnchor="middle" fill="#fca5a5" fontSize="9" fontWeight="bold">MULE ACCOUNT</text>
-                      <text x="255" y="63" textAnchor="middle" fill="#ef4444" fontSize="8">SBI-8822-4412</text>
-                      <text x="255" y="75" textAnchor="middle" fill="#f87171" fontSize="8" fontWeight="bold">₹1.80L</text>
-
-                      {/* Box 2: HDFC-1102 – amber */}
-                      <rect x="380" y="28" width="120" height="52" rx="8" ry="8" fill="#0f0e00" stroke="#f59e0b" strokeWidth="1.5" />
-                      <text x="440" y="50" textAnchor="middle" fill="#fcd34d" fontSize="9" fontWeight="bold">LAYERING ACCT</text>
-                      <text x="440" y="63" textAnchor="middle" fill="#f59e0b" fontSize="8">HDFC-1102</text>
-                      <text x="440" y="75" textAnchor="middle" fill="#fbbf24" fontSize="8" fontWeight="bold">₹1.77L</text>
-
-                      {/* Box 3: Crypto Wallet – emerald */}
-                      <rect x="560" y="28" width="120" height="52" rx="8" ry="8" fill="#001a0e" stroke="#10b981" strokeWidth="1.5" />
-                      <text x="620" y="50" textAnchor="middle" fill="#6ee7b7" fontSize="9" fontWeight="bold">CRYPTO WALLET</text>
-                      <text x="620" y="63" textAnchor="middle" fill="#10b981" fontSize="8">BTC-COLD-9x3f</text>
-                      <text x="620" y="75" textAnchor="middle" fill="#34d399" fontSize="8" fontWeight="bold">₹1.75L</text>
-
-                      {/* ── Animated arrow 0→1 (red: flagged) ── */}
+                  {/* Flow Diagram SVG */}
+                  <div className="overflow-x-auto py-2">
+                    <svg viewBox="0 0 850 160" className="w-full max-w-4xl mx-auto" style={{ minWidth: 680 }}>
                       <defs>
-                        <marker id="arrow-red" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
-                          <polygon points="0 0, 7 3.5, 0 7" fill="#ef4444" />
+                        <marker id="arrow-red-lg" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto">
+                          <polygon points="0 0, 9 4.5, 0 9" fill="#ef4444" />
                         </marker>
-                        <marker id="arrow-amber" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
-                          <polygon points="0 0, 7 3.5, 0 7" fill="#f59e0b" />
+                        <marker id="arrow-amber-lg" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto">
+                          <polygon points="0 0, 9 4.5, 0 9" fill="#f59e0b" />
                         </marker>
-                        <marker id="arrow-green" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
-                          <polygon points="0 0, 7 3.5, 0 7" fill="#10b981" />
+                        <marker id="arrow-green-lg" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto">
+                          <polygon points="0 0, 9 4.5, 0 9" fill="#10b981" />
                         </marker>
                       </defs>
-                      {/* Arrow 0→1 */}
-                      <line x1="141" y1="54" x2="187" y2="54" stroke="#ef4444" strokeWidth="2" markerEnd="url(#arrow-red)" strokeDasharray="8 4">
+
+                      {/* Box 0: Victim Source */}
+                      <g className="cursor-pointer transition-transform hover:scale-105">
+                        <rect x="20" y="32" width="160" height="64" rx="10" ry="10" fill="#0f172a" stroke="#475569" strokeWidth="2" />
+                        <text x="100" y="56" textAnchor="middle" fill="#94a3b8" fontSize="12" fontWeight="bold">VICTIM / SOURCE</text>
+                        <text x="100" y="72" textAnchor="middle" fill="#cbd5e1" fontSize="11" fontFamily="monospace">ICICI-7741 / AXIS-7709</text>
+                        <text x="100" y="87" textAnchor="middle" fill="#f87171" fontSize="12" fontWeight="bold">₹4.00 Lakh</text>
+                      </g>
+
+                      {/* Box 1: Mule Account */}
+                      <g className="cursor-pointer transition-transform hover:scale-105">
+                        <rect x="235" y="32" width="165" height="64" rx="10" ry="10" fill="#1a0a0a" stroke="#ef4444" strokeWidth="2" />
+                        <text x="317" y="56" textAnchor="middle" fill="#fca5a5" fontSize="12" fontWeight="bold">MULE ACCOUNT (A)</text>
+                        <text x="317" y="72" textAnchor="middle" fill="#ef4444" fontSize="11" fontFamily="monospace">SBI-8822-4412</text>
+                        <text x="317" y="87" textAnchor="middle" fill="#f87171" fontSize="12" fontWeight="bold">₹3.95 Lakh</text>
+                      </g>
+
+                      {/* Box 2: Layering Account */}
+                      <g className="cursor-pointer transition-transform hover:scale-105">
+                        <rect x="455" y="32" width="160" height="64" rx="10" ry="10" fill="#181302" stroke="#f59e0b" strokeWidth="2" />
+                        <text x="535" y="56" textAnchor="middle" fill="#fcd34d" fontSize="12" fontWeight="bold">LAYERING ACCT (B)</text>
+                        <text x="535" y="72" textAnchor="middle" fill="#f59e0b" fontSize="11" fontFamily="monospace">HDFC-1102-0022</text>
+                        <text x="535" y="87" textAnchor="middle" fill="#fbbf24" fontSize="12" fontWeight="bold">₹3.90 Lakh</text>
+                      </g>
+
+                      {/* Box 3: Crypto Integration */}
+                      <g className="cursor-pointer transition-transform hover:scale-105">
+                        <rect x="670" y="32" width="160" height="64" rx="10" ry="10" fill="#021a12" stroke="#10b981" strokeWidth="2" />
+                        <text x="750" y="56" textAnchor="middle" fill="#6ee7b7" fontSize="12" fontWeight="bold">CRYPTO / ATM</text>
+                        <text x="750" y="72" textAnchor="middle" fill="#10b981" fontSize="11" fontFamily="monospace">BTC-COLD-9x3f</text>
+                        <text x="750" y="87" textAnchor="middle" fill="#34d399" fontSize="12" fontWeight="bold">₹3.90 Lakh</text>
+                      </g>
+
+                      {/* Arrow 0 -> 1 */}
+                      <line x1="180" y1="64" x2="230" y2="64" stroke="#ef4444" strokeWidth="2.5" markerEnd="url(#arrow-red-lg)" strokeDasharray="8 4">
                         <animate attributeName="stroke-dashoffset" from="36" to="0" dur="1.2s" repeatCount="indefinite" />
                       </line>
-                      {/* Arrow 1→2 */}
-                      <line x1="321" y1="54" x2="377" y2="54" stroke="#f59e0b" strokeWidth="2" markerEnd="url(#arrow-amber)" strokeDasharray="8 4">
+
+                      {/* Arrow 1 -> 2 */}
+                      <line x1="400" y1="64" x2="450" y2="64" stroke="#f59e0b" strokeWidth="2.5" markerEnd="url(#arrow-amber-lg)" strokeDasharray="8 4">
                         <animate attributeName="stroke-dashoffset" from="36" to="0" dur="1.4s" repeatCount="indefinite" />
                       </line>
-                      {/* Arrow 2→3 */}
-                      <line x1="501" y1="54" x2="557" y2="54" stroke="#10b981" strokeWidth="2" markerEnd="url(#arrow-green)" strokeDasharray="8 4">
+
+                      {/* Arrow 2 -> 3 */}
+                      <line x1="615" y1="64" x2="665" y2="64" stroke="#10b981" strokeWidth="2.5" markerEnd="url(#arrow-green-lg)" strokeDasharray="8 4">
                         <animate attributeName="stroke-dashoffset" from="36" to="0" dur="1.6s" repeatCount="indefinite" />
                       </line>
 
-                      {/* ── Phase labels below arrows ── */}
-                      <text x="164" y="100" textAnchor="middle" fill="#ef4444" fontSize="8.5" fontWeight="bold">PLACEMENT</text>
-                      <text x="349" y="100" textAnchor="middle" fill="#f59e0b" fontSize="8.5" fontWeight="bold">LAYERING</text>
-                      <text x="529" y="100" textAnchor="middle" fill="#10b981" fontSize="8.5" fontWeight="bold">INTEGRATION</text>
+                      {/* Phase Badges below arrows */}
+                      <rect x="185" y="108" width="80" height="22" rx="4" fill="#1f1315" stroke="#ef4444" strokeWidth="1" />
+                      <text x="225" y="123" textAnchor="middle" fill="#ef4444" fontSize="10.5" fontWeight="bold">PLACEMENT</text>
+
+                      <rect x="405" y="108" width="70" height="22" rx="4" fill="#1d1708" stroke="#f59e0b" strokeWidth="1" />
+                      <text x="440" y="123" textAnchor="middle" fill="#f59e0b" fontSize="10.5" fontWeight="bold">LAYERING</text>
+
+                      <rect x="618" y="108" width="85" height="22" rx="4" fill="#091b15" stroke="#10b981" strokeWidth="1" />
+                      <text x="660" y="123" textAnchor="middle" fill="#10b981" fontSize="10.5" fontWeight="bold">INTEGRATION</text>
                     </svg>
                   </div>
                 </div>
 
-                {/* ── Improved Transaction Table ── */}
-                <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-amber-500">Audit Ledger: Flagged Illicit Cashflows</h3>
-                  <div className="overflow-x-auto rounded-xl border border-slate-800/60">
-                    <table className="table-enterprise w-full">
+                {/* ── NEW Aggregated Analytics Section (Temporal & Category Trends) ── */}
+                {(() => {
+                  // Aggregate data by date
+                  const dateMap: Record<string, { date: string; flagged: number; normal: number; total: number }> = {};
+                  mockFinancialTransactions.forEach((tx) => {
+                    const rawDate = tx.TransactionDate ? tx.TransactionDate.split("T")[0] : "2026-01-01";
+                    const d = new Date(rawDate);
+                    const formatted = !isNaN(d.getTime())
+                      ? `${d.toLocaleString("en-US", { month: "short" })} ${d.getDate()}`
+                      : rawDate;
+
+                    if (!dateMap[formatted]) {
+                      dateMap[formatted] = { date: formatted, flagged: 0, normal: 0, total: 0 };
+                    }
+                    if (tx.IsSuspicious) {
+                      dateMap[formatted].flagged += tx.Amount;
+                    } else {
+                      dateMap[formatted].normal += tx.Amount;
+                    }
+                    dateMap[formatted].total += tx.Amount;
+                  });
+
+                  const temporalData = Object.values(dateMap);
+
+                  // Aggregate data by Crime Category / Risk Type
+                  const categoryAgg = [
+                    {
+                      category: "Phishing & Mule Layering",
+                      amount: mockFinancialTransactions
+                        .filter((t) => t.RiskReason?.toLowerCase().includes("mule") || t.RiskReason?.toLowerCase().includes("phishing") || t.RiskReason?.toLowerCase().includes("layering"))
+                        .reduce((sum, t) => sum + t.Amount, 0),
+                      count: mockFinancialTransactions.filter((t) => t.RiskReason?.toLowerCase().includes("mule") || t.RiskReason?.toLowerCase().includes("phishing") || t.RiskReason?.toLowerCase().includes("layering")).length,
+                      fill: "#ef4444",
+                    },
+                    {
+                      category: "Narcotics Settlement",
+                      amount: mockFinancialTransactions
+                        .filter((t) => t.RiskReason?.toLowerCase().includes("drug") || t.RiskReason?.toLowerCase().includes("narcotics") || t.RiskReason?.toLowerCase().includes("mdma"))
+                        .reduce((sum, t) => sum + t.Amount, 0),
+                      count: mockFinancialTransactions.filter((t) => t.RiskReason?.toLowerCase().includes("drug") || t.RiskReason?.toLowerCase().includes("narcotics") || t.RiskReason?.toLowerCase().includes("mdma")).length,
+                      fill: "#f59e0b",
+                    },
+                    {
+                      category: "Extortion Proceeds",
+                      amount: mockFinancialTransactions
+                        .filter((t) => t.RiskReason?.toLowerCase().includes("extortion") || t.RiskReason?.toLowerCase().includes("hawala"))
+                        .reduce((sum, t) => sum + t.Amount, 0),
+                      count: mockFinancialTransactions.filter((t) => t.RiskReason?.toLowerCase().includes("extortion") || t.RiskReason?.toLowerCase().includes("hawala")).length,
+                      fill: "#8b5cf6",
+                    },
+                    {
+                      category: "Embezzlement & Fraud",
+                      amount: mockFinancialTransactions
+                        .filter((t) => t.RiskReason?.toLowerCase().includes("embezzled") || t.RiskReason?.toLowerCase().includes("sim swap") || t.RiskReason?.toLowerCase().includes("job fraud"))
+                        .reduce((sum, t) => sum + t.Amount, 0),
+                      count: mockFinancialTransactions.filter((t) => t.RiskReason?.toLowerCase().includes("embezzled") || t.RiskReason?.toLowerCase().includes("sim swap") || t.RiskReason?.toLowerCase().includes("job fraud")).length,
+                      fill: "#0284c7",
+                    },
+                    {
+                      category: "Arms & Robbery Payoffs",
+                      amount: mockFinancialTransactions
+                        .filter((t) => t.RiskReason?.toLowerCase().includes("arms") || t.RiskReason?.toLowerCase().includes("robbery") || t.RiskReason?.toLowerCase().includes("murder"))
+                        .reduce((sum, t) => sum + t.Amount, 0),
+                      count: mockFinancialTransactions.filter((t) => t.RiskReason?.toLowerCase().includes("arms") || t.RiskReason?.toLowerCase().includes("robbery") || t.RiskReason?.toLowerCase().includes("murder")).length,
+                      fill: "#10b981",
+                    },
+                  ];
+
+                  return (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Chart 1: Temporal Cashflow Aggregation */}
+                      <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-5 space-y-3 shadow-xl">
+                        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                          <div>
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-sky-400 flex items-center gap-2">
+                              <TrendingUp className="w-4 h-4 text-sky-500" />
+                              Temporal Cashflow Volume Aggregation
+                            </h3>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                              Daily cash movement split by flagged suspicious vs verified normal funds
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="h-64 pt-2">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={temporalData} margin={{ top: 10, right: 15, left: 10, bottom: 25 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                              <XAxis dataKey="date" tick={{ fill: "#94a3b8", fontSize: 11 }} angle={-20} textAnchor="end" />
+                              <YAxis tick={{ fill: "#94a3b8", fontSize: 11 }} tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`} />
+                              <Tooltip
+                                contentStyle={{ backgroundColor: "#090d16", borderColor: "#334155", borderRadius: "8px", fontSize: "12px", color: "#f8fafc" }}
+                                formatter={(val: any, name: any) => [`₹${Number(val).toLocaleString("en-IN")}`, name === "flagged" ? "Flagged Suspicious" : "Verified Normal"]}
+                              />
+                              <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }} />
+                              <Bar dataKey="flagged" name="Flagged Suspicious" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="normal" name="Verified Normal" fill="#0284c7" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
+                      {/* Chart 2: Modus Operandi Aggregation */}
+                      <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-5 space-y-3 shadow-xl">
+                        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                          <div>
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                              <DollarSign className="w-4 h-4 text-amber-500" />
+                              Illicit Funds Aggregated by Crime Category
+                            </h3>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                              Distribution of total flagged volume across criminal operational channels
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="h-64 pt-2">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart layout="vertical" data={categoryAgg} margin={{ top: 10, right: 20, left: 40, bottom: 10 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                              <XAxis type="number" tick={{ fill: "#94a3b8", fontSize: 11 }} tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`} />
+                              <YAxis type="category" dataKey="category" tick={{ fill: "#cbd5e1", fontSize: 11 }} width={140} />
+                              <Tooltip
+                                contentStyle={{ backgroundColor: "#090d16", borderColor: "#334155", borderRadius: "8px", fontSize: "12px", color: "#f8fafc" }}
+                                formatter={(val: any) => [`₹${Number(val).toLocaleString("en-IN")}`, "Total Volume"]}
+                              />
+                              <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
+                                {categoryAgg.map((entry, idx) => (
+                                  <Cell key={`cell-${idx}`} fill={entry.fill} />
+                                ))}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* ── Account-to-Account Flow Network SVG (Zero Overlap & High Readability) ── */}
+                <div className="bg-slate-950/90 border border-slate-800 rounded-xl p-6 space-y-4 shadow-xl">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                    <div>
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-sky-400 flex items-center gap-2">
+                        <Users className="w-4.5 h-4.5 text-sky-500" />
+                        Account-to-Account Flow Network
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Interactive transaction matrix. Hover over nodes or flow lines for account details and risk reasons.
+                      </p>
+                    </div>
+
+                    {/* Network Legend */}
+                    <div className="flex flex-wrap items-center gap-4 text-xs font-semibold bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg">
+                      <span className="flex items-center gap-1.5 text-rose-400">
+                        <span className="w-4 h-1 bg-rose-500 rounded"></span> Flagged Suspicious Flow
+                      </span>
+                      <span className="flex items-center gap-1.5 text-amber-400">
+                        <span className="w-4 h-1 bg-amber-500 rounded"></span> Standard Flow
+                      </span>
+                      <span className="text-slate-500">|</span>
+                      <span className="text-slate-400">Line Thickness = Transaction Amount</span>
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const filteredTxs = mockFinancialTransactions.filter((t) => {
+                      if (finRiskFilter === "SUSPICIOUS" && !t.IsSuspicious) return false;
+                      if (finRiskFilter === "NORMAL" && t.IsSuspicious) return false;
+                      if (finSearchQuery) {
+                        const q = finSearchQuery.toLowerCase();
+                        return (
+                          t.FromAccount.toLowerCase().includes(q) ||
+                          t.ToAccount.toLowerCase().includes(q) ||
+                          t.SenderName.toLowerCase().includes(q) ||
+                          t.RecipientName.toLowerCase().includes(q) ||
+                          (t.RiskReason && t.RiskReason.toLowerCase().includes(q))
+                        );
+                      }
+                      return true;
+                    });
+
+                    // Build node & edge list (aggregated or detailed)
+                    let edgesToRender: any[] = [];
+                    if (finViewMode === "AGGREGATED") {
+                      const linkMap: Record<string, any> = {};
+                      filteredTxs.forEach((tx) => {
+                        const key = `${tx.FromAccount}___${tx.ToAccount}`;
+                        if (!linkMap[key]) {
+                          linkMap[key] = {
+                            from: tx.FromAccount,
+                            to: tx.ToAccount,
+                            amount: 0,
+                            count: 0,
+                            isSuspicious: false,
+                            sender: tx.SenderName,
+                            recipient: tx.RecipientName,
+                            reasons: [],
+                          };
+                        }
+                        linkMap[key].amount += tx.Amount;
+                        linkMap[key].count += 1;
+                        if (tx.IsSuspicious) linkMap[key].isSuspicious = true;
+                        if (tx.RiskReason && !linkMap[key].reasons.includes(tx.RiskReason)) {
+                          linkMap[key].reasons.push(tx.RiskReason);
+                        }
+                      });
+                      edgesToRender = Object.values(linkMap);
+                    } else {
+                      edgesToRender = filteredTxs.map((tx) => ({
+                        from: tx.FromAccount,
+                        to: tx.ToAccount,
+                        amount: tx.Amount,
+                        count: 1,
+                        isSuspicious: tx.IsSuspicious,
+                        sender: tx.SenderName,
+                        recipient: tx.RecipientName,
+                        reasons: [tx.RiskReason],
+                      }));
+                    }
+
+                    const fromAccts = [...new Set(edgesToRender.map((e) => e.from))];
+                    const toAccts = [...new Set(edgesToRender.map((e) => e.to))];
+                    const maxAmount = Math.max(...edgesToRender.map((e) => e.amount), 1);
+
+                    const svgW = 920;
+                    const nodeH = 36;
+                    const nodeW = 165;
+                    const leftX = 30;
+                    const rightX = 725;
+                    const startY = 45;
+                    const stepY = 46; // Step 46px > Node height 36px => Zero overlap!
+
+                    const maxNodes = Math.max(fromAccts.length, toAccts.length, 1);
+                    const svgH = Math.max(580, startY + maxNodes * stepY + 30);
+
+                    const fromY = (i: number) => startY + i * stepY;
+                    const toY = (i: number) => startY + i * stepY;
+
+                    return (
+                      <div className="relative overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-2">
+                        {/* Hover Tooltip Overlay */}
+                        {finHoveredEdge && (
+                          <div className="absolute top-4 right-4 z-20 bg-slate-900/95 border border-slate-700 p-3.5 rounded-xl shadow-2xl max-w-sm text-xs space-y-1 text-slate-200">
+                            <div className="font-bold text-sky-400 flex items-center gap-1.5">
+                              <span>{finHoveredEdge.from}</span>
+                              <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                              <span>{finHoveredEdge.to}</span>
+                            </div>
+                            <div className="text-slate-300 font-semibold">
+                              Total Flow: <span className="text-rose-400 font-bold">₹{finHoveredEdge.amount.toLocaleString("en-IN")}</span> ({finHoveredEdge.count} tx)
+                            </div>
+                            <div className="text-slate-400 text-[11px]">
+                              Sender: {finHoveredEdge.sender} → Recipient: {finHoveredEdge.recipient}
+                            </div>
+                            {finHoveredEdge.reasons.length > 0 && (
+                              <div className="text-rose-300/90 italic text-[11px] pt-1 border-t border-slate-800">
+                                <strong>Risk Reason:</strong> {finHoveredEdge.reasons.join("; ")}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full mx-auto" style={{ minWidth: 720 }}>
+                          {/* Section Headers */}
+                          <text x={leftX + nodeW / 2} y={22} textAnchor="middle" fill="#64748b" fontSize="12" fontWeight="bold" letterSpacing="1">
+                            SOURCE ACCOUNTS ({fromAccts.length})
+                          </text>
+                          <text x={rightX + nodeW / 2} y={22} textAnchor="middle" fill="#64748b" fontSize="12" fontWeight="bold" letterSpacing="1">
+                            DESTINATION / MULE ACCOUNTS ({toAccts.length})
+                          </text>
+
+                          {/* Render Flow Edges */}
+                          {edgesToRender.map((edge, i) => {
+                            const fi = fromAccts.indexOf(edge.from);
+                            const ti = toAccts.indexOf(edge.to);
+                            if (fi === -1 || ti === -1) return null;
+
+                            const y1 = fromY(fi) + nodeH / 2;
+                            const y2 = toY(ti) + nodeH / 2;
+                            const x1 = leftX + nodeW;
+                            const x2 = rightX;
+
+                            const ratio = edge.amount / maxAmount;
+                            const strokeW = Math.max(1.5, ratio * 6);
+                            const isSusp = edge.isSuspicious;
+
+                            const strokeColor = isSusp ? "#ef4444" : "#f59e0b";
+                            const opacity = finHoveredNode
+                              ? edge.from === finHoveredNode || edge.to === finHoveredNode
+                                ? 1
+                                : 0.15
+                              : 0.85;
+
+                            const midX = (x1 + x2) / 2;
+                            const path = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+
+                            // Alternating label vertical offset to eliminate label collision
+                            const dyOffset = i % 2 === 0 ? -10 : 12;
+                            const labelX = midX;
+                            const labelY = (y1 + y2) / 2 + dyOffset;
+
+                            const amtStr = `₹${(edge.amount / 1000).toFixed(0)}K${edge.count > 1 ? ` (${edge.count})` : ""}`;
+
+                            return (
+                              <g
+                                key={`edge-${i}`}
+                                onMouseEnter={() => setFinHoveredEdge(edge)}
+                                onMouseLeave={() => setFinHoveredEdge(null)}
+                                className="cursor-pointer transition-opacity"
+                                style={{ opacity }}
+                              >
+                                <path d={path} fill="none" stroke={strokeColor} strokeWidth={strokeW} strokeLinecap="round" />
+
+                                {/* Label Background Badge to prevent overlap with strokes */}
+                                <rect
+                                  x={labelX - 32}
+                                  y={labelY - 11}
+                                  width={64}
+                                  height={16}
+                                  rx={4}
+                                  ry={4}
+                                  fill="#030712"
+                                  stroke={isSusp ? "#ef4444" : "#334155"}
+                                  strokeWidth="1"
+                                />
+                                <text x={labelX} y={labelY} textAnchor="middle" fill={isSusp ? "#fca5a5" : "#fcd34d"} fontSize="11" fontWeight="bold" fontFamily="monospace">
+                                  {amtStr}
+                                </text>
+                              </g>
+                            );
+                          })}
+
+                          {/* From-Account Nodes (Left) */}
+                          {fromAccts.map((acct, i) => {
+                            const y = fromY(i);
+                            const isHovered = finHoveredNode === acct;
+                            return (
+                              <g
+                                key={`from-${acct}`}
+                                onMouseEnter={() => setFinHoveredNode(acct)}
+                                onMouseLeave={() => setFinHoveredNode(null)}
+                                className="cursor-pointer"
+                              >
+                                <rect
+                                  x={leftX}
+                                  y={y}
+                                  width={nodeW}
+                                  height={nodeH}
+                                  rx={6}
+                                  ry={6}
+                                  fill={isHovered ? "#1e293b" : "#0f172a"}
+                                  stroke={isHovered ? "#38bdf8" : "#334155"}
+                                  strokeWidth={isHovered ? "2" : "1.5"}
+                                />
+                                <text x={leftX + nodeW / 2} y={y + 22} textAnchor="middle" fill="#cbd5e1" fontSize="12" fontWeight="bold" fontFamily="monospace">
+                                  {acct}
+                                </text>
+                              </g>
+                            );
+                          })}
+
+                          {/* To-Account Nodes (Right) */}
+                          {toAccts.map((acct, i) => {
+                            const y = toY(i);
+                            const isMule = acct.includes("MULE") || acct.includes("SBI-8822") || acct.includes("CRYPTO");
+                            const isHovered = finHoveredNode === acct;
+                            return (
+                              <g
+                                key={`to-${acct}`}
+                                onMouseEnter={() => setFinHoveredNode(acct)}
+                                onMouseLeave={() => setFinHoveredNode(null)}
+                                className="cursor-pointer"
+                              >
+                                <rect
+                                  x={rightX}
+                                  y={y}
+                                  width={nodeW}
+                                  height={nodeH}
+                                  rx={6}
+                                  ry={6}
+                                  fill={isHovered ? "#2a0f12" : "#1a0a0a"}
+                                  stroke={isMule ? "#ef4444" : "#f59e0b"}
+                                  strokeWidth={isHovered ? "2.5" : "1.5"}
+                                />
+                                <text x={rightX + nodeW / 2} y={y + 22} textAnchor="middle" fill={isMule ? "#fca5a5" : "#fcd34d"} fontSize="12" fontWeight="bold" fontFamily="monospace">
+                                  {acct}
+                                </text>
+                              </g>
+                            );
+                          })}
+                        </svg>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* ── Transaction Table / Audit Ledger ── */}
+                <div className="bg-slate-950/80 border border-slate-800 p-6 rounded-xl space-y-4 shadow-xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                      <FileText className="w-4.5 h-4.5 text-amber-500" />
+                      Audit Ledger: Flagged Illicit Cashflows
+                    </h3>
+                    <span className="text-xs text-slate-400 font-semibold">
+                      Showing {mockFinancialTransactions.length} records from FIR Financial Database
+                    </span>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-xl border border-slate-800">
+                    <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr>
-                          <th className="text-left">Tx ID</th>
-                          <th className="text-center">Flow</th>
-                          <th className="text-left">From Account</th>
-                          <th className="text-left">To Account</th>
-                          <th className="text-right">Amount</th>
-                          <th className="text-left">Date</th>
-                          <th className="text-left">Sender → Recipient</th>
-                          <th className="text-left">Risk Reason</th>
-                          <th className="text-center">Status</th>
+                        <tr className="bg-slate-900/90 border-b border-slate-800 text-xs font-bold text-slate-300 uppercase tracking-wider">
+                          <th className="py-3 px-4">Tx ID</th>
+                          <th className="py-3 px-2 text-center">Flow</th>
+                          <th className="py-3 px-4">From Account</th>
+                          <th className="py-3 px-4">To Account</th>
+                          <th className="py-3 px-4 text-right">Amount</th>
+                          <th className="py-3 px-4">Date</th>
+                          <th className="py-3 px-4">Sender → Recipient</th>
+                          <th className="py-3 px-4">Risk Reason</th>
+                          <th className="py-3 px-4 text-center">Status</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-slate-850">
                         {[...mockFinancialTransactions]
+                          .filter((t) => {
+                            if (finRiskFilter === "SUSPICIOUS" && !t.IsSuspicious) return false;
+                            if (finRiskFilter === "NORMAL" && t.IsSuspicious) return false;
+                            if (finSearchQuery) {
+                              const q = finSearchQuery.toLowerCase();
+                              return (
+                                t.FromAccount.toLowerCase().includes(q) ||
+                                t.ToAccount.toLowerCase().includes(q) ||
+                                t.SenderName.toLowerCase().includes(q) ||
+                                t.RecipientName.toLowerCase().includes(q) ||
+                                (t.RiskReason && t.RiskReason.toLowerCase().includes(q))
+                              );
+                            }
+                            return true;
+                          })
                           .sort((a, b) => (b.IsSuspicious ? 1 : 0) - (a.IsSuspicious ? 1 : 0))
                           .map((tx, idx) => {
                             const isSusp = tx.IsSuspicious;
-                            const rowBg = idx % 2 === 0 ? "bg-slate-950/40" : "bg-slate-900/30";
-                            const borderColor = isSusp ? "border-l-rose-500" : "border-l-slate-700";
-                            // Format date DD/MM/YYYY
+                            const rowBg = idx % 2 === 0 ? "bg-slate-950/60" : "bg-slate-900/40";
+                            const borderColor = isSusp ? "border-l-4 border-l-rose-500" : "border-l-4 border-l-slate-700";
+
                             const rawDate = tx.TransactionDate || "";
                             let formattedDate = rawDate;
                             try {
@@ -1896,28 +2463,38 @@ export default function App() {
                                 formattedDate = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
                               }
                             } catch {}
-                            const riskText = tx.RiskReason ? (tx.RiskReason.length > 40 ? tx.RiskReason.slice(0, 40) + "…" : tx.RiskReason) : "—";
+
                             return (
-                              <tr key={idx} className={`${rowBg} border-l-2 ${borderColor}`}>
-                                <td className="font-mono text-caption text-slate-500">TX_{tx.TransactionID}</td>
-                                <td className="text-center">
-                                  <ArrowRight className={`w-3.5 h-3.5 mx-auto ${isSusp ? "text-rose-400" : "text-slate-600"}`} />
+                              <tr key={idx} className={`${rowBg} ${borderColor} hover:bg-slate-850/80 transition-colors`}>
+                                <td className="py-3 px-4 font-mono text-xs text-slate-300 font-semibold">TX_{tx.TransactionID}</td>
+                                <td className="py-3 px-2 text-center">
+                                  <ArrowRight className={`w-4 h-4 mx-auto ${isSusp ? "text-rose-400" : "text-slate-500"}`} />
                                 </td>
-                                <td className="font-mono text-caption">{tx.FromAccount}</td>
-                                <td className={`font-mono text-caption ${isSusp ? "text-rose-400/90" : "text-amber-400/80"}`}>{tx.ToAccount}</td>
-                                <td className="text-right font-bold text-rose-400">₹{tx.Amount.toLocaleString()}</td>
-                                <td className="text-slate-400 text-caption whitespace-nowrap">{formattedDate}</td>
-                                <td className="text-slate-400 text-caption">
-                                  <span className="text-slate-300">{tx.SenderName}</span>
-                                  <span className="text-slate-600 mx-1">→</span>
-                                  <span>{tx.RecipientName}</span>
+                                <td className="py-3 px-4 font-mono text-xs text-slate-200">{tx.FromAccount}</td>
+                                <td className={`py-3 px-4 font-mono text-xs ${isSusp ? "text-rose-300 font-bold" : "text-amber-300 font-semibold"}`}>
+                                  {tx.ToAccount}
                                 </td>
-                                <td className={`text-caption ${isSusp ? "text-rose-300/80" : "text-slate-500"}`}>{riskText}</td>
-                                <td className="text-center">
+                                <td className="py-3 px-4 text-right font-bold text-sm text-rose-400 tabular-nums">
+                                  ₹{tx.Amount.toLocaleString("en-IN")}
+                                </td>
+                                <td className="py-3 px-4 text-xs text-slate-400 whitespace-nowrap">{formattedDate}</td>
+                                <td className="py-3 px-4 text-xs text-slate-300">
+                                  <span className="font-semibold text-slate-200">{tx.SenderName}</span>
+                                  <span className="text-slate-500 mx-1.5">→</span>
+                                  <span className="text-slate-300">{tx.RecipientName}</span>
+                                </td>
+                                <td className={`py-3 px-4 text-xs leading-relaxed ${isSusp ? "text-rose-200/90 font-medium" : "text-slate-400"}`}>
+                                  {tx.RiskReason || "Standard non-flagged fund transfer"}
+                                </td>
+                                <td className="py-3 px-4 text-center whitespace-nowrap">
                                   {isSusp ? (
-                                    <span className="badge badge-red">Flagged</span>
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                                      Flagged
+                                    </span>
                                   ) : (
-                                    <span className="badge badge-slate">Passed</span>
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase bg-slate-800 text-slate-400 border border-slate-700">
+                                      Passed
+                                    </span>
                                   )}
                                 </td>
                               </tr>
@@ -1928,80 +2505,13 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* ── Money Flow Network SVG ── */}
-                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-5 space-y-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-sky-500">Account-to-Account Flow Network</h3>
-                  <p className="text-[11px] text-slate-500">Each line represents a transaction. Thick red = large suspicious flow · Thin amber = smaller flow · Nodes show account identifiers</p>
-                  {(() => {
-                    // Build unique left (From) and right (To) account lists
-                    const fromAccts = [...new Set(mockFinancialTransactions.map(t => t.FromAccount))];
-                    const toAccts   = [...new Set(mockFinancialTransactions.map(t => t.ToAccount))];
-                    const maxAmount = Math.max(...mockFinancialTransactions.map(t => t.Amount));
-                    const svgH = 300;
-                    const svgW = 500;
-                    const leftX = 30;
-                    const rightX = 370;
-                    const nodeH = 22;
-                    // Y positions for each node
-                    const fromY = (i: number) => 30 + i * ((svgH - 60) / Math.max(fromAccts.length - 1, 1));
-                    const toY   = (i: number) => 30 + i * ((svgH - 60) / Math.max(toAccts.length - 1, 1));
-                    return (
-                      <div className="overflow-x-auto">
-                        <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full max-w-xl mx-auto" style={{ minWidth: 360, background: "#020617", borderRadius: 12 }}>
-                          {/* Transaction edges */}
-                          {mockFinancialTransactions.map((tx, i) => {
-                            const fi = fromAccts.indexOf(tx.FromAccount);
-                            const ti = toAccts.indexOf(tx.ToAccount);
-                            const y1 = fromY(fi) + nodeH / 2;
-                            const y2 = toY(ti) + nodeH / 2;
-                            const x1 = leftX + 120;
-                            const x2 = rightX;
-                            const ratio = tx.Amount / maxAmount;
-                            const strokeW = Math.max(1, ratio * 5);
-                            const color = tx.IsSuspicious ? `rgba(239,68,68,${0.4 + ratio * 0.5})` : `rgba(245,158,11,${0.3 + ratio * 0.4})`;
-                            const midX = (x1 + x2) / 2;
-                            const path = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
-                            const labelX = midX;
-                            const labelY = (y1 + y2) / 2 - 4;
-                            return (
-                              <g key={i}>
-                                <path d={path} fill="none" stroke={color} strokeWidth={strokeW} opacity={0.85} />
-                                <text x={labelX} y={labelY} textAnchor="middle" fill="#94a3b8" fontSize="7.5" fontWeight="600">
-                                  ₹{(tx.Amount / 1000).toFixed(0)}K
-                                </text>
-                              </g>
-                            );
-                          })}
-                          {/* From-account nodes (left) */}
-                          {fromAccts.map((acct, i) => (
-                            <g key={acct}>
-                              <rect x={leftX} y={fromY(i)} width={120} height={nodeH} rx={5} ry={5} fill="#0f172a" stroke="#334155" strokeWidth="1" />
-                              <text x={leftX + 60} y={fromY(i) + 14} textAnchor="middle" fill="#94a3b8" fontSize="8.5" fontWeight="600">{acct}</text>
-                            </g>
-                          ))}
-                          {/* To-account nodes (right) */}
-                          {toAccts.map((acct, i) => (
-                            <g key={acct}>
-                              <rect x={rightX} y={toY(i)} width={120} height={nodeH} rx={5} ry={5} fill="#0f172a" stroke="#ef4444" strokeWidth="1" />
-                              <text x={rightX + 60} y={toY(i) + 14} textAnchor="middle" fill="#fca5a5" fontSize="8.5" fontWeight="600">{acct}</text>
-                            </g>
-                          ))}
-                          {/* Labels */}
-                          <text x={leftX + 60} y={16} textAnchor="middle" fill="#64748b" fontSize="8" fontWeight="bold">FROM ACCOUNTS</text>
-                          <text x={rightX + 60} y={16} textAnchor="middle" fill="#64748b" fontSize="8" fontWeight="bold">TO ACCOUNTS</text>
-                        </svg>
-                      </div>
-                    );
-                  })()}
-                </div>
-
                 {/* ── Alert Banner ── */}
-                <div className="bg-rose-500/5 border border-rose-500/20 p-4 rounded-xl text-xs space-y-1.5">
-                  <div className="text-rose-400 font-bold flex items-center gap-1.5 uppercase">
-                    <AlertTriangle className="w-4.5 h-4.5 text-rose-500" />
+                <div className="bg-rose-500/10 border border-rose-500/30 p-5 rounded-xl text-xs space-y-2 shadow-lg">
+                  <div className="text-rose-400 font-bold flex items-center gap-2 uppercase tracking-wide text-sm">
+                    <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
                     Suspicious Correlation Vector Detected
                   </div>
-                  <p className="text-slate-400 leading-relaxed">
+                  <p className="text-slate-300 leading-relaxed text-xs">
                     Suresh Hegde (P_SURESH_02) account SBI-8822-4412 is resolving as a centralized recipient of both drug distribution proceeds (from Kiran Gowda) and fences pay-out for high-end stolen appliances. Initiating coordination with commercial bank fraud desks is highly recommended.
                   </p>
                 </div>
