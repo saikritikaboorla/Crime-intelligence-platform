@@ -69,142 +69,111 @@ const DEMO_ROLES: DemoRole[] = [
   },
 ];
 
-// ── Deterministic star positions ───────────────────────────────────────────────
-const STARS = Array.from({ length: 90 }, (_, i) => ({
-  x: ((i * 127 + 33) % 97) + 1.5,
-  y: ((i * 89 + 17) % 95) + 2.5,
-  r: i % 3 === 0 ? 1.4 : i % 3 === 1 ? 0.9 : 0.5,
-  delay: (i * 0.31) % 4,
-  dur: 2 + (i % 5) * 0.8,
-}));
-
-// Network nodes for animated background graph
+// Network nodes for animated background graph (dark tactical palette)
 const BG_NODES = [
-  { x: 12, y: 18, r: 3.5, t: "case"    },
-  { x: 38, y: 10, r: 2.8, t: "suspect" },
-  { x: 65, y: 22, r: 3.2, t: "case"    },
-  { x: 85, y: 52, r: 2.5, t: "account" },
-  { x: 52, y: 45, r: 4.2, t: "case"    },
-  { x: 25, y: 55, r: 2.6, t: "suspect" },
-  { x: 75, y: 70, r: 2.8, t: "account" },
-  { x: 10, y: 72, r: 2.4, t: "victim"  },
-  { x: 42, y: 80, r: 3.0, t: "suspect" },
-  { x: 90, y: 35, r: 2.2, t: "victim"  },
-  { x: 30, y: 32, r: 2.0, t: "account" },
-  { x: 58, y: 88, r: 2.6, t: "case"    },
-  { x: 18, y: 42, r: 2.2, t: "suspect" },
-  { x: 70, y: 42, r: 2.4, t: "case"    },
-  { x: 48, y: 62, r: 1.8, t: "victim"  },
+  { x: 12, y: 18, r: 3.2, t: "case"    },
+  { x: 38, y: 10, r: 2.5, t: "suspect" },
+  { x: 65, y: 22, r: 3.0, t: "case"    },
+  { x: 85, y: 52, r: 2.2, t: "account" },
+  { x: 52, y: 45, r: 3.8, t: "case"    },
+  { x: 25, y: 55, r: 2.4, t: "suspect" },
+  { x: 75, y: 70, r: 2.5, t: "account" },
+  { x: 10, y: 72, r: 2.2, t: "victim"  },
+  { x: 42, y: 80, r: 2.8, t: "suspect" },
+  { x: 90, y: 35, r: 2.0, t: "victim"  },
+  { x: 30, y: 32, r: 1.8, t: "account" },
+  { x: 58, y: 88, r: 2.4, t: "case"    },
+  { x: 18, y: 42, r: 2.0, t: "suspect" },
+  { x: 70, y: 42, r: 2.2, t: "case"    },
+  { x: 48, y: 62, r: 1.6, t: "victim"  },
 ];
 const BG_EDGES = [
   [0,1],[1,2],[2,4],[3,4],[4,5],[4,6],[5,7],[6,8],[0,5],[2,9],[1,10],[8,11],[0,12],[2,13],[4,14],[10,12],
 ];
 
 function nodeStroke(t: string) {
-  if (t === "case")    return "rgba(59,130,246,0.55)";
-  if (t === "suspect") return "rgba(239,68,68,0.45)";
-  if (t === "account") return "rgba(245,158,11,0.45)";
-  return "rgba(16,185,129,0.45)";
+  if (t === "case")    return "rgba(37,99,235,0.45)";
+  if (t === "suspect") return "rgba(225,29,72,0.35)";
+  if (t === "account") return "rgba(217,119,6,0.35)";
+  return "rgba(16,185,129,0.35)";
 }
 function nodeFill(t: string) {
-  if (t === "case")    return "rgba(30,64,175,0.28)";
-  if (t === "suspect") return "rgba(153,27,27,0.22)";
-  if (t === "account") return "rgba(146,64,14,0.22)";
-  return "rgba(6,95,70,0.22)";
+  if (t === "case")    return "rgba(30,58,138,0.25)";
+  if (t === "suspect") return "rgba(136,19,55,0.20)";
+  if (t === "account") return "rgba(120,53,15,0.20)";
+  return "rgba(6,78,59,0.20)";
 }
 
 // ── Animated 3D Background ────────────────────────────────────────────────────
 function Background3D() {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setMounted(true), 80); return () => clearTimeout(t); }, []);
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 60); return () => clearTimeout(t); }, []);
 
   return (
     <div
       className="absolute inset-0 pointer-events-none select-none overflow-hidden"
       aria-hidden="true"
-      style={{ opacity: mounted ? 1 : 0, transition: "opacity 1.4s ease" }}
+      style={{ opacity: mounted ? 1 : 0, transition: "opacity 1.2s ease" }}
     >
       {/* ── CSS keyframes injected inline ── */}
       <style>{`
-        @keyframes twinkle   { 0%,100%{opacity:0.15} 50%{opacity:1} }
-        @keyframes drift1    { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(18px,-14px) scale(1.06)} }
-        @keyframes drift2    { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-22px,12px) scale(1.04)} }
-        @keyframes drift3    { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(14px,18px) scale(1.05)} }
-        @keyframes nodeFloat { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-9px)} }
+        @keyframes drift1    { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(25px,-20px) scale(1.08)} }
+        @keyframes drift2    { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-30px,18px) scale(1.05)} }
+        @keyframes nodeFloat { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-8px)} }
         @keyframes lineFlow  { 0%{stroke-dashoffset:60} 100%{stroke-dashoffset:0} }
-        @keyframes scanline  { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
-        @keyframes gridPulse { 0%,100%{opacity:0.035} 50%{opacity:0.075} }
+        @keyframes moveGrid3D {
+          0%   { transform: perspective(900px) rotateX(68deg) translateY(0px) scale(1.6); }
+          100% { transform: perspective(900px) rotateX(68deg) translateY(60px) scale(1.6); }
+        }
       `}</style>
 
-      {/* Deep space gradient base */}
+      {/* Dark executive midnight base */}
       <div style={{
         position: "absolute", inset: 0,
-        background: "linear-gradient(135deg, #020817 0%, #070d2a 35%, #0a0f2e 60%, #050d1f 100%)",
+        background: "linear-gradient(135deg, #020617 0%, #050a18 40%, #070d22 70%, #030712 100%)",
       }} />
 
-      {/* Moving glow orbs */}
+      {/* Soft dark-blue ambient glow orbs (no white light) */}
       <div style={{
-        position: "absolute", width: 700, height: 700,
-        top: "40%", left: "50%", transform: "translate(-50%,-50%)",
-        background: "radial-gradient(ellipse, rgba(37,99,235,0.07) 0%, transparent 65%)",
-        borderRadius: "50%", animation: "drift1 28s ease-in-out infinite",
-      }} />
-      <div style={{
-        position: "absolute", width: 420, height: 420,
-        top: "12%", right: "5%",
-        background: "radial-gradient(ellipse, rgba(99,102,241,0.055) 0%, transparent 60%)",
-        borderRadius: "50%", animation: "drift2 38s ease-in-out infinite",
+        position: "absolute", width: 800, height: 800,
+        top: "35%", left: "45%", transform: "translate(-50%,-50%)",
+        background: "radial-gradient(ellipse, rgba(29,78,216,0.06) 0%, transparent 65%)",
+        borderRadius: "50%", animation: "drift1 32s ease-in-out infinite",
       }} />
       <div style={{
-        position: "absolute", width: 320, height: 320,
-        bottom: "8%", left: "3%",
-        background: "radial-gradient(ellipse, rgba(16,185,129,0.04) 0%, transparent 60%)",
-        borderRadius: "50%", animation: "drift3 48s ease-in-out infinite",
+        position: "absolute", width: 500, height: 500,
+        top: "10%", right: "8%",
+        background: "radial-gradient(ellipse, rgba(79,70,229,0.045) 0%, transparent 60%)",
+        borderRadius: "50%", animation: "drift2 42s ease-in-out infinite",
       }} />
 
-      {/* Perspective grid */}
-      <svg
-        style={{
-          position: "absolute", inset: 0, width: "100%", height: "100%",
-          animation: "gridPulse 6s ease-in-out infinite",
-        }}
-        preserveAspectRatio="xMidYMid slice"
-      >
-        <defs>
-          <pattern id="grid3d" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(59,130,246,0.18)" strokeWidth="0.5" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid3d)"
-          style={{ transform: "perspective(900px) rotateX(72deg) scaleX(1.4) translateY(-30%)", transformOrigin: "50% 100%" }} />
-      </svg>
+      {/* Moving 3D Perspective Grid */}
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+        <svg
+          style={{
+            position: "absolute", width: "100%", height: "200%", top: "-50%",
+            transformOrigin: "50% 100%",
+            animation: "moveGrid3D 16s linear infinite",
+            opacity: 0.7,
+          }}
+          preserveAspectRatio="none"
+        >
+          <defs>
+            <pattern id="grid3dDark" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+              <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(37,99,235,0.09)" strokeWidth="0.6" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid3dDark)" />
+        </svg>
+      </div>
 
-      {/* Star field SVG */}
-      <svg
-        viewBox="0 0 100 100"
-        preserveAspectRatio="xMidYMid slice"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
-      >
-        {STARS.map((s, i) => (
-          <circle
-            key={i}
-            cx={s.x} cy={s.y} r={s.r}
-            fill="white"
-            opacity="0.2"
-            style={{
-              animation: `twinkle ${s.dur}s ease-in-out ${s.delay}s infinite`,
-            }}
-          />
-        ))}
-      </svg>
-
-      {/* Animated network graph */}
+      {/* Floating 3D Dark Network Nodes */}
       <svg
         viewBox="0 0 100 100"
         preserveAspectRatio="xMidYMid slice"
         style={{
           position: "absolute", inset: 0, width: "100%", height: "100%",
-          filter: "blur(0.3px)", opacity: 0.5,
+          filter: "blur(0.2px)", opacity: 0.45,
         }}
       >
         {BG_EDGES.map(([a, b], i) => {
@@ -212,32 +181,25 @@ function Background3D() {
           return (
             <line key={i}
               x1={na.x} y1={na.y} x2={nb.x} y2={nb.y}
-              stroke="rgba(59,130,246,0.2)" strokeWidth="0.22"
-              strokeDasharray="4 3"
-              style={{ animation: `lineFlow ${3 + (i % 4) * 0.6}s linear ${(i * 0.4) % 2}s infinite` }}
+              stroke="rgba(37,99,235,0.18)" strokeWidth="0.2"
+              strokeDasharray="3 3"
+              style={{ animation: `lineFlow ${4 + (i % 4) * 0.8}s linear ${(i * 0.4) % 2}s infinite` }}
             />
           );
         })}
         {BG_NODES.map((node, i) => (
-          <g key={i} style={{ animation: `nodeFloat ${5 + (i % 4) * 1.5}s ease-in-out ${(i * 0.7) % 3}s infinite` }}>
-            <circle cx={node.x} cy={node.y} r={node.r + 2.8} fill="none"
-              stroke={nodeStroke(node.t)} strokeWidth="0.18" opacity="0.4" />
+          <g key={i} style={{ animation: `nodeFloat ${6 + (i % 4) * 1.5}s ease-in-out ${(i * 0.7) % 3}s infinite` }}>
+            <circle cx={node.x} cy={node.y} r={node.r + 2.5} fill="none"
+              stroke={nodeStroke(node.t)} strokeWidth="0.15" opacity="0.3" />
             <circle cx={node.x} cy={node.y} r={node.r}
-              fill={nodeFill(node.t)} stroke={nodeStroke(node.t)} strokeWidth="0.35" />
+              fill={nodeFill(node.t)} stroke={nodeStroke(node.t)} strokeWidth="0.3" />
           </g>
         ))}
       </svg>
-
-      {/* Subtle scan line sweep */}
-      <div style={{
-        position: "absolute", left: 0, right: 0, height: "2px",
-        background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.08), transparent)",
-        animation: "scanline 8s linear infinite",
-        pointerEvents: "none",
-      }} />
     </div>
   );
 }
+
 
 // ── Counting animation hook ───────────────────────────────────────────────────
 function useCountUp(target: number, duration = 1200) {
