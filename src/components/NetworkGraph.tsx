@@ -37,10 +37,19 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
   const [layoutMode, setLayoutMode] = useState<"circular" | "hierarchy">("circular");
   const [spacingFactor, setSpacingFactor] = useState<number>(1.0);
 
-  const [zoom, setZoom] = useState<number>(0.65);
-  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState<number>(1.6);
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: -400, y: -250 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() => {
+    const initial = new Set<string>();
+    nodes.forEach(n => {
+      if (n.type === "Case" || n.type === "Suspect") initial.add(n.id);
+    });
+    return initial;
+  });
 
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -78,64 +87,86 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
     return { nodeIds: connectedNodeIds, edgeIds: connectedEdgeIds };
   }, [selectedNodeId, edges]);
 
+  // Hover highlight connections (similar to relatedConnections but for hoveredNodeId)
+  const hoveredConnections = useMemo(() => {
+    if (!hoveredNodeId) return { nodeIds: new Set<string>(), edgeIds: new Set<string>() };
+    const connectedNodeIds = new Set<string>([hoveredNodeId]);
+    const connectedEdgeIds = new Set<string>();
+
+    edges.forEach(edge => {
+      if (edge.source === hoveredNodeId) {
+        connectedNodeIds.add(edge.target);
+        connectedEdgeIds.add(edge.id);
+      } else if (edge.target === hoveredNodeId) {
+        connectedNodeIds.add(edge.source);
+        connectedEdgeIds.add(edge.id);
+      }
+    });
+
+    return { nodeIds: connectedNodeIds, edgeIds: connectedEdgeIds };
+  }, [hoveredNodeId, edges]);
+
   // Render SVG Node positions dynamically
   const positionedNodes = useMemo(() => {
-    const width = 1200;
-    const height = 800;
-    const center = { x: width / 2, y: height / 2 };
+    const width = 2200;
+    const height = 1400;
+    const center = { x: 1100, y: 700 };
 
     if (layoutMode === "circular") {
-      // Group nodes by type and place each type on its own ring
       const byType: Record<string, any[]> = { Case: [], Suspect: [], Victim: [], Account: [] };
       nodes.forEach(n => {
         const key = n.type in byType ? n.type : "Account";
         byType[key].push(n);
       });
 
-      // Ring radii — well-separated
+      // Larger ring radii to reduce crowding on 2200×1400 canvas
       const ringRadius: Record<string, number> = {
-        Case: 140 * spacingFactor,
-        Suspect: 280 * spacingFactor,
-        Victim: 400 * spacingFactor,
-        Account: 520 * spacingFactor,
+        Case:    150 * spacingFactor,
+        Suspect: 380 * spacingFactor,
+        Victim:  600 * spacingFactor,
+        Account: 780 * spacingFactor,
       };
 
       return nodes.map(node => {
         const group = byType[node.type] ?? byType.Account;
         const idx = group.findIndex((n: any) => n.id === node.id);
         const count = group.length;
-        const r = ringRadius[node.type] ?? 300 * spacingFactor;
-        // Offset each ring start angle slightly to avoid stacking
-        const startAngle = node.type === "Suspect" ? Math.PI / 6 : node.type === "Victim" ? Math.PI / 3 : node.type === "Account" ? Math.PI / 2 : 0;
+        const r = ringRadius[node.type] ?? 400 * spacingFactor;
+        // Offset start angle per type so labels don't stack at 0°
+        const offsets: Record<string, number> = { Case: 0, Suspect: Math.PI / 8, Victim: Math.PI / 4, Account: Math.PI / 3 };
+        const startAngle = offsets[node.type] ?? 0;
         const angle = startAngle + (count > 1 ? (idx / count) * 2 * Math.PI : 0);
+        // Jitter: alternate ±20px y-offset for odd-indexed nodes to prevent label overlap
+        const jitter = idx % 2 === 1 ? 20 : -20;
+        const jitterY = count > 3 ? jitter : 0;
         return {
           ...node,
           x: center.x + r * Math.cos(angle),
-          y: center.y + r * Math.sin(angle),
+          y: center.y + r * Math.sin(angle) + jitterY,
         };
       });
     } else {
-      // Hierarchy layout with generous spacing
-      const cases = nodes.filter(n => n.type === "Case");
+      // Hierarchy: Cases top → Suspects → Victims → Accounts bottom
+      // Increased vertical spacing to spread nodes on taller canvas
+      const cases    = nodes.filter(n => n.type === "Case");
       const suspects = nodes.filter(n => n.type === "Suspect");
-      const victims = nodes.filter(n => n.type === "Victim");
+      const victims  = nodes.filter(n => n.type === "Victim");
       const accounts = nodes.filter(n => n.type === "Account");
 
       const placeRow = (group: any[], y: number) =>
         group.map((node, idx) => ({
           ...node,
           x: (width / (group.length + 1)) * (idx + 1),
-          y,
+          // Horizontal jitter for alternating nodes
+          y: y + (idx % 2 === 1 ? 20 : -20),
         }));
 
-      const placed = [
-        ...placeRow(cases,    100),
-        ...placeRow(suspects, 300),
-        ...placeRow(victims,  480),
-        ...placeRow(accounts, 660),
-      ];
-
-      return placed.map(node => ({
+      return [
+        ...placeRow(cases,    150),
+        ...placeRow(suspects, 420),
+        ...placeRow(victims,  700),
+        ...placeRow(accounts, 980),
+      ].map(node => ({
         ...node,
         x: center.x + (node.x - center.x) * spacingFactor,
         y: center.y + (node.y - center.y) * spacingFactor,
@@ -148,6 +179,36 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
     positionedNodes.forEach(n => map.set(n.id, n));
     return map;
   }, [positionedNodes]);
+
+  // Progressive visibility: show Case/Suspect always; others only when connected to selected/hovered/expanded
+  const visibleNodeIds = useMemo(() => {
+    const ids = new Set<string>();
+    positionedNodes.forEach(n => {
+      if (n.type === "Case" || n.type === "Suspect") ids.add(n.id);
+    });
+    // Also show nodes connected to selected node
+    if (selectedNodeId) {
+      edges.forEach(e => {
+        if (e.source === selectedNodeId) ids.add(e.target);
+        if (e.target === selectedNodeId) ids.add(e.source);
+      });
+    }
+    // Also show nodes connected to hovered node
+    if (hoveredNodeId) {
+      edges.forEach(e => {
+        if (e.source === hoveredNodeId) ids.add(e.target);
+        if (e.target === hoveredNodeId) ids.add(e.source);
+      });
+    }
+    // Also show nodes that have been manually expanded
+    expandedNodes.forEach(nid => {
+      edges.forEach(e => {
+        if (e.source === nid) ids.add(e.target);
+        if (e.target === nid) ids.add(e.source);
+      });
+    });
+    return ids;
+  }, [positionedNodes, edges, selectedNodeId, hoveredNodeId, expandedNodes]);
 
   // Interactive direct connections list for selected node details traversal
   const directLinks = useMemo(() => {
@@ -172,6 +233,7 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
   // Auto-focus selected node in directory list or center it
   const handleNodeSelect = (nodeId: string) => {
     setSelectedNodeId(nodeId);
+    setExpandedNodes(prev => new Set([...prev, nodeId]));
     const node = nodeMap.get(nodeId);
     if (node) {
       onSelectNode(node);
@@ -206,8 +268,8 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
   };
 
   const resetPanZoom = () => {
-    setZoom(1.0);
-    setPan({ x: 0, y: 0 });
+    setZoom(1.6);
+    setPan({ x: -400, y: -250 });
   };
 
   const renderIcon = (type: string, isSuspicious?: boolean) => {
@@ -257,37 +319,50 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* Sidebar Controls & Refined Details */}
-      <div className="dossier-panel flex flex-col overflow-hidden" style={{ maxHeight: '520px' }}>
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold tracking-wider uppercase text-amber-500 flex items-center gap-2">
+      {/* Sidebar Controls & Refined Details — FULL PANEL SCROLL */}
+      <div className="bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden flex flex-col" style={{ height: '600px', minHeight: '600px' }}>
+        {/* Fixed Header */}
+        <div className="flex-shrink-0 p-4 border-b border-slate-800/60 bg-slate-900/40">
+          <h3 className="text-xs font-bold tracking-wider uppercase text-amber-500 flex items-center gap-2 mb-3">
             <Sliders className="w-4 h-4" />
             Control Hub
           </h3>
-          <div className="bg-slate-950/80 p-0.5 rounded-lg border border-slate-800 flex items-center">
-            <button
-              onClick={() => setViewTab("graph")}
-              className={`p-1 rounded-md text-xs transition ${
-                viewTab === "graph"
-                  ? "bg-amber-500/20 text-amber-400"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-              title="Interactive Graphic Network"
-            >
-              <Network className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewTab("directory")}
-              className={`p-1 rounded-md text-xs transition ${
-                viewTab === "directory"
-                  ? "bg-amber-500/20 text-amber-400"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-              title="Accessible Relationship Registry"
-            >
+          {/* Graph view toggle button */}
+          <button
+            onClick={() => setViewTab("graph")}
+            className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border transition ${
+              viewTab === "graph"
+                ? "bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-[0_0_12px_rgba(251,191,36,0.3)]"
+                : "bg-slate-900 text-slate-400 border-slate-700 hover:text-slate-200 hover:border-slate-600 hover:bg-slate-800"
+            }`}
+            title="Interactive Graph View"
+          >
+            <Network className="w-4 h-4" />
+            <span>Graph</span>
+          </button>
+        </div>
+
+        {/* SCROLLABLE CONTENT AREA — wraps everything below the fixed header */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
+
+        {/* Syndicate Directory — prominent full-width button */}
+        <div>
+          <button
+            onClick={() => setViewTab("directory")}
+            className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border transition ${
+              viewTab === "directory"
+                ? "bg-blue-500/20 text-blue-300 border-blue-500/50 shadow-[0_0_16px_rgba(59,130,246,0.4)]"
+                : "bg-slate-900/80 text-blue-400 border-blue-500/30 hover:bg-blue-900/20 hover:border-blue-400/50"
+            }`}
+            title="Syndicate Relationship Directory"
+          >
+            <div className="flex items-center gap-2">
               <List className="w-4 h-4" />
-            </button>
-          </div>
+              <span>Syndicate Directory</span>
+            </div>
+            <ChevronRight className="w-4 h-4 shrink-0" />
+          </button>
+          <p className="text-[10px] text-slate-500 text-center mt-1">Browse all entities &amp; relationships</p>
         </div>
 
         {/* Global Filters */}
@@ -398,8 +473,8 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
           </div>
         )}
 
-        {/* Detailed Relationship Inspector / Panel */}
-        <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-4 pt-3 border-t border-slate-800/60 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        {/* Detailed Relationship Inspector */}
+        <div className="space-y-4 pt-3 border-t border-slate-800/60">
           {selectedNodeId && nodeMap.has(selectedNodeId) ? (
             <div className="bg-slate-950/80 rounded-xl border border-slate-800 space-y-3.5 animate-fadeIn overflow-hidden">
               {/* Colored header bar based on node type */}
@@ -573,14 +648,15 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
               </div>
             </div>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center p-4 border border-dashed border-slate-800 rounded-xl bg-slate-900/10 text-slate-500">
+            <div className="flex flex-col items-center justify-center text-center p-4 border border-dashed border-slate-800 rounded-xl bg-slate-900/10 text-slate-500 min-h-[120px]">
               <Info className="w-6 h-6 text-slate-600 mb-2" />
               <p className="text-xs font-semibold">Inspector Inactive</p>
               <p className="text-[10px] text-slate-600 mt-1 max-w-[200px]">Click any node or register entry to deeply explore active intelligence connections</p>
             </div>
           )}
-        </div>
-      </div>
+        </div>{/* END inspector wrapper */}
+        </div>{/* END scrollable content */}
+      </div>{/* END sidebar container */}
 
       {/* Main Presentation Pane (Interactive SVG Canvas OR Registry Table) */}
       <div className="lg:col-span-3 flex flex-col h-[600px] bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden relative">
@@ -599,6 +675,8 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
               <div className="bg-slate-900/90 backdrop-blur-md py-1 px-3 rounded-full border border-slate-800 text-[10px] font-bold text-slate-300 flex items-center gap-1.5 shadow-lg pointer-events-auto">
                 <span>Zoom Scale:</span>
                 <span className="text-amber-400">{(zoom * 100).toFixed(0)}%</span>
+                <span className="text-slate-600 mx-1">|</span>
+                <span className="text-slate-400">{visibleNodeIds.size} / {positionedNodes.length} nodes</span>
               </div>
             </div>
 
@@ -625,6 +703,29 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
               >
                 <Maximize2 className="w-4 h-4" />
               </button>
+              {/* Toggle: Show All Nodes / Collapse to Primary Only */}
+              <button
+                onClick={() => {
+                  const allPrimary = positionedNodes.every(
+                    n => n.type === "Case" || n.type === "Suspect" || !expandedNodes.has(n.id)
+                  );
+                  if (expandedNodes.size > positionedNodes.filter(n => n.type === "Case" || n.type === "Suspect").length) {
+                    // Collapse back to primary only (Case + Suspect)
+                    const primary = new Set<string>();
+                    positionedNodes.forEach(n => {
+                      if (n.type === "Case" || n.type === "Suspect") primary.add(n.id);
+                    });
+                    setExpandedNodes(primary);
+                  } else {
+                    // Expand all nodes
+                    setExpandedNodes(new Set(positionedNodes.map(n => n.id)));
+                  }
+                }}
+                className="p-2 bg-slate-950 hover:bg-slate-800 text-slate-300 rounded-lg border border-slate-800 transition active:scale-95"
+                title="Toggle: Show All / Primary Only"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
             </div>
 
             {/* Main Interactive Canvas */}
@@ -636,194 +737,152 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
               onWheel={handleWheel}
-              viewBox="0 0 1200 800"
+              viewBox="0 0 2200 1400"
             >
               {/* Transform Group carrying the zoom and panning offsets */}
               <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
-                
-                {/* 1. RENDER RELATIONSHIP EDGES */}
+
+                {/* 1. RENDER RELATIONSHIP EDGES — only between visible nodes */}
                 {edges.map((edge) => {
                   const srcNode = nodeMap.get(edge.source);
                   const tgtNode = nodeMap.get(edge.target);
-
                   if (!srcNode || !tgtNode) return null;
+                  // Progressive: hide edges whose nodes are not in both visible AND filtered sets
+                  if (!filteredNodeIds.has(edge.source) || !filteredNodeIds.has(edge.target)) return null;
+                  if (!visibleNodeIds.has(edge.source) || !visibleNodeIds.has(edge.target)) return null;
 
-                  // Highlight logic
-                  let isHighlighted = false;
-                  let isDimmed = false;
-                  if (selectedNodeId) {
-                    if (relatedConnections.edgeIds.has(edge.id)) {
-                      isHighlighted = true;
-                    } else {
-                      isDimmed = true;
-                    }
-                  }
+                  const isHighlighted = selectedNodeId
+                    ? relatedConnections.edgeIds.has(edge.id)
+                    : hoveredNodeId
+                      ? hoveredConnections.edgeIds.has(edge.id)
+                      : false;
+                  const isDimmed = selectedNodeId
+                    ? !relatedConnections.edgeIds.has(edge.id)
+                    : hoveredNodeId
+                      ? !hoveredConnections.edgeIds.has(edge.id)
+                      : false;
 
-                  // Customize visual weights & color channels
-                  let strokeColor = "stroke-slate-800";
-                  let strokeWidth = 1.2;
-                  let strokeDasharray = "";
+                  if (isDimmed) return (
+                    <line key={edge.id} x1={srcNode.x} y1={srcNode.y} x2={tgtNode.x} y2={tgtNode.y}
+                      stroke="rgba(30,41,59,0.3)" strokeWidth={0.5} />
+                  );
 
-                  if (edge.relation === "ASSOCIATE_OF") {
-                    strokeColor = "stroke-emerald-500/40";
-                    strokeDasharray = "4,4";
-                  } else if (edge.relation === "TRANSACTIONS") {
-                    strokeColor = edge.amount > 100000 ? "stroke-rose-500/60" : "stroke-rose-400/40";
-                    strokeWidth = edge.amount > 100000 ? 2.5 : 1.8;
-                  } else if (edge.relation === "ACCUSED_IN") {
-                    strokeColor = "stroke-amber-500/40";
-                  } else if (edge.relation === "VICTIM_IN") {
-                    strokeColor = "stroke-sky-500/40";
-                  }
+                  let stroke = "#334155"; let strokeWidth = 1; let dash = "";
+                  if (edge.relation === "ASSOCIATE_OF")  { stroke = "rgba(16,185,129,0.45)"; dash = "5,4"; }
+                  else if (edge.relation === "TRANSACTIONS") { stroke = edge.amount > 100000 ? "rgba(239,68,68,0.7)" : "rgba(239,68,68,0.4)"; strokeWidth = edge.amount > 100000 ? 2.5 : 1.5; }
+                  else if (edge.relation === "ACCUSED_IN")   { stroke = "rgba(245,158,11,0.45)"; }
+                  else if (edge.relation === "VICTIM_IN")    { stroke = "rgba(56,189,248,0.45)"; }
+                  else if (edge.relation === "LINKED_TO_CASE") { stroke = "rgba(168,85,247,0.35)"; dash = "3,5"; }
 
-                  if (isHighlighted) {
-                    strokeColor = strokeColor.includes("rose") ? "stroke-rose-400" :
-                                 strokeColor.includes("emerald") ? "stroke-emerald-400" :
-                                 strokeColor.includes("sky") ? "stroke-sky-400" :
-                                 "stroke-amber-400";
-                    strokeWidth += 1.2;
-                  } else if (isDimmed) {
-                    strokeColor = "stroke-slate-900/10";
-                    strokeWidth = 0.5;
-                  }
+                  if (isHighlighted) { strokeWidth += 1.5; stroke = stroke.replace(/0\.\d+\)/, "0.95)"); }
+
+                  // Curved edges to reduce overlap — use quadratic bezier
+                  const mx = (srcNode.x + tgtNode.x) / 2;
+                  const my = (srcNode.y + tgtNode.y) / 2;
+                  // Curve offset perpendicular to edge direction
+                  const dx = tgtNode.x - srcNode.x;
+                  const dy = tgtNode.y - srcNode.y;
+                  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+                  const curve = 30;
+                  const cx = mx - (dy / len) * curve;
+                  const cy = my + (dx / len) * curve;
 
                   return (
-                    <g key={edge.id} className="transition-all duration-300">
-                      <line
-                        x1={srcNode.x}
-                        y1={srcNode.y}
-                        x2={tgtNode.x}
-                        y2={tgtNode.y}
-                        className={`${strokeColor} transition-all duration-300`}
+                    <g key={edge.id}>
+                      <path
+                        d={`M ${srcNode.x} ${srcNode.y} Q ${cx} ${cy} ${tgtNode.x} ${tgtNode.y}`}
+                        fill="none"
+                        stroke={stroke}
                         strokeWidth={strokeWidth}
-                        strokeDasharray={strokeDasharray}
+                        strokeDasharray={dash}
+                        className="transition-all duration-300"
                       />
-                      {/* Financial transaction label */}
-                      {edge.relation === "TRANSACTIONS" && (isHighlighted || !selectedNodeId) && (
-                        <g transform={`translate(${(srcNode.x + tgtNode.x) / 2}, ${(srcNode.y + tgtNode.y) / 2})`}>
-                          <rect
-                            x="-22"
-                            y="-7"
-                            width="44"
-                            height="14"
-                            rx="4"
-                            className="fill-slate-950/90 stroke-slate-800/80 stroke-[0.5]"
-                          />
-                          <text
-                            fill="#f43f5e"
-                            fontSize="8"
-                            fontWeight="bold"
-                            textAnchor="middle"
-                            y="3"
-                          >
-                            ₹{(edge.amount / 1000).toFixed(0)}k
-                          </text>
+                      {/* Financial amount label — only when highlighted */}
+                      {edge.relation === "TRANSACTIONS" && isHighlighted && (
+                        <g transform={`translate(${cx}, ${cy})`}>
+                          <rect x="-24" y="-8" width="48" height="16" rx="4" fill="rgba(2,6,23,0.92)" stroke="rgba(51,65,85,0.8)" strokeWidth="0.5" />
+                          <text fill="#f87171" fontSize="9" fontWeight="bold" textAnchor="middle" y="4">₹{(edge.amount/1000).toFixed(0)}k</text>
                         </g>
                       )}
                     </g>
                   );
                 })}
 
-                {/* 2. RENDER STATIONS / ENTITY NODES */}
+                {/* 2. RENDER NODES — with progressive label visibility */}
                 {positionedNodes.map((node) => {
-                  let isHighlighted = false;
-                  let isDimmed = false;
-                  let isFiltered = filteredNodeIds.has(node.id);
+                  // Node is visible only if it passes both the search/filter AND progressive visibility
+                  if (!filteredNodeIds.has(node.id)) return null;
+                  if (!visibleNodeIds.has(node.id)) return null;
 
-                  if (selectedNodeId) {
-                    if (relatedConnections.nodeIds.has(node.id)) {
-                      isHighlighted = true;
-                    } else {
-                      isDimmed = true;
-                    }
-                  }
+                  // Combined selected + hovered highlight/dim logic
+                  const isHighlighted = selectedNodeId
+                    ? relatedConnections.nodeIds.has(node.id)
+                    : hoveredNodeId
+                      ? hoveredConnections.nodeIds.has(node.id)
+                      : false;
+                  const isDimmed = selectedNodeId
+                    ? !relatedConnections.nodeIds.has(node.id)
+                    : hoveredNodeId
+                      ? !hoveredConnections.nodeIds.has(node.id)
+                      : false;
+                  const isSelected = node.id === selectedNodeId;
 
-                  // Determine colors and sizes
-                  let size = 16;
-                  let fillColor = "fill-slate-900";
-                  let strokeColor = "stroke-slate-600";
+                  // Always show labels — graph must be fully readable at all zoom levels
+                  const showLabel = true;
 
-                  if (node.type === "Suspect") {
-                    fillColor = "fill-emerald-950/90";
-                    strokeColor = "stroke-emerald-400";
-                    size = 18;
-                  } else if (node.type === "Case") {
-                    fillColor = "fill-amber-950/90";
-                    strokeColor = "stroke-amber-400";
-                    size = 20;
-                  } else if (node.type === "Account") {
-                    fillColor = node.isSuspicious ? "fill-rose-950/90" : "fill-slate-900/90";
-                    strokeColor = node.isSuspicious ? "stroke-rose-500" : "stroke-slate-500";
-                    size = 15;
-                  } else if (node.type === "Victim") {
-                    fillColor = "fill-sky-950/90";
-                    strokeColor = "stroke-sky-400";
-                    size = 15;
-                  }
-
-                  if (isHighlighted) {
-                    size += 4;
-                  }
-
-                  // Visibility class
-                  let opacityClass = "transition-all duration-300";
-                  if (isDimmed) opacityClass += " opacity-25 scale-90";
-                  if (!isFiltered) opacityClass += " opacity-10";
+                  let size = 14;
+                  let fill = "#1e293b"; let stroke = "#64748b";
+                  if (node.type === "Suspect") { fill = "rgba(6,78,59,0.9)";  stroke = isHighlighted ? "#34d399" : "#10b981"; size = 24; }
+                  else if (node.type === "Case")    { fill = "rgba(120,53,15,0.9)"; stroke = isHighlighted ? "#fcd34d" : "#f59e0b"; size = 28; }
+                  else if (node.type === "Account") { fill = node.isSuspicious ? "rgba(127,29,29,0.9)" : "rgba(15,23,42,0.9)"; stroke = node.isSuspicious ? "#f87171" : "#475569"; size = 20; }
+                  else if (node.type === "Victim")  { fill = "rgba(7,89,133,0.9)";  stroke = isHighlighted ? "#7dd3fc" : "#38bdf8"; size = 21; }
+                  if (isSelected) { size += 6; stroke = "#fbbf24"; }
 
                   return (
                     <g
                       key={node.id}
                       transform={`translate(${node.x}, ${node.y})`}
-                      className={`${opacityClass} cursor-pointer group outline-none`}
+                      style={{ opacity: isDimmed ? 0.15 : 1, transition: "opacity 0.25s, transform 0.25s" }}
+                      className="cursor-pointer group outline-none"
                       onClick={() => handleNodeSelect(node.id)}
+                      onMouseEnter={() => setHoveredNodeId(node.id)}
+                      onMouseLeave={() => setHoveredNodeId(null)}
                       onKeyDown={(e) => handleKeyDown(e, node.id)}
-                      tabIndex={isFiltered ? 0 : -1}
+                      tabIndex={0}
                       role="button"
-                      aria-label={`${node.type} Node: ${node.label}`}
+                      aria-label={`${node.type}: ${node.label}`}
                     >
-                      <title>{`${node.type}: ${node.label} ${node.age ? `, Age: ${node.age}` : ""}`}</title>
-                      
-                      {/* Ripple Halo effect on hovered or highlighted items */}
-                      {isHighlighted && (
-                        <circle
-                          r={size + 8}
-                          className="fill-none stroke-amber-400/25 stroke-[1] animate-ping"
-                        />
-                      )}
+                      <title>{`${node.type}: ${node.label}${node.age ? ` | Age: ${node.age}` : ""}${node.crimeNo ? ` | FIR: ${node.crimeNo}` : ""}${node.owner ? ` | ${node.owner}` : ""}`}</title>
 
-                      <circle
-                        r={size}
-                        className={`${fillColor} ${strokeColor} stroke-[2] group-hover:stroke-amber-400 transition-all shadow-xl`}
-                      />
-                      
-                      <foreignObject
-                        x={-size}
-                        y={-size}
-                        width={size * 2}
-                        height={size * 2}
-                        className="pointer-events-none"
-                      >
+                      {/* Selection ring */}
+                      {isSelected && <circle r={size + 8} fill="none" stroke="rgba(251,191,36,0.3)" strokeWidth="2" className="animate-ping" />}
+                      {isHighlighted && <circle r={size + 5} fill="none" stroke={stroke} strokeWidth="1" opacity="0.4" />}
+
+                      {/* Node body */}
+                      <circle r={size} fill={fill} stroke={stroke} strokeWidth={isSelected ? 2.5 : isHighlighted ? 2 : 1.5}
+                        className="group-hover:stroke-amber-400 transition-all duration-200" />
+
+                      {/* Icon inside node */}
+                      <foreignObject x={-size * 0.7} y={-size * 0.7} width={size * 1.4} height={size * 1.4} className="pointer-events-none">
                         <div className="w-full h-full flex items-center justify-center">
                           {renderIcon(node.type, node.isSuspicious)}
                         </div>
                       </foreignObject>
 
-                      {/* Clean display typography labels */}
-                      <g transform={`translate(0, ${size + 14})`}>
+                      {/* Label — always visible, crisp and readable */}
+                      <g transform={`translate(0, ${size + 16})`}
+                         style={{ opacity: 1 }}
+                         className="pointer-events-none">
                         <rect
-                          x="-45"
-                          y="-7"
-                          width="90"
-                          height="14"
-                          rx="4"
-                          className="fill-slate-950/80 stroke-slate-900/40 stroke-[0.5] group-hover:fill-slate-900 transition-colors"
+                          x={-(Math.min(node.label.length, 20) * 3.8 + 10)}
+                          y="-9" rx="4"
+                          width={(Math.min(node.label.length, 20) * 7.6 + 20)}
+                          height="18"
+                          fill="rgba(2,6,23,0.95)" stroke="rgba(71,85,105,0.8)" strokeWidth="0.8"
                         />
-                        <text
-                          className="fill-slate-200 font-bold text-[9px] pointer-events-none"
-                          textAnchor="middle"
-                          y="3"
-                        >
-                          {node.label.length > 15 ? `${node.label.substring(0, 12)}...` : node.label}
+                        <text fill={isSelected ? "#fbbf24" : isHighlighted ? "#e2e8f0" : "#cbd5e1"} fontSize="11" fontWeight="700"
+                          textAnchor="middle" y="4" className="pointer-events-none">
+                          {node.label.length > 20 ? node.label.substring(0, 18) + "…" : node.label}
                         </text>
                       </g>
                     </g>
@@ -916,12 +975,13 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                           <button
                             onClick={() => {
                               setViewTab("graph");
-                              handleNodeSelect(node.id);
+                              // Small delay to let graph render before centering on node
+                              setTimeout(() => handleNodeSelect(node.id), 60);
                             }}
-                            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-amber-400 border border-slate-800 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                            className="px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 hover:text-amber-300 border border-amber-500/30 hover:border-amber-500/60 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-[0_0_8px_rgba(251,191,36,0.15)]"
                           >
-                            <span>Trace on Graph</span>
                             <Network className="w-3.5 h-3.5" />
+                            <span>Show in Graph</span>
                           </button>
                         </div>
                       </div>

@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, ScatterChart, Scatter,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  Cell
+  Cell, LabelList, ZAxis
 } from "recharts";
 import {
   Activity, TrendingUp, Sparkles, AlertTriangle, CheckCircle,
@@ -63,36 +63,37 @@ interface InsightProps {
 
 function AIInsightCard({ observation, trend, whyMatters, action, accentClass = "border-blue-500/25" }: InsightProps) {
   const [open, setOpen] = useState(true);
+  // Extract the border color class to use as a left-border accent
   return (
-    <div className={`mt-4 rounded-xl border ${accentClass} bg-slate-950/60`}>
+    <div className={`mt-4 rounded-xl border ${accentClass} bg-slate-950/60 border-l-4`}>
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-4 py-3 text-left group"
         aria-expanded={open}
       >
-        <span className="flex items-center gap-2 text-caption font-semibold text-blue-300 uppercase tracking-wider">
-          <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+        <span className="flex items-center gap-2 text-xs font-bold text-blue-300 uppercase tracking-wider">
+          <Sparkles className="w-4 h-4 text-blue-400" />
           AI Insight
         </span>
-        <span className="text-slate-500 text-micro group-hover:text-slate-300 transition">{open ? "▴ Hide" : "▾ Show Insight"}</span>
+        <span className="text-slate-500 text-xs group-hover:text-slate-300 transition">{open ? "▴ Hide" : "▾ Show Insight"}</span>
       </button>
       {open && (
         <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="space-y-0.5">
-            <div className="text-micro font-semibold text-slate-500 uppercase tracking-wider">Key Observation</div>
-            <p className="text-body-sm text-slate-300 leading-relaxed">{observation}</p>
+          <div className="space-y-1">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Key Observation</div>
+            <p className="text-xs text-slate-300 leading-relaxed">{observation}</p>
           </div>
-          <div className="space-y-0.5">
-            <div className="text-micro font-semibold text-slate-500 uppercase tracking-wider">Trend Summary</div>
-            <p className="text-body-sm text-slate-300 leading-relaxed">{trend}</p>
+          <div className="space-y-1">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Trend Summary</div>
+            <p className="text-xs text-slate-300 leading-relaxed">{trend}</p>
           </div>
-          <div className="space-y-0.5">
-            <div className="text-micro font-semibold text-slate-500 uppercase tracking-wider">Why It Matters</div>
-            <p className="text-body-sm text-slate-300 leading-relaxed">{whyMatters}</p>
+          <div className="space-y-1">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Why It Matters</div>
+            <p className="text-xs text-slate-300 leading-relaxed">{whyMatters}</p>
           </div>
-          <div className="space-y-0.5">
-            <div className="text-micro font-semibold text-amber-500/80 uppercase tracking-wider">Suggested Action</div>
-            <p className="text-body-sm text-amber-200/80 leading-relaxed">{action}</p>
+          <div className="space-y-1">
+            <div className="text-xs font-bold text-amber-500/90 uppercase tracking-wider">Suggested Action</div>
+            <p className="text-xs text-amber-200/90 leading-relaxed">{action}</p>
           </div>
         </div>
       )}
@@ -166,16 +167,17 @@ function SocioRiskChart({ data }: { data: SocioRow[] }) {
       </div>
 
       {/* Chart */}
-      <div className="h-72 w-full mt-4">
+      <div className="h-[320px] w-full mt-4">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 8, right: 16, bottom: 8, left: 0 }} barCategoryGap="25%">
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(51,65,85,0.4)" vertical={false} />
+          <BarChart data={chartData} margin={{ top: 20, right: 16, bottom: 24, left: 8 }} barCategoryGap="25%">
+            <CartesianGrid strokeDasharray="4 4" stroke="rgba(51,65,85,0.5)" vertical={false} />
             <XAxis
               dataKey="name"
               stroke="#475569"
-              tick={{ fill: "#94a3b8", fontSize: 12, fontWeight: 500 }}
+              tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 500 }}
               tickLine={false}
               axisLine={{ stroke: "rgba(51,65,85,0.5)" }}
+              label={{ value: "Districts", position: "insideBottom", offset: -12, style: { fill: "#64748b", fontSize: 11 } }}
             />
             <YAxis
               stroke="#475569"
@@ -184,20 +186,28 @@ function SocioRiskChart({ data }: { data: SocioRow[] }) {
               axisLine={false}
               tickFormatter={(v) => `${v}%`}
               domain={[0, 100]}
-              width={38}
-              label={{ value: "Index (%)", angle: -90, position: "insideLeft", offset: 10, style: { fill: "#64748b", fontSize: 11 } }}
+              width={44}
+              label={{ value: "Index Value", angle: -90, position: "insideLeft", offset: 12, style: { fill: "#64748b", fontSize: 11 } }}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(51,65,85,0.15)" }} />
             <Legend
-              wrapperStyle={{ fontSize: 12, paddingTop: 12 }}
+              wrapperStyle={{ fontSize: 12, paddingTop: 14 }}
               iconType="square"
-              iconSize={10}
+              iconSize={12}
               formatter={(v) => <span style={{ color: "#94a3b8" }}>{v}</span>}
             />
-            <Bar dataKey="Urbanization %"     fill="#0ea5e9" radius={[3,3,0,0]} maxBarSize={18} />
-            <Bar dataKey="Economic Stress %"  fill="#f59e0b" radius={[3,3,0,0]} maxBarSize={18} />
-            <Bar dataKey="Migration Rate %"   fill="#8b5cf6" radius={[3,3,0,0]} maxBarSize={18} />
-            <Bar dataKey="Education Index %"  fill="#10b981" radius={[3,3,0,0]} maxBarSize={18} />
+            <Bar dataKey="Urbanization %"     fill="#60a5fa" radius={[3,3,0,0]} maxBarSize={18}>
+              <LabelList dataKey="Urbanization %" position="top" style={{ fontSize: 9, fill: "#94a3b8" }} formatter={(v: number) => `${v}`} />
+            </Bar>
+            <Bar dataKey="Economic Stress %"  fill="#f87171" radius={[3,3,0,0]} maxBarSize={18}>
+              <LabelList dataKey="Economic Stress %" position="top" style={{ fontSize: 9, fill: "#94a3b8" }} formatter={(v: number) => `${v}`} />
+            </Bar>
+            <Bar dataKey="Migration Rate %"   fill="#a78bfa" radius={[3,3,0,0]} maxBarSize={18}>
+              <LabelList dataKey="Migration Rate %" position="top" style={{ fontSize: 9, fill: "#94a3b8" }} formatter={(v: number) => `${v}`} />
+            </Bar>
+            <Bar dataKey="Education Index %"  fill="#34d399" radius={[3,3,0,0]} maxBarSize={18}>
+              <LabelList dataKey="Education Index %" position="top" style={{ fontSize: 9, fill: "#94a3b8" }} formatter={(v: number) => `${v}`} />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -229,16 +239,20 @@ function CrimeDistributionChart({ data }: { data: SocioRow[] }) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
     const row = data.find(d => d.districtName.startsWith(label));
+    const total = row?.totalCrimes ?? 0;
     return (
       <TooltipBox>
         <p style={{ color: "#e2e8f0", fontWeight: 700, marginBottom: 6 }}>{row?.districtName ?? label}</p>
         {payload.map((p: any) => p.value > 0 && (
           <p key={p.name} style={{ color: p.fill, marginBottom: 2 }}>
-            {p.name}: <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{p.value} case{p.value !== 1 ? "s" : ""}</span>
+            {p.name}: <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{p.value}</span>
+            {total > 0 && (
+              <span style={{ color: "#64748b", fontSize: 11 }}> ({Math.round((p.value / total) * 100)}%)</span>
+            )}
           </p>
         ))}
         <p style={{ color: "#64748b", borderTop: "1px solid #1e293b", paddingTop: 6, marginTop: 6 }}>
-          Total: <span style={{ color: "#fbbf24", fontWeight: 700 }}>{row?.totalCrimes ?? 0}</span>
+          Total: <span style={{ color: "#fbbf24", fontWeight: 700 }}>{total}</span>
         </p>
       </TooltipBox>
     );
@@ -261,7 +275,7 @@ function CrimeDistributionChart({ data }: { data: SocioRow[] }) {
         </div>
       </div>
 
-      <div className="h-72 w-full mt-4">
+      <div className="h-[340px] w-full mt-4">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 8, right: 16, bottom: 8, left: 0 }} barCategoryGap="35%">
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(51,65,85,0.4)" vertical={false} />
@@ -358,7 +372,7 @@ function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
         ))}
       </div>
 
-      <div className="h-72 w-full mt-2">
+      <div className="h-[340px] w-full mt-2">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 16, right: 24, bottom: 40, left: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(51,65,85,0.4)" />
@@ -495,7 +509,7 @@ function DistrictRadarChart({ data }: { data: SocioRow[] }) {
         </div>
       </div>
 
-      <div className="h-64 w-full">
+      <div className="h-[320px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={singleRadarData} margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
             <PolarGrid stroke="rgba(51,65,85,0.5)" />
@@ -515,8 +529,8 @@ function DistrictRadarChart({ data }: { data: SocioRow[] }) {
               dataKey="value"
               stroke={color}
               fill={color}
-              fillOpacity={0.18}
-              strokeWidth={2}
+              fillOpacity={0.35}
+              strokeWidth={2.5}
             />
             <Tooltip
               contentStyle={{

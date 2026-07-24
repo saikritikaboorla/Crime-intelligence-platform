@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import catalyst from "zcatalyst-sdk-node";
 dotenv.config();
 
 import {
@@ -424,6 +425,101 @@ app.get("/api/analytics/decision-support/:caseId", (req, res) => {
       ...arrests.map(a => ({ time: a.ArrestSurrenderDate, label: a.ArrestSurrenderTypeID === 1 ? "Arrest Made" : "Voluntary Surrender", description: `By IO: ${officerName(a.IOID)}` })),
     ].sort((a, b) => a.time.localeCompare(b.time)),
   });
+});
+
+// ── HEATMAP ANALYTICS ────────────────────────────────────────────────────────
+app.get("/api/analytics/heatmap", async (req, res) => {
+  // Query Zoho Catalyst Data Store if deployed & initialized
+  let catalystCases: any[] = [];
+  try {
+    const catalystApp = catalyst.initialize(req as any);
+    const zql = catalystApp.zcql();
+    const result = await zql.executeZCQLQuery("SELECT * FROM CaseMaster");
+    if (result && Array.isArray(result) && result.length > 0) {
+      catalystCases = result.map((r: any) => r.CaseMaster || r);
+    }
+  } catch (err) {
+    // Seamless fallback to CSV data layer
+  }
+
+  // Combine CSV cases with Catalyst cases
+  const sourceCases = catalystCases.length > 0 ? catalystCases : mockCases;
+
+  // Crime incident layer from CaseMaster (has lat/lng)
+  const caseLayer = sourceCases.map(c => {
+    const dist = mockDistricts.find(d => d.DistrictID === districtOfStation(c.PoliceStationID));
+    return {
+      layer: "case",
+      caseNo: c.CaseNo,
+      crimeNo: c.CrimeNo,
+      lat: c.latitude,
+      lng: c.longitude,
+      district: dist?.DistrictName ?? "Unknown",
+      station: stationName(c.PoliceStationID),
+      crimeType: crimeSubHead(c.CrimeMinorHeadID),
+      crimeHead: crimeHead(c.CrimeMajorHeadID),
+      severity: c.GravityOffenceID === 1 ? "heinous" : "standard",
+      status: statusName(c.CaseStatusID),
+      date: c.CrimeRegisteredDate,
+      weight: c.GravityOffenceID === 1 ? 10 : 5,
+      isSuspicious: false,
+    };
+  });
+
+  // Arrest layer — use station GPS from cases in same station
+  const arrestLayer = mockArrestSurrenders.map(a => {
+    const relCase = mockCases.find(c => c.CaseMasterID === a.CaseMasterID);
+    if (!relCase) return null;
+    const dist = mockDistricts.find(d => d.DistrictID === a.ArrestSurrenderDistrictId);
+    const accused = mockAccused.find(acc => acc.AccusedMasterID === a.AccusedMasterID);
+    return {
+      layer: "arrest",
+      caseNo: relCase.CaseNo,
+      crimeNo: relCase.CrimeNo,
+      lat: relCase.latitude,
+      lng: relCase.longitude,
+      district: dist?.DistrictName ?? "Unknown",
+      station: stationName(a.PoliceStationID),
+      crimeType: crimeSubHead(relCase.CrimeMinorHeadID),
+      crimeHead: crimeHead(relCase.CrimeMajorHeadID),
+      severity: relCase.GravityOffenceID === 1 ? "heinous" : "standard",
+      status: "Arrested",
+      date: a.ArrestSurrenderDate,
+      weight: 8,
+      suspectName: accused?.AccusedName ?? "Unknown",
+      isSuspicious: false,
+    };
+  }).filter(Boolean);
+
+  // Financial fraud layer — use case GPS for linked cases
+  const financialLayer = mockFinancialTransactions
+    .filter(t => t.IsSuspicious)
+    .map(t => {
+      const relCase = mockCases.find(c => c.CaseMasterID === t.CaseMasterID);
+      if (!relCase) return null;
+      const dist = mockDistricts.find(d => d.DistrictID === districtOfStation(relCase.PoliceStationID));
+      return {
+        layer: "financial",
+        caseNo: relCase.CaseNo,
+        crimeNo: relCase.CrimeNo,
+        lat: relCase.latitude,
+        lng: relCase.longitude,
+        district: dist?.DistrictName ?? "Unknown",
+        station: stationName(relCase.PoliceStationID),
+        crimeType: "Financial Fraud / Money Laundering",
+        crimeHead: "Financial Crime",
+        severity: "heinous",
+        status: "Under Investigation",
+        date: t.TransactionDate,
+        amount: t.Amount,
+        weight: 9,
+        isSuspicious: true,
+        riskReason: t.RiskReason,
+      };
+    }).filter(Boolean);
+
+  const all = [...caseLayer, ...arrestLayer, ...financialLayer];
+  res.json(all);
 });
 
 // ── FORECASTING / EARLY WARNINGS ─────────────────────────────────────────────

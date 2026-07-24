@@ -36,6 +36,7 @@ import NetworkGraph from "./components/NetworkGraph";
 import MissionControl from "./components/MissionControl";
 import SociologicalInsights from "./components/SociologicalInsights";
 import LoginPage from "./components/LoginPage";
+import HeatmapAnalytics from "./components/HeatmapAnalytics";
 import { mockFinancialTransactions } from "./mockData";
 
 export default function App() {
@@ -77,6 +78,7 @@ export default function App() {
   
   // Forecasting and warning state
   const [forecasting, setForecasting] = useState<any>({ warnings: [], hotspotsRisk: [] });
+  const [heatmapData, setHeatmapData] = useState<any[]>([]);
   
   // Audit Logs state
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -106,12 +108,18 @@ export default function App() {
     fetchOffenders();
     fetchDecisionSupport(1001);
     fetchForecasting();
+    fetchHeatmap();
     fetchAuditLogs();
   }, []);
 
   useEffect(() => {
-    // Auto scroll chat
-    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Scroll only the chat message container, not the whole page
+    if (chatBottomRef.current) {
+      const container = chatBottomRef.current.parentElement;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
   }, [messages]);
 
   // Log audit event on server and local
@@ -205,6 +213,16 @@ export default function App() {
       setForecasting(data);
     } catch (err) {
       console.error("Error fetching forecasting:", err);
+    }
+  };
+
+  const fetchHeatmap = async () => {
+    try {
+      const res = await fetch("/api/analytics/heatmap");
+      const data = await res.json();
+      setHeatmapData(data);
+    } catch (err) {
+      console.error("Error fetching heatmap:", err);
     }
   };
 
@@ -549,6 +567,7 @@ export default function App() {
             { id: "sociological", icon: LineChart,      label: "Sociological Insights",desc: "Socio-economic factors" },
             { id: "financial",    icon: DollarSign,     label: "Financial Trace",      desc: "Money flow analysis" },
             { id: "forecasting",  icon: AlertTriangle,  label: "Early Warnings",       desc: "Predictive signals" },
+            { id: "heatmap",      icon: MapPin,         label: "Heatmap Analytics",    desc: "Geographic crime density" },
           ].map((tab) => {
             const Icon = tab.icon;
             const isSelected = activeTab === tab.id;
@@ -688,6 +707,7 @@ export default function App() {
                   { id: "sociological", icon: LineChart,     label: "Sociological Insights", desc: "Socio-economic factors" },
                   { id: "financial",    icon: DollarSign,    label: "Financial Trace",       desc: "Money flow analysis" },
                   { id: "forecasting",  icon: AlertTriangle, label: "Early Warnings",        desc: "Predictive signals" },
+                  { id: "heatmap",      icon: MapPin,        label: "Heatmap Analytics",     desc: "Geographic crime density" },
                 ].map((tab) => {
                   const Icon = tab.icon;
                   const isSelected = activeTab === tab.id;
@@ -878,7 +898,7 @@ export default function App() {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
-                  className="flex flex-col h-full grow gap-4"
+                  className="flex flex-col h-full grow gap-4 min-h-0"
                 >
                   {/* Chat header panel */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-700/60 pb-4 gap-3">
@@ -904,19 +924,99 @@ export default function App() {
                   </div>
 
                   {/* Main conversation sandbox */}
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 grow min-h-[400px]">
-                    {/* Left Column: Operational Intel Dossier */}
-                    <div className="dossier-panel">
-                      <div className="space-y-4">
-                        <div className="pb-3 border-b border-slate-800/70">
-                          <h3 className="text-label text-amber-500/90">
-                            Operational Intel Dossier
-                          </h3>
-                          <p className="text-micro text-slate-600 font-mono mt-1 uppercase">MODULE: CHAT_CORES_GROUNDED</p>
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0" style={{minHeight: '0'}}>
+                    {/* Left Column: Operational Intel Dossier — FULL HEIGHT */}
+                    <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl flex flex-col overflow-hidden min-h-0 h-full">
+                      {/* Fixed header */}
+                      <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-slate-800/70">
+                        <h3 className="text-label text-amber-500/90">
+                          Operational Intel Dossier
+                        </h3>
+                        <p className="text-micro text-slate-600 font-mono mt-1 uppercase">MODULE: CHAT_CORES_GROUNDED</p>
+                      </div>
+
+                      {/* SCROLLABLE body */}
+                      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
+
+                        {/* Suggested Queries — FIRST, most prominent */}
+                        <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl p-3 space-y-2">
+                          <h4 className="dossier-label text-amber-500/90 flex items-center gap-1.5">
+                            <Sparkles className="w-3 h-3 text-amber-400" />
+                            Suggested Queries
+                          </h4>
+                          <div className="space-y-1.5 text-caption">
+                            {[
+                              { text: "Who are the repeat offenders in property theft?", lang: "en" },
+                              { text: "ರಮೇಶ್ ಕುಮಾರ್ ಅವರ ಅಪರಾಧ ಇತಿಹಾಸವೇನು?", lang: "kn" },
+                              { text: "Analyze the cyber phishing flow", lang: "en" },
+                              { text: "Show all drug trafficking cases in Bengaluru", lang: "en" },
+                              { text: "List mule accounts linked to FIR 202600004", lang: "en" },
+                              { text: "What is the financial laundering trail for Vikram Malhotra?", lang: "en" },
+                              { text: "Which district has the highest crime rate?", lang: "en" },
+                              { text: "ಸುರೇಶ್ ಹೆಗ್ಡೆ ಅವರ ಎಲ್ಲ ಪ್ರಕರಣಗಳನ್ನು ತೋರಿಸಿ", lang: "kn" },
+                              { text: "Show all murder cases and their suspects", lang: "en" },
+                              { text: "What are Kiran Gowda's known associates?", lang: "en" },
+                              { text: "List all arrests made in Kalaburagi district", lang: "en" },
+                              { text: "Which cases have chargesheet filed?", lang: "en" },
+                              { text: "Analyze extortion cases and financial connections", lang: "en" },
+                              { text: "ಮಂಗಳೂರಿನಲ್ಲಿ ಯಾವ ಅಪರಾಧಗಳು ನಡೆದಿವೆ?", lang: "kn" },
+                              { text: "Show victims who are police personnel", lang: "en" },
+                            ].map((q, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedLanguage(q.lang as any);
+                                  setChatInput(q.text);
+                                }}
+                                className="w-full text-left py-2.5 px-2.5 rounded-lg border border-slate-800/60 hover:border-amber-500/50 bg-slate-900/40 text-slate-400 hover:text-slate-200 hover:bg-amber-500/5 transition leading-snug"
+                              >
+                                {q.text}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Cross-Module Actions */}
+                        <div className="pt-1 border-t border-slate-800/50 space-y-1.5">
+                          <h4 className="dossier-label text-amber-500/70">Cross-Module Actions</h4>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTab("network");
+                              logAuditEvent("Cross Link", "Transitioned from Chat to Network Map.");
+                            }}
+                            className="cross-action-btn"
+                          >
+                            <span>Accused Link Map</span>
+                            <span>→</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTab("profiling");
+                              logAuditEvent("Cross Link", "Transitioned from Chat to Offender Profiling.");
+                            }}
+                            className="cross-action-btn"
+                          >
+                            <span>Offender Dossiers</span>
+                            <span>→</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTab("heatmap");
+                              logAuditEvent("Cross Link", "Transitioned from Chat to Heatmap Analytics.");
+                            }}
+                            className="cross-action-btn"
+                          >
+                            <span>Heatmap Analytics</span>
+                            <span>→</span>
+                          </button>
                         </div>
 
                         {/* Purpose and Utility */}
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5 pt-1 border-t border-slate-800/50">
                           <h4 className="dossier-label text-slate-500">Crime-Solver Purpose</h4>
                           <p className="text-caption text-slate-400 leading-relaxed">
                             Translates natural language queries into grounded retrieval calls. Search raw case narratives, victim files, and suspicious account nodes to verify active timelines.
@@ -927,76 +1027,31 @@ export default function App() {
                         <div className="space-y-1.5 pt-2 border-t border-slate-800/50">
                           <h4 className="dossier-label text-slate-500">Database Variables</h4>
                           <div className="space-y-1 font-mono text-micro">
-                            <div className="dossier-var-row">
-                              <span className="text-blue-400">FIRNo</span>
-                              <span className="text-slate-600">Case Identifier</span>
-                            </div>
-                            <div className="dossier-var-row">
-                              <span className="text-blue-400">BriefFacts</span>
-                              <span className="text-slate-600">Incident Narrative</span>
-                            </div>
-                            <div className="dossier-var-row">
-                              <span className="text-blue-400">Citations</span>
-                              <span className="text-slate-600">Grounding Docs</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Quick Suggested Inputs */}
-                        <div className="space-y-1.5 pt-2 border-t border-slate-800/50">
-                          <h4 className="dossier-label text-slate-500">Suggested Queries</h4>
-                          <div className="space-y-1.5 text-caption">
                             {[
-                              { text: "Who are the repeat offenders in property theft?", lang: "en" },
-                              { text: "ರಮೇಶ್ ಕುಮಾರ್ ಅವರ ಅಪರಾಧ ಇತಿಹಾಸವೇನು?", lang: "kn" },
-                              { text: "Analyze the cyber phishing flow", lang: "en" }
-                            ].map((q, idx) => (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedLanguage(q.lang as any);
-                                  setChatInput(q.text);
-                                }}
-                                className="w-full text-left p-2 rounded-lg border border-slate-800/60 hover:border-slate-700 bg-slate-900/40 text-slate-400 hover:text-slate-200 transition text-left leading-snug"
-                              >
-                                {q.text}
-                              </button>
+                              { key: "FIRNo", val: "Case Identifier" },
+                              { key: "BriefFacts", val: "Incident Narrative" },
+                              { key: "Citations", val: "Grounding Docs" },
+                              { key: "AccusedName", val: "Suspect Record" },
+                              { key: "PersonID", val: "Cross-case Link" },
+                              { key: "latitude/longitude", val: "GPS Coordinates" },
+                              { key: "IsSuspicious", val: "Financial Flag" },
+                              { key: "RiskReason", val: "Mule Rationale" },
+                              { key: "ArrestDate", val: "Custody Record" },
+                              { key: "DistrictName", val: "Jurisdiction" },
+                            ].map(({ key, val }) => (
+                              <div key={key} className="dossier-var-row">
+                                <span className="text-blue-400">{key}</span>
+                                <span className="text-slate-600">{val}</span>
+                              </div>
                             ))}
                           </div>
                         </div>
-                      </div>
 
-                      {/* Cross-Module Actions */}
-                      <div className="pt-3 border-t border-slate-800/50 space-y-1.5">
-                        <h4 className="dossier-label text-amber-500/70">Cross-Module Actions</h4>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTab("network");
-                            logAuditEvent("Cross Link", "Transitioned from Chat to Network Map.");
-                          }}
-                          className="cross-action-btn"
-                        >
-                          <span>Accused Link Map</span>
-                          <span>→</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTab("profiling");
-                            logAuditEvent("Cross Link", "Transitioned from Chat to Offender Profiling.");
-                          }}
-                          className="cross-action-btn"
-                        >
-                          <span>Offender Dossiers</span>
-                          <span>→</span>
-                        </button>
-                      </div>
+                      </div>{/* end scrollable body */}
                     </div>
 
                     {/* Right Column: Dynamic Messages scroll window */}
-                    <div className="lg:col-span-3 flex flex-col bg-slate-950/40 border border-slate-800/60 rounded-xl overflow-hidden h-[450px]">
+                    <div className="lg:col-span-3 flex flex-col bg-slate-950/40 border border-slate-800/60 rounded-xl overflow-hidden min-h-0 h-full">
                     
                     <div className="flex-grow overflow-y-auto space-y-4 p-4 scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
                       {messages.map((m) => (
@@ -1075,7 +1130,7 @@ export default function App() {
                     </div>
 
                     {/* Chat input form */}
-                    <form onSubmit={handleSendMessage} className="border-t border-slate-800/60 bg-slate-950/80 p-3 flex gap-2">
+                    <form onSubmit={handleSendMessage} className="mt-auto border-t border-slate-800/60 bg-slate-950/80 p-3 flex gap-2">
                       <button type="button" onClick={startVoiceInput}
                         className={`p-2.5 rounded-lg border transition shrink-0 ${
                           isListening ? "bg-rose-500/20 border-rose-500/40 text-rose-400 animate-pulse" : "bg-slate-900 hover:bg-slate-800 border-slate-700 text-slate-400"
@@ -1681,6 +1736,7 @@ export default function App() {
                 exit={{ opacity: 0, y: -15 }}
                 className="space-y-6 flex flex-col h-full grow overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800"
               >
+                {/* ── Header ── */}
                 <div>
                   <h2 className="section-title">
                     <DollarSign className="w-5 h-5 text-rose-500" />
@@ -1689,89 +1745,265 @@ export default function App() {
                   <p className="section-subtitle mt-1">Automated tracking of suspicious transaction flows, unverified mule accounts, and layering sequences (FR-7)</p>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                  {/* Left explanation of Laundering Phases */}
-                  <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl space-y-4.5 col-span-1">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-rose-500">Mule Account Integration Alerts</h3>
-                    <p className="text-xs leading-relaxed text-slate-300">
-                      Our intelligence layer matches transactions in the database with financial fraud MOs (e.g. immediate cashouts, high velocity layering):
-                    </p>
-
-                    <div className="space-y-3 text-xs">
-                      <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-lg space-y-1.5">
-                        <div className="flex items-center gap-2 text-rose-400 font-bold uppercase text-[10px]">
-                          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
-                          <span>Phase 1: Placement</span>
+                {/* ── KPI Summary Cards ── */}
+                {(() => {
+                  const suspicious = mockFinancialTransactions.filter(t => t.IsSuspicious);
+                  const totalFlaggedAmount = suspicious.reduce((sum, t) => sum + t.Amount, 0);
+                  const uniqueAccounts = new Set([
+                    ...mockFinancialTransactions.map(t => t.FromAccount),
+                    ...mockFinancialTransactions.map(t => t.ToAccount),
+                  ]).size;
+                  const kpis = [
+                    {
+                      label: "Total Transactions",
+                      value: mockFinancialTransactions.length,
+                      icon: <DollarSign className="w-5 h-5 text-sky-400" />,
+                      color: "border-sky-500/30 bg-sky-500/5",
+                      valueClass: "text-sky-300",
+                    },
+                    {
+                      label: "Flagged / Suspicious",
+                      value: suspicious.length,
+                      icon: <AlertTriangle className="w-5 h-5 text-rose-400" />,
+                      color: "border-rose-500/30 bg-rose-500/5",
+                      valueClass: "text-rose-300",
+                    },
+                    {
+                      label: "Total Flagged Amount",
+                      value: `₹${(totalFlaggedAmount / 100000).toFixed(2)} lakh`,
+                      icon: <TrendingUp className="w-5 h-5 text-amber-400" />,
+                      color: "border-amber-500/30 bg-amber-500/5",
+                      valueClass: "text-amber-300",
+                    },
+                    {
+                      label: "Unique Accounts",
+                      value: uniqueAccounts,
+                      icon: <Users className="w-5 h-5 text-emerald-400" />,
+                      color: "border-emerald-500/30 bg-emerald-500/5",
+                      valueClass: "text-emerald-300",
+                    },
+                  ];
+                  return (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      {kpis.map((kpi, i) => (
+                        <div key={i} className={`rounded-xl border p-4 space-y-2 ${kpi.color}`}>
+                          <div className="flex items-center justify-between">
+                            {kpi.icon}
+                            <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">{kpi.label}</span>
+                          </div>
+                          <div className={`text-2xl font-bold tabular-nums ${kpi.valueClass}`}>{kpi.value}</div>
                         </div>
-                        <p className="text-slate-400 text-[11px]">Victim bank deposits cash/RTGS funds into initial mule account SBI-8822 immediately preceding warning alarms.</p>
-                      </div>
-
-                      <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-lg space-y-1.5">
-                        <div className="flex items-center gap-2 text-amber-400 font-bold uppercase text-[10px]">
-                          <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                          <span>Phase 2: Layering</span>
-                        </div>
-                        <p className="text-slate-400 text-[11px]">Rapid outbound transfer of 98.7% of scammed funds to HDFC-1102 within 30 minutes to bypass automated AML holds.</p>
-                      </div>
-
-                      <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-lg space-y-1.5">
-                        <div className="flex items-center gap-2 text-emerald-400 font-bold uppercase text-[10px]">
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                          <span>Phase 3: Integration</span>
-                        </div>
-                        <p className="text-slate-400 text-[11px]">Laundering completed via offshore peer-to-peer cryptocurrency nodes, exchanging cash to cold wallets.</p>
-                      </div>
+                      ))}
                     </div>
-                  </div>
+                  );
+                })()}
 
-                  {/* Right Transaction Table logs */}
-                  <div className="xl:col-span-2 bg-slate-950/60 border border-slate-800 p-5 rounded-xl space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-amber-500">Audit Ledger: Flagged Illicit Cashflows</h3>
-                    <div className="overflow-x-auto rounded-xl border border-slate-800/60">
-                      <table className="table-enterprise w-full">
-                        <thead>
-                          <tr>
-                            <th className="text-left">Tx ID</th>
-                            <th className="text-left">From Account</th>
-                            <th className="text-left">To Account</th>
-                            <th className="text-right">Amount</th>
-                            <th className="text-left">Sender</th>
-                            <th className="text-left">Recipient</th>
-                            <th className="text-center">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {mockFinancialTransactions.map((tx, idx) => (
-                            <tr key={idx}>
-                              <td className="font-mono text-caption text-slate-500">TX_{tx.TransactionID}</td>
-                              <td className="font-mono text-caption">{tx.FromAccount}</td>
-                              <td className="font-mono text-caption text-amber-400/80">{tx.ToAccount}</td>
-                              <td className="text-right font-bold text-rose-400">₹{tx.Amount.toLocaleString()}</td>
-                              <td className="text-slate-500 text-caption">{tx.SenderName}</td>
-                              <td className="font-medium text-slate-300">{tx.RecipientName}</td>
-                              <td className="text-center">
-                                {tx.IsSuspicious ? (
-                                  <span className="badge badge-red">Flagged</span>
-                                ) : (
-                                  <span className="badge badge-slate">Passed</span>
-                                )}
-                              </td>
-                            </tr>
+                {/* ── Money-Laundering Flow Diagram ── */}
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-5 space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-rose-500">Money-Laundering Chain: 3-Phase Flow</h3>
+                  <p className="text-[11px] text-slate-500">Animated flow shows fund movement from victim source → mule account → layering account → crypto integration</p>
+                  <div className="overflow-x-auto">
+                    <svg viewBox="0 0 700 130" className="w-full max-w-3xl mx-auto" style={{ minWidth: 520 }}>
+                      {/* ── Node boxes ── */}
+                      {/* Box 0: Victim/Source – slate */}
+                      <rect x="20" y="28" width="120" height="52" rx="8" ry="8" fill="#0f172a" stroke="#475569" strokeWidth="1.5" />
+                      <text x="80" y="50" textAnchor="middle" fill="#94a3b8" fontSize="9" fontWeight="bold">VICTIM / SOURCE</text>
+                      <text x="80" y="63" textAnchor="middle" fill="#64748b" fontSize="8">ICICI-7741</text>
+                      <text x="80" y="75" textAnchor="middle" fill="#f87171" fontSize="8" fontWeight="bold">₹2.60L</text>
+
+                      {/* Box 1: Mule SBI-8822 – red flagged */}
+                      <rect x="190" y="28" width="130" height="52" rx="8" ry="8" fill="#1a0a0a" stroke="#ef4444" strokeWidth="1.5" />
+                      <text x="255" y="50" textAnchor="middle" fill="#fca5a5" fontSize="9" fontWeight="bold">MULE ACCOUNT</text>
+                      <text x="255" y="63" textAnchor="middle" fill="#ef4444" fontSize="8">SBI-8822-4412</text>
+                      <text x="255" y="75" textAnchor="middle" fill="#f87171" fontSize="8" fontWeight="bold">₹1.80L</text>
+
+                      {/* Box 2: HDFC-1102 – amber */}
+                      <rect x="380" y="28" width="120" height="52" rx="8" ry="8" fill="#0f0e00" stroke="#f59e0b" strokeWidth="1.5" />
+                      <text x="440" y="50" textAnchor="middle" fill="#fcd34d" fontSize="9" fontWeight="bold">LAYERING ACCT</text>
+                      <text x="440" y="63" textAnchor="middle" fill="#f59e0b" fontSize="8">HDFC-1102</text>
+                      <text x="440" y="75" textAnchor="middle" fill="#fbbf24" fontSize="8" fontWeight="bold">₹1.77L</text>
+
+                      {/* Box 3: Crypto Wallet – emerald */}
+                      <rect x="560" y="28" width="120" height="52" rx="8" ry="8" fill="#001a0e" stroke="#10b981" strokeWidth="1.5" />
+                      <text x="620" y="50" textAnchor="middle" fill="#6ee7b7" fontSize="9" fontWeight="bold">CRYPTO WALLET</text>
+                      <text x="620" y="63" textAnchor="middle" fill="#10b981" fontSize="8">BTC-COLD-9x3f</text>
+                      <text x="620" y="75" textAnchor="middle" fill="#34d399" fontSize="8" fontWeight="bold">₹1.75L</text>
+
+                      {/* ── Animated arrow 0→1 (red: flagged) ── */}
+                      <defs>
+                        <marker id="arrow-red" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
+                          <polygon points="0 0, 7 3.5, 0 7" fill="#ef4444" />
+                        </marker>
+                        <marker id="arrow-amber" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
+                          <polygon points="0 0, 7 3.5, 0 7" fill="#f59e0b" />
+                        </marker>
+                        <marker id="arrow-green" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
+                          <polygon points="0 0, 7 3.5, 0 7" fill="#10b981" />
+                        </marker>
+                      </defs>
+                      {/* Arrow 0→1 */}
+                      <line x1="141" y1="54" x2="187" y2="54" stroke="#ef4444" strokeWidth="2" markerEnd="url(#arrow-red)" strokeDasharray="8 4">
+                        <animate attributeName="stroke-dashoffset" from="36" to="0" dur="1.2s" repeatCount="indefinite" />
+                      </line>
+                      {/* Arrow 1→2 */}
+                      <line x1="321" y1="54" x2="377" y2="54" stroke="#f59e0b" strokeWidth="2" markerEnd="url(#arrow-amber)" strokeDasharray="8 4">
+                        <animate attributeName="stroke-dashoffset" from="36" to="0" dur="1.4s" repeatCount="indefinite" />
+                      </line>
+                      {/* Arrow 2→3 */}
+                      <line x1="501" y1="54" x2="557" y2="54" stroke="#10b981" strokeWidth="2" markerEnd="url(#arrow-green)" strokeDasharray="8 4">
+                        <animate attributeName="stroke-dashoffset" from="36" to="0" dur="1.6s" repeatCount="indefinite" />
+                      </line>
+
+                      {/* ── Phase labels below arrows ── */}
+                      <text x="164" y="100" textAnchor="middle" fill="#ef4444" fontSize="8.5" fontWeight="bold">PLACEMENT</text>
+                      <text x="349" y="100" textAnchor="middle" fill="#f59e0b" fontSize="8.5" fontWeight="bold">LAYERING</text>
+                      <text x="529" y="100" textAnchor="middle" fill="#10b981" fontSize="8.5" fontWeight="bold">INTEGRATION</text>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* ── Improved Transaction Table ── */}
+                <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl space-y-4">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-amber-500">Audit Ledger: Flagged Illicit Cashflows</h3>
+                  <div className="overflow-x-auto rounded-xl border border-slate-800/60">
+                    <table className="table-enterprise w-full">
+                      <thead>
+                        <tr>
+                          <th className="text-left">Tx ID</th>
+                          <th className="text-center">Flow</th>
+                          <th className="text-left">From Account</th>
+                          <th className="text-left">To Account</th>
+                          <th className="text-right">Amount</th>
+                          <th className="text-left">Date</th>
+                          <th className="text-left">Sender → Recipient</th>
+                          <th className="text-left">Risk Reason</th>
+                          <th className="text-center">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...mockFinancialTransactions]
+                          .sort((a, b) => (b.IsSuspicious ? 1 : 0) - (a.IsSuspicious ? 1 : 0))
+                          .map((tx, idx) => {
+                            const isSusp = tx.IsSuspicious;
+                            const rowBg = idx % 2 === 0 ? "bg-slate-950/40" : "bg-slate-900/30";
+                            const borderColor = isSusp ? "border-l-rose-500" : "border-l-slate-700";
+                            // Format date DD/MM/YYYY
+                            const rawDate = tx.TransactionDate || "";
+                            let formattedDate = rawDate;
+                            try {
+                              const d = new Date(rawDate);
+                              if (!isNaN(d.getTime())) {
+                                formattedDate = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+                              }
+                            } catch {}
+                            const riskText = tx.RiskReason ? (tx.RiskReason.length > 40 ? tx.RiskReason.slice(0, 40) + "…" : tx.RiskReason) : "—";
+                            return (
+                              <tr key={idx} className={`${rowBg} border-l-2 ${borderColor}`}>
+                                <td className="font-mono text-caption text-slate-500">TX_{tx.TransactionID}</td>
+                                <td className="text-center">
+                                  <ArrowRight className={`w-3.5 h-3.5 mx-auto ${isSusp ? "text-rose-400" : "text-slate-600"}`} />
+                                </td>
+                                <td className="font-mono text-caption">{tx.FromAccount}</td>
+                                <td className={`font-mono text-caption ${isSusp ? "text-rose-400/90" : "text-amber-400/80"}`}>{tx.ToAccount}</td>
+                                <td className="text-right font-bold text-rose-400">₹{tx.Amount.toLocaleString()}</td>
+                                <td className="text-slate-400 text-caption whitespace-nowrap">{formattedDate}</td>
+                                <td className="text-slate-400 text-caption">
+                                  <span className="text-slate-300">{tx.SenderName}</span>
+                                  <span className="text-slate-600 mx-1">→</span>
+                                  <span>{tx.RecipientName}</span>
+                                </td>
+                                <td className={`text-caption ${isSusp ? "text-rose-300/80" : "text-slate-500"}`}>{riskText}</td>
+                                <td className="text-center">
+                                  {isSusp ? (
+                                    <span className="badge badge-red">Flagged</span>
+                                  ) : (
+                                    <span className="badge badge-slate">Passed</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* ── Money Flow Network SVG ── */}
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-5 space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-sky-500">Account-to-Account Flow Network</h3>
+                  <p className="text-[11px] text-slate-500">Each line represents a transaction. Thick red = large suspicious flow · Thin amber = smaller flow · Nodes show account identifiers</p>
+                  {(() => {
+                    // Build unique left (From) and right (To) account lists
+                    const fromAccts = [...new Set(mockFinancialTransactions.map(t => t.FromAccount))];
+                    const toAccts   = [...new Set(mockFinancialTransactions.map(t => t.ToAccount))];
+                    const maxAmount = Math.max(...mockFinancialTransactions.map(t => t.Amount));
+                    const svgH = 300;
+                    const svgW = 500;
+                    const leftX = 30;
+                    const rightX = 370;
+                    const nodeH = 22;
+                    // Y positions for each node
+                    const fromY = (i: number) => 30 + i * ((svgH - 60) / Math.max(fromAccts.length - 1, 1));
+                    const toY   = (i: number) => 30 + i * ((svgH - 60) / Math.max(toAccts.length - 1, 1));
+                    return (
+                      <div className="overflow-x-auto">
+                        <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full max-w-xl mx-auto" style={{ minWidth: 360, background: "#020617", borderRadius: 12 }}>
+                          {/* Transaction edges */}
+                          {mockFinancialTransactions.map((tx, i) => {
+                            const fi = fromAccts.indexOf(tx.FromAccount);
+                            const ti = toAccts.indexOf(tx.ToAccount);
+                            const y1 = fromY(fi) + nodeH / 2;
+                            const y2 = toY(ti) + nodeH / 2;
+                            const x1 = leftX + 120;
+                            const x2 = rightX;
+                            const ratio = tx.Amount / maxAmount;
+                            const strokeW = Math.max(1, ratio * 5);
+                            const color = tx.IsSuspicious ? `rgba(239,68,68,${0.4 + ratio * 0.5})` : `rgba(245,158,11,${0.3 + ratio * 0.4})`;
+                            const midX = (x1 + x2) / 2;
+                            const path = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+                            const labelX = midX;
+                            const labelY = (y1 + y2) / 2 - 4;
+                            return (
+                              <g key={i}>
+                                <path d={path} fill="none" stroke={color} strokeWidth={strokeW} opacity={0.85} />
+                                <text x={labelX} y={labelY} textAnchor="middle" fill="#94a3b8" fontSize="7.5" fontWeight="600">
+                                  ₹{(tx.Amount / 1000).toFixed(0)}K
+                                </text>
+                              </g>
+                            );
+                          })}
+                          {/* From-account nodes (left) */}
+                          {fromAccts.map((acct, i) => (
+                            <g key={acct}>
+                              <rect x={leftX} y={fromY(i)} width={120} height={nodeH} rx={5} ry={5} fill="#0f172a" stroke="#334155" strokeWidth="1" />
+                              <text x={leftX + 60} y={fromY(i) + 14} textAnchor="middle" fill="#94a3b8" fontSize="8.5" fontWeight="600">{acct}</text>
+                            </g>
                           ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="bg-rose-500/5 border border-rose-500/20 p-4 rounded-xl text-xs space-y-1.5">
-                      <div className="text-rose-400 font-bold flex items-center gap-1.5 uppercase">
-                        <AlertTriangle className="w-4.5 h-4.5 text-rose-500" />
-                        Suspicious Correlation Vector Detected
+                          {/* To-account nodes (right) */}
+                          {toAccts.map((acct, i) => (
+                            <g key={acct}>
+                              <rect x={rightX} y={toY(i)} width={120} height={nodeH} rx={5} ry={5} fill="#0f172a" stroke="#ef4444" strokeWidth="1" />
+                              <text x={rightX + 60} y={toY(i) + 14} textAnchor="middle" fill="#fca5a5" fontSize="8.5" fontWeight="600">{acct}</text>
+                            </g>
+                          ))}
+                          {/* Labels */}
+                          <text x={leftX + 60} y={16} textAnchor="middle" fill="#64748b" fontSize="8" fontWeight="bold">FROM ACCOUNTS</text>
+                          <text x={rightX + 60} y={16} textAnchor="middle" fill="#64748b" fontSize="8" fontWeight="bold">TO ACCOUNTS</text>
+                        </svg>
                       </div>
-                      <p className="text-slate-400 leading-relaxed">
-                        Suresh Hegde (P_SURESH_02) account SBI-8822-4412 is resolving as a centralized recipient of both drug distribution proceeds (from Kiran Gowda) and fences pay-out for high-end stolen appliances. Initiating coordination with commercial bank fraud desks is highly recommended.
-                      </p>
-                    </div>
+                    );
+                  })()}
+                </div>
+
+                {/* ── Alert Banner ── */}
+                <div className="bg-rose-500/5 border border-rose-500/20 p-4 rounded-xl text-xs space-y-1.5">
+                  <div className="text-rose-400 font-bold flex items-center gap-1.5 uppercase">
+                    <AlertTriangle className="w-4.5 h-4.5 text-rose-500" />
+                    Suspicious Correlation Vector Detected
                   </div>
+                  <p className="text-slate-400 leading-relaxed">
+                    Suresh Hegde (P_SURESH_02) account SBI-8822-4412 is resolving as a centralized recipient of both drug distribution proceeds (from Kiran Gowda) and fences pay-out for high-end stolen appliances. Initiating coordination with commercial bank fraud desks is highly recommended.
+                  </p>
                 </div>
               </motion.div>
             )}
@@ -1917,6 +2149,22 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+              </motion.div>
+            )}
+
+            {activeTab === "heatmap" && (
+              <motion.div
+                key="tab_heatmap"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                className="flex flex-col h-full grow"
+              >
+                <HeatmapAnalytics
+                  heatmapData={heatmapData}
+                  onNavigate={handleTabChange}
+                  logAuditEvent={logAuditEvent}
+                />
               </motion.div>
             )}
 
