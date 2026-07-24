@@ -123,6 +123,7 @@ export default function App() {
   const [finSearchQuery, setFinSearchQuery] = useState<string>("");
   const [finHoveredNode, setFinHoveredNode] = useState<string | null>(null);
   const [finHoveredEdge, setFinHoveredEdge] = useState<any | null>(null);
+  const [finSelectedChainCaseId, setFinSelectedChainCaseId] = useState<number>(1004);
 
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
     setToast({ message, type });
@@ -2075,9 +2076,27 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Flow Diagram SVG */}
+                  {/* Flow Diagram SVG — FIR 202600004: Vikram Malhotra Phishing Chain (TX 9003→9004→9005, split TX 9018) */}
+                  {/* Source: FinancialTransaction.csv rows 9003, 9004, 9005, 9018 */}
+                  <div className="mb-2 flex flex-wrap gap-3 text-xs">
+                    <span className="bg-slate-900 border border-slate-700 px-3 py-1 rounded-lg text-slate-400 font-mono">
+                      FIR: <span className="text-amber-400 font-bold">202600004</span>
+                    </span>
+                    <span className="bg-slate-900 border border-slate-700 px-3 py-1 rounded-lg text-slate-400">
+                      Victim: <span className="text-slate-200 font-semibold">K. Raghunath</span> (Senior Citizen, Mangaluru)
+                    </span>
+                    <span className="bg-slate-900 border border-slate-700 px-3 py-1 rounded-lg text-slate-400">
+                      Accused: <span className="text-rose-300 font-semibold">Vikram Malhotra (A4)</span>
+                    </span>
+                    <span className="bg-rose-500/10 border border-rose-500/30 px-3 py-1 rounded-lg text-rose-400 font-semibold">
+                      Total Laundered: ₹4,00,000 → ₹4,35,000 (incl. ATM)
+                    </span>
+                    <span className="bg-slate-900 border border-slate-700 px-3 py-1 rounded-lg text-slate-400">
+                      Time Span: <span className="text-slate-200 font-semibold">10:45 → 13:00 (2h 15m)</span>
+                    </span>
+                  </div>
                   <div className="overflow-x-auto py-2">
-                    <svg viewBox="0 0 850 160" className="w-full max-w-4xl mx-auto" style={{ minWidth: 680 }}>
+                    <svg viewBox="0 0 920 220" className="w-full max-w-5xl mx-auto" style={{ minWidth: 720 }}>
                       <defs>
                         <marker id="arrow-red-lg" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto">
                           <polygon points="0 0, 9 4.5, 0 9" fill="#ef4444" />
@@ -2088,65 +2107,125 @@ export default function App() {
                         <marker id="arrow-green-lg" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto">
                           <polygon points="0 0, 9 4.5, 0 9" fill="#10b981" />
                         </marker>
+                        <marker id="arrow-purple-lg" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto">
+                          <polygon points="0 0, 9 4.5, 0 9" fill="#a855f7" />
+                        </marker>
                       </defs>
 
-                      {/* Box 0: Victim Source */}
+                      {/* Box 0: Victim Source — TX9003 FROM: AXIS-7709-1234 */}
                       <g className="cursor-pointer transition-transform hover:scale-105">
-                        <rect x="20" y="32" width="160" height="64" rx="10" ry="10" fill="#0f172a" stroke="#475569" strokeWidth="2" />
-                        <text x="100" y="56" textAnchor="middle" fill="#94a3b8" fontSize="12" fontWeight="bold">VICTIM / SOURCE</text>
-                        <text x="100" y="72" textAnchor="middle" fill="#cbd5e1" fontSize="11" fontFamily="monospace">ICICI-7741 / AXIS-7709</text>
-                        <text x="100" y="87" textAnchor="middle" fill="#f87171" fontSize="12" fontWeight="bold">₹4.00 Lakh</text>
+                        <rect x="12" y="28" width="170" height="76" rx="10" ry="10" fill="#0f172a" stroke="#475569" strokeWidth="2" />
+                        <text x="97" y="48" textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="bold">VICTIM / SOURCE</text>
+                        <text x="97" y="63" textAnchor="middle" fill="#cbd5e1" fontSize="10" fontFamily="monospace">AXIS-7709-1234</text>
+                        <text x="97" y="78" textAnchor="middle" fill="#94a3b8" fontSize="10">K. Raghunath</text>
+                        <text x="97" y="95" textAnchor="middle" fill="#f87171" fontSize="12" fontWeight="bold">₹4,00,000</text>
                       </g>
 
-                      {/* Box 1: Mule Account */}
+                      {/* Box 1: Placement — TX9003 TO: MULE-SBI-8822-0011 */}
                       <g className="cursor-pointer transition-transform hover:scale-105">
-                        <rect x="235" y="32" width="165" height="64" rx="10" ry="10" fill="#1a0a0a" stroke="#ef4444" strokeWidth="2" />
-                        <text x="317" y="56" textAnchor="middle" fill="#fca5a5" fontSize="12" fontWeight="bold">MULE ACCOUNT (A)</text>
-                        <text x="317" y="72" textAnchor="middle" fill="#ef4444" fontSize="11" fontFamily="monospace">SBI-8822-4412</text>
-                        <text x="317" y="87" textAnchor="middle" fill="#f87171" fontSize="12" fontWeight="bold">₹3.95 Lakh</text>
+                        <rect x="232" y="28" width="178" height="76" rx="10" ry="10" fill="#1a0a0a" stroke="#ef4444" strokeWidth="2" />
+                        <text x="321" y="48" textAnchor="middle" fill="#fca5a5" fontSize="11" fontWeight="bold">MULE ACCOUNT A</text>
+                        <text x="321" y="63" textAnchor="middle" fill="#ef4444" fontSize="10" fontFamily="monospace">MULE-SBI-8822-0011</text>
+                        <text x="321" y="78" textAnchor="middle" fill="#fca5a5" fontSize="10">Vikram Malhotra Network</text>
+                        <text x="321" y="95" textAnchor="middle" fill="#f87171" fontSize="12" fontWeight="bold">₹4,00,000 (TX 9003)</text>
                       </g>
 
-                      {/* Box 2: Layering Account */}
+                      {/* Box 2: Layering — TX9004 TO: MULE-HDFC-1102-0022 */}
                       <g className="cursor-pointer transition-transform hover:scale-105">
-                        <rect x="455" y="32" width="160" height="64" rx="10" ry="10" fill="#181302" stroke="#f59e0b" strokeWidth="2" />
-                        <text x="535" y="56" textAnchor="middle" fill="#fcd34d" fontSize="12" fontWeight="bold">LAYERING ACCT (B)</text>
-                        <text x="535" y="72" textAnchor="middle" fill="#f59e0b" fontSize="11" fontFamily="monospace">HDFC-1102-0022</text>
-                        <text x="535" y="87" textAnchor="middle" fill="#fbbf24" fontSize="12" fontWeight="bold">₹3.90 Lakh</text>
+                        <rect x="462" y="28" width="178" height="76" rx="10" ry="10" fill="#181302" stroke="#f59e0b" strokeWidth="2" />
+                        <text x="551" y="48" textAnchor="middle" fill="#fcd34d" fontSize="11" fontWeight="bold">LAYERING ACCT B</text>
+                        <text x="551" y="63" textAnchor="middle" fill="#f59e0b" fontSize="10" fontFamily="monospace">MULE-HDFC-1102-0022</text>
+                        <text x="551" y="78" textAnchor="middle" fill="#fcd34d" fontSize="10">Mule Account B</text>
+                        <text x="551" y="95" textAnchor="middle" fill="#fbbf24" fontSize="12" fontWeight="bold">₹3,95,000 (TX 9004)</text>
                       </g>
 
-                      {/* Box 3: Crypto Integration */}
+                      {/* Box 3a: Crypto Integration — TX9005 TO: CRYPTO-P2P-EXCHANGE */}
                       <g className="cursor-pointer transition-transform hover:scale-105">
-                        <rect x="670" y="32" width="160" height="64" rx="10" ry="10" fill="#021a12" stroke="#10b981" strokeWidth="2" />
-                        <text x="750" y="56" textAnchor="middle" fill="#6ee7b7" fontSize="12" fontWeight="bold">CRYPTO / ATM</text>
-                        <text x="750" y="72" textAnchor="middle" fill="#10b981" fontSize="11" fontFamily="monospace">BTC-COLD-9x3f</text>
-                        <text x="750" y="87" textAnchor="middle" fill="#34d399" fontSize="12" fontWeight="bold">₹3.90 Lakh</text>
+                        <rect x="693" y="10" width="178" height="76" rx="10" ry="10" fill="#021a12" stroke="#10b981" strokeWidth="2" />
+                        <text x="782" y="30" textAnchor="middle" fill="#6ee7b7" fontSize="11" fontWeight="bold">CRYPTO EXCHANGE</text>
+                        <text x="782" y="45" textAnchor="middle" fill="#10b981" fontSize="10" fontFamily="monospace">CRYPTO-P2P-EXCHANGE</text>
+                        <text x="782" y="60" textAnchor="middle" fill="#6ee7b7" fontSize="10">Overseas P2P Merchant</text>
+                        <text x="782" y="76" textAnchor="middle" fill="#34d399" fontSize="12" fontWeight="bold">₹3,90,000 (TX 9005)</text>
                       </g>
 
-                      {/* Arrow 0 -> 1 */}
-                      <line x1="180" y1="64" x2="230" y2="64" stroke="#ef4444" strokeWidth="2.5" markerEnd="url(#arrow-red-lg)" strokeDasharray="8 4">
+                      {/* Box 3b: ATM Cash-out — TX9018 TO: ATM-WITHDRAWAL-BLR */}
+                      <g className="cursor-pointer transition-transform hover:scale-105">
+                        <rect x="693" y="120" width="178" height="76" rx="10" ry="10" fill="#150b1a" stroke="#a855f7" strokeWidth="2" />
+                        <text x="782" y="140" textAnchor="middle" fill="#d8b4fe" fontSize="11" fontWeight="bold">ATM CASH-OUT</text>
+                        <text x="782" y="155" textAnchor="middle" fill="#a855f7" fontSize="10" fontFamily="monospace">ATM-WITHDRAWAL-BLR</text>
+                        <text x="782" y="170" textAnchor="middle" fill="#d8b4fe" fontSize="10">Jayanagar Branch, BLR</text>
+                        <text x="782" y="186" textAnchor="middle" fill="#c084fc" fontSize="12" fontWeight="bold">₹45,000 (TX 9018)</text>
+                      </g>
+
+                      {/* Arrow 0 → 1: PLACEMENT (10:45 AM) */}
+                      <line x1="182" y1="66" x2="228" y2="66" stroke="#ef4444" strokeWidth="2.5" markerEnd="url(#arrow-red-lg)" strokeDasharray="8 4">
                         <animate attributeName="stroke-dashoffset" from="36" to="0" dur="1.2s" repeatCount="indefinite" />
                       </line>
+                      <text x="205" y="58" textAnchor="middle" fill="#94a3b8" fontSize="9">10:45 AM</text>
 
-                      {/* Arrow 1 -> 2 */}
-                      <line x1="400" y1="64" x2="450" y2="64" stroke="#f59e0b" strokeWidth="2.5" markerEnd="url(#arrow-amber-lg)" strokeDasharray="8 4">
+                      {/* Arrow 1 → 2: LAYERING (11:15 AM, +30 min) */}
+                      <line x1="410" y1="66" x2="458" y2="66" stroke="#f59e0b" strokeWidth="2.5" markerEnd="url(#arrow-amber-lg)" strokeDasharray="8 4">
                         <animate attributeName="stroke-dashoffset" from="36" to="0" dur="1.4s" repeatCount="indefinite" />
                       </line>
+                      <text x="434" y="58" textAnchor="middle" fill="#94a3b8" fontSize="9">11:15 AM +30m</text>
 
-                      {/* Arrow 2 -> 3 */}
-                      <line x1="615" y1="64" x2="665" y2="64" stroke="#10b981" strokeWidth="2.5" markerEnd="url(#arrow-green-lg)" strokeDasharray="8 4">
+                      {/* Arrow 2 → 3a: CRYPTO INTEGRATION (11:45 AM, +30 min) */}
+                      <line x1="640" y1="52" x2="689" y2="40" stroke="#10b981" strokeWidth="2.5" markerEnd="url(#arrow-green-lg)" strokeDasharray="8 4">
                         <animate attributeName="stroke-dashoffset" from="36" to="0" dur="1.6s" repeatCount="indefinite" />
                       </line>
+                      <text x="664" y="36" textAnchor="middle" fill="#94a3b8" fontSize="9">11:45 AM</text>
 
-                      {/* Phase Badges below arrows */}
-                      <rect x="185" y="108" width="80" height="22" rx="4" fill="#1f1315" stroke="#ef4444" strokeWidth="1" />
-                      <text x="225" y="123" textAnchor="middle" fill="#ef4444" fontSize="10.5" fontWeight="bold">PLACEMENT</text>
+                      {/* Arrow 2 → 3b: ATM CASH-OUT (13:00, +1h15m) */}
+                      <line x1="640" y1="80" x2="689" y2="155" stroke="#a855f7" strokeWidth="2.5" markerEnd="url(#arrow-purple-lg)" strokeDasharray="8 4">
+                        <animate attributeName="stroke-dashoffset" from="36" to="0" dur="1.8s" repeatCount="indefinite" />
+                      </line>
+                      <text x="654" y="132" textAnchor="middle" fill="#94a3b8" fontSize="9">13:00 +1h15m</text>
 
-                      <rect x="405" y="108" width="70" height="22" rx="4" fill="#1d1708" stroke="#f59e0b" strokeWidth="1" />
-                      <text x="440" y="123" textAnchor="middle" fill="#f59e0b" fontSize="10.5" fontWeight="bold">LAYERING</text>
+                      {/* Phase Badges */}
+                      <rect x="182" y="112" width="82" height="22" rx="4" fill="#1f1315" stroke="#ef4444" strokeWidth="1" />
+                      <text x="223" y="127" textAnchor="middle" fill="#ef4444" fontSize="10.5" fontWeight="bold">PLACEMENT</text>
 
-                      <rect x="618" y="108" width="85" height="22" rx="4" fill="#091b15" stroke="#10b981" strokeWidth="1" />
-                      <text x="660" y="123" textAnchor="middle" fill="#10b981" fontSize="10.5" fontWeight="bold">INTEGRATION</text>
+                      <rect x="415" y="112" width="72" height="22" rx="4" fill="#1d1708" stroke="#f59e0b" strokeWidth="1" />
+                      <text x="451" y="127" textAnchor="middle" fill="#f59e0b" fontSize="10.5" fontWeight="bold">LAYERING</text>
+
+                      <rect x="700" y="93" width="90" height="22" rx="4" fill="#091b15" stroke="#10b981" strokeWidth="1" />
+                      <text x="745" y="108" textAnchor="middle" fill="#10b981" fontSize="10.5" fontWeight="bold">INTEGRATION</text>
+
+                      <rect x="700" y="200" width="88" height="22" rx="4" fill="#15081f" stroke="#a855f7" strokeWidth="1" />
+                      <text x="744" y="215" textAnchor="middle" fill="#a855f7" fontSize="10.5" fontWeight="bold">CASH-OUT</text>
                     </svg>
+                  </div>
+
+                  {/* TX Timeline Detail — 4 transactions sourced from FinancialTransaction.csv */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-slate-800/60">
+                    {[
+                      { id: "TX 9003", time: "27 Mar 10:45", from: "AXIS-7709-1234", to: "MULE-SBI-8822-0011", amt: "₹4,00,000", phase: "Placement", color: "rose", note: "OTP extracted from K. Raghunath. Large RTGS to zero-balance mule." },
+                      { id: "TX 9004", time: "27 Mar 11:15 (+30m)", from: "MULE-SBI-8822-0011", to: "MULE-HDFC-1102-0022", amt: "₹3,95,000", phase: "Layering", color: "amber", note: "98.75% of funds moved to second mule within 30 minutes." },
+                      { id: "TX 9005", time: "27 Mar 11:45 (+30m)", from: "MULE-HDFC-1102-0022", to: "CRYPTO-P2P-EXCHANGE", amt: "₹3,90,000", phase: "Integration", color: "emerald", note: "Converted to crypto via anonymous P2P exchange for anonymity." },
+                      { id: "TX 9018", time: "27 Mar 13:00 (+1h15m)", from: "MULE-HDFC-1102-0022", to: "ATM-WITHDRAWAL-BLR", amt: "₹45,000", phase: "Cash-Out", color: "purple", note: "Physical ATM withdrawal at Jayanagar Branch completing the cycle." },
+                    ].map((tx) => (
+                      <div key={tx.id} className={`bg-slate-900/60 border border-slate-800 rounded-lg p-3 space-y-1.5`}>
+                        <div className="flex justify-between items-center">
+                          <span className="font-mono text-xs font-bold text-slate-300">{tx.id}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                            tx.color === "rose" ? "bg-rose-500/10 border-rose-500/30 text-rose-400" :
+                            tx.color === "amber" ? "bg-amber-500/10 border-amber-500/30 text-amber-400" :
+                            tx.color === "emerald" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
+                            "bg-purple-500/10 border-purple-500/30 text-purple-400"
+                          }`}>{tx.phase}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-mono">{tx.time}</div>
+                        <div className={`text-sm font-extrabold tabular-nums ${
+                          tx.color === "rose" ? "text-rose-400" : tx.color === "amber" ? "text-amber-400" : tx.color === "emerald" ? "text-emerald-400" : "text-purple-400"
+                        }`}>{tx.amt}</div>
+                        <div className="text-[10px] font-mono text-slate-400 truncate">{tx.from}</div>
+                        <div className="text-[10px] text-slate-500 text-center">↓</div>
+                        <div className={`text-[10px] font-mono font-bold truncate ${
+                          tx.color === "rose" ? "text-rose-300" : tx.color === "amber" ? "text-amber-300" : tx.color === "emerald" ? "text-emerald-300" : "text-purple-300"
+                        }`}>{tx.to}</div>
+                        <div className="text-[10px] text-slate-500 leading-relaxed pt-1 border-t border-slate-800/60">{tx.note}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 

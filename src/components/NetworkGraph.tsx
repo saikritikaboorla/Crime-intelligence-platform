@@ -881,6 +881,9 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                   const isLabelAbove = (node.idx !== undefined ? node.idx : 0) % 2 === 1;
                   const labelYOffset = isLabelAbove ? -(size + 20) : (size + 20);
 
+                  // Label visibility: show on zoom >= 1.5, hover, selection, or highlight
+                  const isLabelVisible = zoom >= 1.5 || isSelected || isHighlighted || hoveredNodeId === node.id;
+
                   return (
                     <g
                       key={node.id}
@@ -912,8 +915,12 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                         </div>
                       </foreignObject>
 
-                      {/* Crisp, Highly Readable Node Label Badge */}
-                      <g transform={`translate(0, ${labelYOffset})`} className="pointer-events-none">
+                      {/* Crisp, Highly Readable Node Label Badge — Visible on Zoom >= 1.5, Hover, or Selection */}
+                      <g
+                        transform={`translate(0, ${labelYOffset})`}
+                        style={{ opacity: isLabelVisible ? 1 : 0, transition: "opacity 0.2s ease" }}
+                        className="pointer-events-none"
+                      >
                         <rect
                           x={-(Math.min(node.label.length, 22) * 4.2 + 12)}
                           y="-10" rx="6"
