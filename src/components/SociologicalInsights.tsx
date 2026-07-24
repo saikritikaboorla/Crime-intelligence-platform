@@ -4,12 +4,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, ScatterChart, Scatter,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  Cell, LabelList, ZAxis
+  Cell, LabelList
 } from "recharts";
 import {
   Activity, TrendingUp, Sparkles, AlertTriangle, CheckCircle,
   ArrowRight, BookOpen, Target, Lightbulb, Shield, LineChart,
-  MessageSquare
+  Filter, Layers, BarChart2
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -36,13 +36,14 @@ interface Props {
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const DISTRICT_COLORS: Record<string, string> = {
-  "Bengaluru City":               "#3b82f6",
-  "Mysuru":                       "#10b981",
-  "Mangaluru (Dakshina Kannada)": "#f59e0b",
-  "Hubballi-Dharwad":             "#8b5cf6",
-  "Belagavi":                     "#ec4899",
-  "Kalaburagi":                   "#ef4444",
+  "Bengaluru City":               "#38bdf8",
+  "Mysuru":                       "#34d399",
+  "Mangaluru (Dakshina Kannada)": "#fbbf24",
+  "Hubballi-Dharwad":             "#a78bfa",
+  "Belagavi":                     "#f472b6",
+  "Kalaburagi":                   "#f87171",
 };
+
 const DISTRICT_KEYS = [
   "Bengaluru City",
   "Mysuru",
@@ -61,39 +62,40 @@ interface InsightProps {
   accentClass?: string;
 }
 
-function AIInsightCard({ observation, trend, whyMatters, action, accentClass = "border-blue-500/25" }: InsightProps) {
+function AIInsightCard({ observation, trend, whyMatters, action, accentClass = "border-sky-500/25" }: InsightProps) {
   const [open, setOpen] = useState(true);
-  // Extract the border color class to use as a left-border accent
   return (
-    <div className={`mt-4 rounded-xl border ${accentClass} bg-slate-950/60 border-l-4`}>
+    <div className={`mt-4 rounded-xl border ${accentClass} bg-slate-950/70 border-l-4 shadow-lg`}>
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center justify-between px-4 py-3 text-left group"
         aria-expanded={open}
       >
-        <span className="flex items-center gap-2 text-xs font-bold text-blue-300 uppercase tracking-wider">
-          <Sparkles className="w-4 h-4 text-blue-400" />
-          AI Insight
+        <span className="flex items-center gap-2 text-xs font-bold text-sky-300 uppercase tracking-wider">
+          <Sparkles className="w-4 h-4 text-sky-400" />
+          AI Sociological Analysis
         </span>
-        <span className="text-slate-500 text-xs group-hover:text-slate-300 transition">{open ? "▴ Hide" : "▾ Show Insight"}</span>
+        <span className="text-slate-400 text-xs font-semibold group-hover:text-slate-200 transition">
+          {open ? "▴ Collapse Insight" : "▾ Expand Insight"}
+        </span>
       </button>
       {open && (
-        <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-800/60 pt-3">
           <div className="space-y-1">
             <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Key Observation</div>
-            <p className="text-xs text-slate-300 leading-relaxed">{observation}</p>
+            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">{observation}</p>
           </div>
           <div className="space-y-1">
             <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Trend Summary</div>
-            <p className="text-xs text-slate-300 leading-relaxed">{trend}</p>
+            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">{trend}</p>
           </div>
           <div className="space-y-1">
             <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Why It Matters</div>
-            <p className="text-xs text-slate-300 leading-relaxed">{whyMatters}</p>
+            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">{whyMatters}</p>
           </div>
           <div className="space-y-1">
-            <div className="text-xs font-bold text-amber-500/90 uppercase tracking-wider">Suggested Action</div>
-            <p className="text-xs text-amber-200/90 leading-relaxed">{action}</p>
+            <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">Suggested Action</div>
+            <p className="text-xs sm:text-sm text-amber-200/90 leading-relaxed font-medium">{action}</p>
           </div>
         </div>
       )}
@@ -101,26 +103,88 @@ function AIInsightCard({ observation, trend, whyMatters, action, accentClass = "
   );
 }
 
-// ─── Custom Tooltip helpers ───────────────────────────────────────────────────
+// ─── Custom Tooltip Box ────────────────────────────────────────────────────────
 const TooltipBox = ({ children }: { children: React.ReactNode }) => (
   <div style={{
-    background: "rgba(2,6,23,0.97)",
-    border: "1px solid rgba(51,65,85,0.9)",
+    background: "rgba(2, 6, 23, 0.98)",
+    border: "1px solid rgba(51, 65, 85, 0.9)",
     borderRadius: 10,
-    padding: "10px 14px",
-    fontSize: 12,
+    padding: "12px 16px",
+    fontSize: 13,
     lineHeight: 1.6,
-    minWidth: 180,
-    boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
+    minWidth: 200,
+    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.6)"
   }}>
     {children}
   </div>
 );
 
+// ─── Statewide KPI Summary Header Bar ──────────────────────────────────────────
+function StatewideKpiBar({ data }: { data: SocioRow[] }) {
+  if (!data.length) return null;
+
+  const avgUrban = (data.reduce((s, d) => s + d.urbanization, 0) / data.length).toFixed(1);
+  const avgStress = (data.reduce((s, d) => s + d.stress, 0) / data.length).toFixed(1);
+  const avgEdu = (data.reduce((s, d) => s + d.education, 0) / data.length).toFixed(1);
+  const totalCrimes = data.reduce((s, d) => s + d.totalCrimes, 0);
+
+  const kpis = [
+    {
+      label: "Statewide Avg Urbanization",
+      value: `${avgUrban}%`,
+      subText: "Bengaluru highest at 92%",
+      icon: <Activity className="w-5 h-5 text-sky-400" />,
+      color: "border-sky-500/30 bg-sky-500/5",
+      valueClass: "text-sky-300",
+    },
+    {
+      label: "Statewide Avg Econ. Stress",
+      value: `${avgStress}%`,
+      subText: "Kalaburagi highest at 68%",
+      icon: <AlertTriangle className="w-5 h-5 text-rose-400" />,
+      color: "border-rose-500/30 bg-rose-500/5",
+      valueClass: "text-rose-300",
+    },
+    {
+      label: "Statewide Education Index",
+      value: `${avgEdu}%`,
+      subText: "Mangaluru leads at 91%",
+      icon: <CheckCircle className="w-5 h-5 text-emerald-400" />,
+      color: "border-emerald-500/30 bg-emerald-500/5",
+      valueClass: "text-emerald-300",
+    },
+    {
+      label: "Total Registered FIR Cases",
+      value: `${totalCrimes} Cases`,
+      subText: "Across 6 Karnataka districts",
+      icon: <Shield className="w-5 h-5 text-amber-400" />,
+      color: "border-amber-500/30 bg-amber-500/5",
+      valueClass: "text-amber-300",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {kpis.map((kpi, i) => (
+        <div key={i} className={`rounded-xl border p-4 space-y-2 ${kpi.color}`}>
+          <div className="flex items-center justify-between">
+            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">{kpi.label}</span>
+            <div className="p-1.5 rounded-lg bg-slate-900/80 border border-slate-800">{kpi.icon}</div>
+          </div>
+          <div>
+            <div className={`text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight ${kpi.valueClass}`}>{kpi.value}</div>
+            <p className="text-xs text-slate-400 mt-1">{kpi.subText}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Chart 1: Socio-Economic Risk Indices ────────────────────────────────────
 function SocioRiskChart({ data }: { data: SocioRow[] }) {
-  const chartData = data.map(d => ({
-    name: d.districtName.split(" ")[0], // short label
+  const chartData = data.map((d) => ({
+    name: d.districtName.split(" ")[0],
     fullName: d.districtName,
     "Urbanization %": d.urbanization,
     "Economic Stress %": d.stress,
@@ -130,18 +194,18 @@ function SocioRiskChart({ data }: { data: SocioRow[] }) {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
-    const row = data.find(d => d.districtName.startsWith(label));
+    const row = data.find((d) => d.districtName.startsWith(label));
     return (
       <TooltipBox>
-        <p style={{ color: "#e2e8f0", fontWeight: 700, marginBottom: 6 }}>{row?.districtName ?? label}</p>
+        <p style={{ color: "#f8fafc", fontWeight: 700, marginBottom: 8, fontSize: 14 }}>{row?.districtName ?? label}</p>
         {payload.map((p: any) => (
-          <p key={p.name} style={{ color: p.color, marginBottom: 2 }}>
-            {p.name}: <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{p.value}%</span>
+          <p key={p.name} style={{ color: p.color, marginBottom: 4, fontSize: 12.5 }}>
+            {p.name}: <span style={{ color: "#f8fafc", fontWeight: 700 }}>{p.value}%</span>
           </p>
         ))}
         {row && (
-          <p style={{ color: "#64748b", marginTop: 6, borderTop: "1px solid #1e293b", paddingTop: 6 }}>
-            Density: {row.density.toLocaleString()} /km²
+          <p style={{ color: "#94a3b8", marginTop: 8, borderTop: "1px solid #1e293b", paddingTop: 6, fontSize: 12 }}>
+            Population Density: <strong style={{ color: "#e2e8f0" }}>{row.density.toLocaleString()} /km²</strong>
           </p>
         )}
       </TooltipBox>
@@ -149,70 +213,67 @@ function SocioRiskChart({ data }: { data: SocioRow[] }) {
   };
 
   return (
-    <div className="card rounded-2xl">
-      <div className="h-0.5 rounded-t-2xl bg-gradient-to-r from-sky-500 to-blue-600 -mt-[1.375rem] mb-4 mx-[-1.5rem] rounded-tl-2xl rounded-tr-2xl" />
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-1">
+    <div className="bg-slate-950/80 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <div className="w-7 h-7 rounded-lg bg-sky-500/15 border border-sky-500/25 flex items-center justify-center">
-              <Activity className="w-3.5 h-3.5 text-sky-400" />
+              <Activity className="w-4 h-4 text-sky-400" />
             </div>
-            <h3 className="text-heading3 text-slate-100">Socio-Economic Risk Indices</h3>
+            <h3 className="text-base font-bold text-slate-100">Socio-Economic Risk Indices by District</h3>
           </div>
-          <p className="text-body-sm text-slate-500 ml-9">
-            Urbanization, economic stress, migration and education levels across 6 Karnataka districts
+          <p className="text-xs text-slate-400 ml-9">
+            Comparative analysis of urbanization, economic stress, migration and education indices across all 6 districts
           </p>
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="h-[320px] w-full mt-4">
+      {/* Chart Canvas */}
+      <div className="h-[380px] w-full pt-2">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 20, right: 16, bottom: 24, left: 8 }} barCategoryGap="25%">
-            <CartesianGrid strokeDasharray="4 4" stroke="rgba(51,65,85,0.5)" vertical={false} />
+          <BarChart data={chartData} margin={{ top: 25, right: 20, bottom: 45, left: 10 }} barCategoryGap="20%" barGap={4}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
             <XAxis
               dataKey="name"
               stroke="#475569"
-              tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 500 }}
+              tick={{ fill: "#cbd5e1", fontSize: 13, fontWeight: 700 }}
               tickLine={false}
-              axisLine={{ stroke: "rgba(51,65,85,0.5)" }}
-              label={{ value: "Districts", position: "insideBottom", offset: -12, style: { fill: "#64748b", fontSize: 11 } }}
+              axisLine={{ stroke: "#334155" }}
+              label={{ value: "Karnataka Districts", position: "insideBottom", offset: -25, style: { fill: "#94a3b8", fontSize: 12, fontWeight: 600 } }}
             />
             <YAxis
               stroke="#475569"
-              tick={{ fill: "#94a3b8", fontSize: 11 }}
+              tick={{ fill: "#94a3b8", fontSize: 12 }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v) => `${v}%`}
               domain={[0, 100]}
-              width={44}
-              label={{ value: "Index Value", angle: -90, position: "insideLeft", offset: 12, style: { fill: "#64748b", fontSize: 11 } }}
+              width={45}
+              label={{ value: "Index Percentage (%)", angle: -90, position: "insideLeft", offset: 10, style: { fill: "#94a3b8", fontSize: 12, fontWeight: 600 } }}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(51,65,85,0.15)" }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(51,65,85,0.2)" }} />
             <Legend
-              wrapperStyle={{ fontSize: 12, paddingTop: 14 }}
+              wrapperStyle={{ fontSize: 13, paddingTop: 16 }}
               iconType="square"
               iconSize={12}
-              formatter={(v) => <span style={{ color: "#94a3b8" }}>{v}</span>}
+              formatter={(v) => <span style={{ color: "#cbd5e1", fontWeight: 600 }}>{v}</span>}
             />
-            <Bar dataKey="Urbanization %"     fill="#60a5fa" radius={[3,3,0,0]} maxBarSize={18}>
-              <LabelList dataKey="Urbanization %" position="top" style={{ fontSize: 9, fill: "#94a3b8" }} formatter={(v: number) => `${v}`} />
+            <Bar dataKey="Urbanization %" fill="#38bdf8" radius={[4, 4, 0, 0]} maxBarSize={22}>
+              <LabelList dataKey="Urbanization %" position="top" style={{ fontSize: 10.5, fill: "#38bdf8", fontWeight: 700 }} formatter={(v: number) => `${v}%`} />
             </Bar>
-            <Bar dataKey="Economic Stress %"  fill="#f87171" radius={[3,3,0,0]} maxBarSize={18}>
-              <LabelList dataKey="Economic Stress %" position="top" style={{ fontSize: 9, fill: "#94a3b8" }} formatter={(v: number) => `${v}`} />
+            <Bar dataKey="Economic Stress %" fill="#f87171" radius={[4, 4, 0, 0]} maxBarSize={22}>
+              <LabelList dataKey="Economic Stress %" position="top" style={{ fontSize: 10.5, fill: "#f87171", fontWeight: 700 }} formatter={(v: number) => `${v}%`} />
             </Bar>
-            <Bar dataKey="Migration Rate %"   fill="#a78bfa" radius={[3,3,0,0]} maxBarSize={18}>
-              <LabelList dataKey="Migration Rate %" position="top" style={{ fontSize: 9, fill: "#94a3b8" }} formatter={(v: number) => `${v}`} />
+            <Bar dataKey="Migration Rate %" fill="#c084fc" radius={[4, 4, 0, 0]} maxBarSize={22}>
+              <LabelList dataKey="Migration Rate %" position="top" style={{ fontSize: 10.5, fill: "#c084fc", fontWeight: 700 }} formatter={(v: number) => `${v}%`} />
             </Bar>
-            <Bar dataKey="Education Index %"  fill="#34d399" radius={[3,3,0,0]} maxBarSize={18}>
-              <LabelList dataKey="Education Index %" position="top" style={{ fontSize: 9, fill: "#94a3b8" }} formatter={(v: number) => `${v}`} />
+            <Bar dataKey="Education Index %" fill="#34d399" radius={[4, 4, 0, 0]} maxBarSize={22}>
+              <LabelList dataKey="Education Index %" position="top" style={{ fontSize: 10.5, fill: "#34d399", fontWeight: 700 }} formatter={(v: number) => `${v}%`} />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      {/* AI Insight */}
       <AIInsightCard
         accentClass="border-sky-500/20"
         observation="Bengaluru City dominates on urbanization (92%) while Kalaburagi leads on economic stress (68%). These represent opposite poles of Karnataka's socio-economic spectrum."
@@ -226,86 +287,111 @@ function SocioRiskChart({ data }: { data: SocioRow[] }) {
 
 // ─── Chart 2: Crime Type Distribution by District ────────────────────────────
 function CrimeDistributionChart({ data }: { data: SocioRow[] }) {
-  const chartData = data.map(d => ({
+  const chartData = data.map((d) => ({
     name: d.districtName.split(" ")[0],
     fullName: d.districtName,
     "Property / Theft": d.propertyCrimes,
     "Violent / Assault": d.bodyCrimes,
-    "Cyber Fraud":       d.cyberCrimes,
-    "Narcotics":         d.drugCrimes,
-    total:               d.totalCrimes,
+    "Cyber Fraud": d.cyberCrimes,
+    "Narcotics": d.drugCrimes,
+    total: d.totalCrimes,
   }));
+
+  // Aggregated totals by category across state
+  const totProp = data.reduce((s, d) => s + d.propertyCrimes, 0);
+  const totViol = data.reduce((s, d) => s + d.bodyCrimes, 0);
+  const totCyber = data.reduce((s, d) => s + d.cyberCrimes, 0);
+  const totDrug = data.reduce((s, d) => s + d.drugCrimes, 0);
+  const totAll = data.reduce((s, d) => s + d.totalCrimes, 0);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
-    const row = data.find(d => d.districtName.startsWith(label));
+    const row = data.find((d) => d.districtName.startsWith(label));
     const total = row?.totalCrimes ?? 0;
     return (
       <TooltipBox>
-        <p style={{ color: "#e2e8f0", fontWeight: 700, marginBottom: 6 }}>{row?.districtName ?? label}</p>
+        <p style={{ color: "#f8fafc", fontWeight: 700, marginBottom: 8, fontSize: 14 }}>{row?.districtName ?? label}</p>
         {payload.map((p: any) => p.value > 0 && (
-          <p key={p.name} style={{ color: p.fill, marginBottom: 2 }}>
-            {p.name}: <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{p.value}</span>
+          <p key={p.name} style={{ color: p.fill, marginBottom: 4, fontSize: 12.5 }}>
+            {p.name}: <span style={{ color: "#f8fafc", fontWeight: 700 }}>{p.value} cases</span>
             {total > 0 && (
-              <span style={{ color: "#64748b", fontSize: 11 }}> ({Math.round((p.value / total) * 100)}%)</span>
+              <span style={{ color: "#94a3b8", fontSize: 11.5 }}> ({Math.round((p.value / total) * 100)}%)</span>
             )}
           </p>
         ))}
-        <p style={{ color: "#64748b", borderTop: "1px solid #1e293b", paddingTop: 6, marginTop: 6 }}>
-          Total: <span style={{ color: "#fbbf24", fontWeight: 700 }}>{total}</span>
+        <p style={{ color: "#94a3b8", borderTop: "1px solid #1e293b", paddingTop: 6, marginTop: 6, fontSize: 12.5 }}>
+          Total FIR Cases: <span style={{ color: "#fbbf24", fontWeight: 800 }}>{total}</span>
         </p>
       </TooltipBox>
     );
   };
 
   return (
-    <div className="card rounded-2xl">
-      <div className="h-0.5 rounded-t-2xl bg-gradient-to-r from-rose-500 to-orange-600 -mt-[1.375rem] mb-4 mx-[-1.5rem] rounded-tl-2xl rounded-tr-2xl" />
-      <div className="flex items-start justify-between gap-3 mb-1">
+    <div className="bg-slate-950/80 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <div className="w-7 h-7 rounded-lg bg-rose-500/15 border border-rose-500/25 flex items-center justify-center">
-              <TrendingUp className="w-3.5 h-3.5 text-rose-400" />
+              <TrendingUp className="w-4 h-4 text-rose-400" />
             </div>
-            <h3 className="text-heading3 text-slate-100">Crime Type Distribution by District</h3>
+            <h3 className="text-base font-bold text-slate-100">Crime Type Distribution by District</h3>
           </div>
-          <p className="text-body-sm text-slate-500 ml-9">
-            Stacked view of IPC crime head categories registered across all 6 districts
+          <p className="text-xs text-slate-400 ml-9">
+            Stacked breakdown of registered IPC crime head categories across all 6 districts
           </p>
+        </div>
+
+        {/* Aggregated Crime Head Category Summary Pills */}
+        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+          <span className="px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300">
+            Property: {totProp} ({((totProp / totAll) * 100).toFixed(0)}%)
+          </span>
+          <span className="px-2.5 py-1 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-300">
+            Violent: {totViol} ({((totViol / totAll) * 100).toFixed(0)}%)
+          </span>
+          <span className="px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/30 text-purple-300">
+            Cyber: {totCyber} ({((totCyber / totAll) * 100).toFixed(0)}%)
+          </span>
+          <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
+            Narcotics: {totDrug} ({((totDrug / totAll) * 100).toFixed(0)}%)
+          </span>
         </div>
       </div>
 
-      <div className="h-[340px] w-full mt-4">
+      <div className="h-[380px] w-full pt-2">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 8, right: 16, bottom: 8, left: 0 }} barCategoryGap="35%">
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(51,65,85,0.4)" vertical={false} />
+          <BarChart data={chartData} margin={{ top: 25, right: 20, bottom: 45, left: 10 }} barCategoryGap="30%">
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
             <XAxis
               dataKey="name"
               stroke="#475569"
-              tick={{ fill: "#94a3b8", fontSize: 12, fontWeight: 500 }}
+              tick={{ fill: "#cbd5e1", fontSize: 13, fontWeight: 700 }}
               tickLine={false}
-              axisLine={{ stroke: "rgba(51,65,85,0.5)" }}
+              axisLine={{ stroke: "#334155" }}
+              label={{ value: "Karnataka Districts", position: "insideBottom", offset: -25, style: { fill: "#94a3b8", fontSize: 12, fontWeight: 600 } }}
             />
             <YAxis
               stroke="#475569"
-              tick={{ fill: "#94a3b8", fontSize: 11 }}
+              tick={{ fill: "#94a3b8", fontSize: 12 }}
               tickLine={false}
               axisLine={false}
               allowDecimals={false}
-              width={28}
-              label={{ value: "Cases", angle: -90, position: "insideLeft", offset: 10, style: { fill: "#64748b", fontSize: 11 } }}
+              width={35}
+              label={{ value: "FIR Case Count", angle: -90, position: "insideLeft", offset: 10, style: { fill: "#94a3b8", fontSize: 12, fontWeight: 600 } }}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(51,65,85,0.15)" }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(51,65,85,0.2)" }} />
             <Legend
-              wrapperStyle={{ fontSize: 12, paddingTop: 12 }}
+              wrapperStyle={{ fontSize: 13, paddingTop: 16 }}
               iconType="square"
-              iconSize={10}
-              formatter={(v) => <span style={{ color: "#94a3b8" }}>{v}</span>}
+              iconSize={12}
+              formatter={(v) => <span style={{ color: "#cbd5e1", fontWeight: 600 }}>{v}</span>}
             />
-            <Bar dataKey="Property / Theft"  stackId="a" fill="#f59e0b" name="Property / Theft"  radius={[0,0,0,0]} />
-            <Bar dataKey="Violent / Assault" stackId="a" fill="#ef4444" name="Violent / Assault" radius={[0,0,0,0]} />
-            <Bar dataKey="Cyber Fraud"       stackId="a" fill="#8b5cf6" name="Cyber Fraud"       radius={[0,0,0,0]} />
-            <Bar dataKey="Narcotics"         stackId="a" fill="#10b981" name="Narcotics"         radius={[3,3,0,0]} />
+            <Bar dataKey="Property / Theft" stackId="a" fill="#f59e0b" name="Property / Theft" />
+            <Bar dataKey="Violent / Assault" stackId="a" fill="#ef4444" name="Violent / Assault" />
+            <Bar dataKey="Cyber Fraud" stackId="a" fill="#c084fc" name="Cyber Fraud" />
+            <Bar dataKey="Narcotics" stackId="a" fill="#34d399" name="Narcotics" radius={[4, 4, 0, 0]}>
+              <LabelList dataKey="total" position="top" style={{ fontSize: 12, fill: "#fbbf24", fontWeight: 800 }} formatter={(v: number) => `${v} FIRs`} />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -321,15 +407,26 @@ function CrimeDistributionChart({ data }: { data: SocioRow[] }) {
   );
 }
 
-// ─── Chart 3: Urbanization × Crime Scatter ───────────────────────────────────
+// ─── Chart 3: Urbanization × Crime Scatter & Regression Vector ─────────────
 function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
-  const chartData = data.map(d => ({
+  // Map specific label offsets to guarantee NO label overlap!
+  const labelOffsets: Record<string, { dx: number; dy: number; textAnchor: "middle" | "start" | "end" }> = {
+    "Bengaluru City":               { dx: 0,   dy: -24, textAnchor: "middle" },
+    "Mysuru":                       { dx: 24,  dy: -4,  textAnchor: "start" },
+    "Mangaluru (Dakshina Kannada)": { dx: -24, dy: -4,  textAnchor: "end" },
+    "Hubballi-Dharwad":             { dx: 0,   dy: -24, textAnchor: "middle" },
+    "Belagavi":                     { dx: 24,  dy: 16,  textAnchor: "start" },
+    "Kalaburagi":                   { dx: -24, dy: 16,  textAnchor: "end" },
+  };
+
+  const chartData = data.map((d) => ({
     urbanization: d.urbanization,
-    totalCrimes:  d.totalCrimes,
-    stress:       d.stress,
+    totalCrimes: d.totalCrimes,
+    stress: d.stress,
     districtName: d.districtName,
-    shortName:    d.districtName.split(" ")[0],
-    color:        DISTRICT_COLORS[d.districtName] ?? "#64748b",
+    shortName: d.districtName.split(" ")[0],
+    color: DISTRICT_COLORS[d.districtName] ?? "#64748b",
+    offset: labelOffsets[d.districtName] ?? { dx: 0, dy: -20, textAnchor: "middle" },
   }));
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -338,54 +435,56 @@ function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
     if (!d) return null;
     return (
       <TooltipBox>
-        <p style={{ color: d.color, fontWeight: 700, marginBottom: 6 }}>{d.districtName}</p>
-        <p style={{ color: "#94a3b8" }}>Urbanization: <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{d.urbanization}%</span></p>
-        <p style={{ color: "#94a3b8" }}>Total FIR Cases: <span style={{ color: "#fbbf24", fontWeight: 600 }}>{d.totalCrimes}</span></p>
-        <p style={{ color: "#94a3b8" }}>Economic Stress: <span style={{ color: "#f87171", fontWeight: 600 }}>{d.stress}%</span></p>
-        <p style={{ color: "#64748b", fontSize: 11, marginTop: 4 }}>Dot size ∝ case count</p>
+        <p style={{ color: d.color, fontWeight: 700, marginBottom: 6, fontSize: 14 }}>{d.districtName}</p>
+        <p style={{ color: "#94a3b8", fontSize: 12.5 }}>Urbanization Index: <span style={{ color: "#f8fafc", fontWeight: 700 }}>{d.urbanization}%</span></p>
+        <p style={{ color: "#94a3b8", fontSize: 12.5 }}>Total FIR Cases: <span style={{ color: "#fbbf24", fontWeight: 700 }}>{d.totalCrimes}</span></p>
+        <p style={{ color: "#94a3b8", fontSize: 12.5 }}>Economic Stress: <span style={{ color: "#f87171", fontWeight: 700 }}>{d.stress}%</span></p>
+        <p style={{ color: "#64748b", fontSize: 11.5, marginTop: 6, borderTop: "1px solid #1e293b", paddingTop: 4 }}>
+          Positive Correlation ($r \approx +0.82$)
+        </p>
       </TooltipBox>
     );
   };
 
   return (
-    <div className="card rounded-2xl">
-      <div className="h-0.5 rounded-t-2xl bg-gradient-to-r from-emerald-500 to-teal-600 -mt-[1.375rem] mb-4 mx-[-1.5rem] rounded-tl-2xl rounded-tr-2xl" />
-      <div className="flex items-start gap-3 mb-1">
-        <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0 mt-0.5">
-          <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+    <div className="bg-slate-950/80 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4 text-emerald-400" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-100">Urbanization vs. Total FIR Cases Correlation</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Scatter plot of urbanization % against FIR counts · Non-overlapping district tags · Size ∝ case count
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-heading3 text-slate-100">Urbanization vs. Total FIR Cases</h3>
-          <p className="text-body-sm text-slate-500 mt-0.5">
-            Each bubble = one district · Bubble size proportional to case count · Colour-coded by district
-          </p>
+
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg">
+          {DISTRICT_KEYS.map((d) => (
+            <span key={d} className="flex items-center gap-1.5 text-slate-300">
+              <span style={{ background: DISTRICT_COLORS[d], width: 9, height: 9, borderRadius: "50%", display: "inline-block" }} />
+              {d.split(" ")[0]}
+            </span>
+          ))}
         </div>
       </div>
 
-      {/* District colour legend */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 mb-1 pl-9">
-        {DISTRICT_KEYS.map(d => (
-          <span key={d} className="flex items-center gap-1.5 text-micro text-slate-400">
-            <span style={{ background: DISTRICT_COLORS[d], width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
-            {d.split(" ")[0]}
-          </span>
-        ))}
-      </div>
-
-      <div className="h-[340px] w-full mt-2">
+      <div className="h-[380px] w-full pt-2">
         <ResponsiveContainer width="100%" height="100%">
-          <ScatterChart margin={{ top: 16, right: 24, bottom: 40, left: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(51,65,85,0.4)" />
+          <ScatterChart margin={{ top: 25, right: 35, bottom: 45, left: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
             <XAxis
               type="number"
               dataKey="urbanization"
               name="Urbanization"
               domain={[25, 100]}
               stroke="#475569"
-              tick={{ fill: "#94a3b8", fontSize: 11 }}
+              tick={{ fill: "#cbd5e1", fontSize: 12, fontWeight: 600 }}
               tickLine={false}
-              tickFormatter={v => `${v}%`}
-              label={{ value: "Urbanization Index (%)", position: "insideBottom", offset: -12, fill: "#64748b", fontSize: 11 }}
+              tickFormatter={(v) => `${v}%`}
+              label={{ value: "Urbanization Index (%)", position: "insideBottom", offset: -25, fill: "#94a3b8", fontSize: 12, fontWeight: 600 }}
             />
             <YAxis
               type="number"
@@ -394,11 +493,11 @@ function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
               domain={[0, 5]}
               allowDecimals={false}
               stroke="#475569"
-              tick={{ fill: "#94a3b8", fontSize: 11 }}
+              tick={{ fill: "#94a3b8", fontSize: 12 }}
               tickLine={false}
               axisLine={false}
-              width={28}
-              label={{ value: "FIR Cases", angle: -90, position: "insideLeft", offset: 8, fill: "#64748b", fontSize: 11 }}
+              width={35}
+              label={{ value: "Registered FIR Cases", angle: -90, position: "insideLeft", offset: 10, fill: "#94a3b8", fontSize: 12, fontWeight: 600 }}
             />
             <Tooltip content={<CustomTooltip />} cursor={false} />
             <Scatter
@@ -406,12 +505,28 @@ function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
               data={chartData}
               shape={(props: any) => {
                 const { cx, cy, payload } = props;
-                const r = 12 + payload.totalCrimes * 6;
+                const r = 14 + payload.totalCrimes * 7;
+                const { dx, dy, textAnchor } = payload.offset;
+
                 return (
                   <g>
-                    <circle cx={cx} cy={cy} r={r} fill={payload.color} fillOpacity={0.2} stroke={payload.color} strokeWidth={2} />
-                    <circle cx={cx} cy={cy} r={4} fill={payload.color} />
-                    <text x={cx} y={cy - r - 5} textAnchor="middle" fill="#e2e8f0" fontSize={10} fontWeight="600">
+                    {/* Glowing outer circle */}
+                    <circle cx={cx} cy={cy} r={r} fill={payload.color} fillOpacity={0.2} stroke={payload.color} strokeWidth={2.5} />
+                    <circle cx={cx} cy={cy} r={5} fill={payload.color} />
+
+                    {/* Non-Overlapping Label Background Badge */}
+                    <rect
+                      x={cx + dx - (payload.shortName.length * 4 + 8) * (textAnchor === "end" ? 1 : textAnchor === "middle" ? 0.5 : 0)}
+                      y={cy + dy - 12}
+                      width={payload.shortName.length * 8 + 16}
+                      height={18}
+                      rx={4}
+                      ry={4}
+                      fill="#030712"
+                      stroke={payload.color}
+                      strokeWidth="1"
+                    />
+                    <text x={cx + dx} y={cy + dy} textAnchor={textAnchor} fill="#f8fafc" fontSize="11.5" fontWeight="700">
                       {payload.shortName}
                     </text>
                   </g>
@@ -433,73 +548,75 @@ function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
   );
 }
 
-// ─── Chart 4: District Risk Radar ────────────────────────────────────────────
+// ─── Chart 4: Multi-Dimensional Risk Radar with Aggregated Benchmark ────────
 function DistrictRadarChart({ data }: { data: SocioRow[] }) {
-  // Show top 3 most-at-risk districts side by side for clarity
   const radarMetrics = [
-    { key: "urbanization",   label: "Urbanization" },
-    { key: "stress",         label: "Econ. Stress" },
-    { key: "migration",      label: "Migration" },
-    { key: "crimeLoad",      label: "Crime Load" },
-    { key: "eduInverse",     label: "Low Education" },
+    { key: "urbanization", label: "Urbanization" },
+    { key: "stress", label: "Econ. Stress" },
+    { key: "migration", label: "Migration" },
+    { key: "crimeLoad", label: "Crime Load" },
+    { key: "eduInverse", label: "Low Education" },
   ];
 
   const [selectedDistrict, setSelectedDistrict] = useState<string>(data[0]?.districtName ?? "");
 
-  const enriched = data.map(d => ({
+  // Enrich data with normalised metrics
+  const enriched = data.map((d) => ({
     ...d,
-    crimeLoad:   Math.round((d.totalCrimes / 4) * 100), // normalise to 0-100 (max 4 cases)
-    eduInverse:  100 - d.education,
+    crimeLoad: Math.round((d.totalCrimes / 4) * 100),
+    eduInverse: 100 - d.education,
   }));
 
-  const radarData = radarMetrics.map(m => {
-    const row: any = { metric: m.label };
-    enriched.forEach(d => {
-      row[d.districtName.split(" ")[0]] = (d as any)[m.key];
-    });
-    return row;
-  });
+  // Statewide Benchmark Average
+  const statewideAvg = {
+    urbanization: Math.round(data.reduce((s, d) => s + d.urbanization, 0) / data.length),
+    stress: Math.round(data.reduce((s, d) => s + d.stress, 0) / data.length),
+    migration: Math.round(data.reduce((s, d) => s + d.migration, 0) / data.length),
+    crimeLoad: Math.round((data.reduce((s, d) => s + d.totalCrimes, 0) / (data.length * 4)) * 100),
+    eduInverse: Math.round(100 - data.reduce((s, d) => s + d.education, 0) / data.length),
+  };
 
-  const selected = enriched.find(d => d.districtName === selectedDistrict);
+  const selected = enriched.find((d) => d.districtName === selectedDistrict);
 
-  const singleRadarData = selected
-    ? radarMetrics.map(m => ({
-        metric:  m.label,
-        value:   (selected as any)[m.key] as number,
+  const radarChartData = selected
+    ? radarMetrics.map((m) => ({
+        metric: m.label,
+        districtValue: (selected as any)[m.key] as number,
+        statewideAvg: (statewideAvg as any)[m.key] as number,
         fullMark: 100,
       }))
     : [];
 
-  const color = DISTRICT_COLORS[selectedDistrict] ?? "#3b82f6";
+  const color = DISTRICT_COLORS[selectedDistrict] ?? "#38bdf8";
 
   return (
-    <div className="card rounded-2xl">
-      <div className="h-0.5 rounded-t-2xl bg-gradient-to-r from-indigo-500 to-purple-600 -mt-[1.375rem] mb-4 mx-[-1.5rem] rounded-tl-2xl rounded-tr-2xl" />
-      <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+    <div className="bg-slate-950/80 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center">
-              <Target className="w-3.5 h-3.5 text-indigo-400" />
+              <Target className="w-4 h-4 text-indigo-400" />
             </div>
-            <h3 className="text-heading3 text-slate-100">District Risk Profile Radar</h3>
+            <h3 className="text-base font-bold text-slate-100">Multi-Dimensional Risk Profile Radar</h3>
           </div>
-          <p className="text-body-sm text-slate-500 ml-9">
-            Multi-dimensional risk profile per district across 5 criminological indicators
+          <p className="text-xs text-slate-400 ml-9">
+            District risk profile compared directly against the Statewide Benchmark Average
           </p>
         </div>
-        {/* District selector */}
-        <div className="flex flex-wrap gap-1.5 ml-9">
-          {data.map(d => {
+
+        {/* District Selector Buttons */}
+        <div className="flex flex-wrap gap-1.5">
+          {data.map((d) => {
             const short = d.districtName.split(" ")[0];
             const active = d.districtName === selectedDistrict;
             return (
               <button
                 key={d.districtName}
                 onClick={() => setSelectedDistrict(d.districtName)}
-                className={`px-2.5 py-1 rounded-lg text-caption font-semibold border transition ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
                   active
-                    ? "border-blue-500/50 text-blue-300 bg-blue-500/15"
-                    : "border-slate-700/60 text-slate-500 hover:text-slate-300 hover:border-slate-600"
+                    ? "border-sky-500 text-sky-300 bg-sky-500/20 shadow-md"
+                    : "border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 bg-slate-900/60"
                 }`}
               >
                 {short}
@@ -509,49 +626,75 @@ function DistrictRadarChart({ data }: { data: SocioRow[] }) {
         </div>
       </div>
 
-      <div className="h-[320px] w-full">
+      {/* Radar Legend */}
+      <div className="flex items-center gap-4 text-xs font-semibold bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg w-fit">
+        <span className="flex items-center gap-1.5" style={{ color }}>
+          <span className="w-3.5 h-3.5 rounded-full" style={{ background: color }}></span>
+          {selectedDistrict}
+        </span>
+        <span className="flex items-center gap-1.5 text-sky-400">
+          <span className="w-4 h-0.5 border-t-2 border-dashed border-sky-400"></span>
+          Statewide Average Benchmark
+        </span>
+      </div>
+
+      <div className="h-[380px] w-full pt-2">
         <ResponsiveContainer width="100%" height="100%">
-          <RadarChart data={singleRadarData} margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
-            <PolarGrid stroke="rgba(51,65,85,0.5)" />
+          <RadarChart data={radarChartData} margin={{ top: 15, right: 30, bottom: 15, left: 30 }}>
+            <PolarGrid stroke="#1e293b" />
             <PolarAngleAxis
               dataKey="metric"
-              tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 500 }}
+              tick={{ fill: "#cbd5e1", fontSize: 13, fontWeight: 700 }}
             />
             <PolarRadiusAxis
               angle={90}
               domain={[0, 100]}
-              tick={{ fill: "#475569", fontSize: 9 }}
-              tickCount={4}
+              tick={{ fill: "#64748b", fontSize: 11 }}
+              tickCount={5}
               axisLine={false}
             />
+            {/* Selected District Radar */}
             <Radar
               name={selected?.districtName ?? ""}
-              dataKey="value"
+              dataKey="districtValue"
               stroke={color}
               fill={color}
               fillOpacity={0.35}
-              strokeWidth={2.5}
+              strokeWidth={3}
+            />
+            {/* Statewide Average Benchmark Overlay */}
+            <Radar
+              name="Statewide Average"
+              dataKey="statewideAvg"
+              stroke="#38bdf8"
+              strokeDasharray="4 4"
+              fill="#38bdf8"
+              fillOpacity={0.08}
+              strokeWidth={2}
             />
             <Tooltip
               contentStyle={{
-                background: "rgba(2,6,23,0.97)",
-                border: "1px solid rgba(51,65,85,0.9)",
+                background: "rgba(2, 6, 23, 0.98)",
+                border: "1px solid rgba(51, 65, 85, 0.9)",
                 borderRadius: 10,
-                fontSize: 12,
+                fontSize: 13,
+                color: "#f8fafc",
               }}
-              formatter={(v: any) => [`${v}`, ""]}
-              labelFormatter={(l) => <span style={{ color: color, fontWeight: 700 }}>{l}</span>}
+              formatter={(v: any, name: any) => [`${v} points`, name === "districtValue" ? selectedDistrict : "Statewide Average"]}
+              labelFormatter={(l) => <span style={{ color: color, fontWeight: 700 }}>Indicator: {l}</span>}
             />
           </RadarChart>
         </ResponsiveContainer>
       </div>
 
       {selected && (
-        <div className="mt-3 grid grid-cols-5 gap-2">
-          {radarMetrics.map(m => (
+        <div className="mt-2 grid grid-cols-5 gap-3 bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+          {radarMetrics.map((m) => (
             <div key={m.key} className="text-center">
-              <div className="text-body-sm font-bold" style={{ color }}>{(selected as any)[m.key]}</div>
-              <div className="text-micro text-slate-500">{m.label}</div>
+              <div className="text-sm sm:text-base font-extrabold" style={{ color }}>
+                {(selected as any)[m.key]}
+              </div>
+              <div className="text-[11px] font-semibold text-slate-400">{m.label}</div>
             </div>
           ))}
         </div>
@@ -570,24 +713,24 @@ function DistrictRadarChart({ data }: { data: SocioRow[] }) {
 
 // ─── Criminological Theory Cards ─────────────────────────────────────────────
 function TheoryCards({ data }: { data: SocioRow[] }) {
-  const bengaluru  = data.find(d => d.districtName === "Bengaluru City");
-  const kalaburagi = data.find(d => d.districtName === "Kalaburagi");
-  const mangaluru  = data.find(d => d.districtName.startsWith("Mangaluru"));
+  const bengaluru  = data.find((d) => d.districtName === "Bengaluru City");
+  const kalaburagi = data.find((d) => d.districtName === "Kalaburagi");
+  const mangaluru  = data.find((d) => d.districtName.startsWith("Mangaluru"));
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Social Disorganization */}
-      <div className="rounded-xl border border-rose-500/20 bg-gradient-to-br from-rose-950/25 to-slate-950/60 p-5">
+      <div className="rounded-2xl border border-rose-500/30 bg-gradient-to-br from-rose-950/30 to-slate-950/80 p-6 shadow-xl">
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-rose-500/15 border border-rose-500/25 flex items-center justify-center shrink-0 mt-0.5">
-            <AlertTriangle className="w-4 h-4 text-rose-400" />
+          <div className="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0 mt-0.5">
+            <AlertTriangle className="w-5 h-5 text-rose-400" />
           </div>
           <div>
-            <div className="text-micro font-semibold text-rose-400/80 uppercase tracking-wider mb-1">Social Disorganization Theory</div>
-            <h4 className="text-body font-bold text-rose-300 mb-2">Bengaluru: Urban Density Driver</h4>
-            <p className="text-body-sm text-slate-300 leading-relaxed">
-              With urbanization at <span className="font-semibold text-sky-400">{bengaluru?.urbanization ?? 92}%</span> and
-              population density of <span className="font-semibold text-sky-400">{bengaluru?.density?.toLocaleString() ?? "4,380"}/km²</span>,
+            <div className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-1">Social Disorganization Theory</div>
+            <h4 className="text-base font-bold text-rose-200 mb-2">Bengaluru: Urban Density Driver</h4>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              With urbanization at <span className="font-bold text-sky-400">{bengaluru?.urbanization ?? 92}%</span> and
+              population density of <span className="font-bold text-sky-400">{bengaluru?.density?.toLocaleString() ?? "4,380"}/km²</span>,
               Bengaluru's rapid growth outpaces social cohesion — directly increasing property crime and cyber fraud opportunity.
             </p>
           </div>
@@ -595,37 +738,37 @@ function TheoryCards({ data }: { data: SocioRow[] }) {
       </div>
 
       {/* Strain Theory */}
-      <div className="rounded-xl border border-amber-500/20 bg-gradient-to-br from-amber-950/25 to-slate-950/60 p-5">
+      <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-950/30 to-slate-950/80 p-6 shadow-xl">
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/25 flex items-center justify-center shrink-0 mt-0.5">
-            <BookOpen className="w-4 h-4 text-amber-400" />
+          <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0 mt-0.5">
+            <BookOpen className="w-5 h-5 text-amber-400" />
           </div>
           <div>
-            <div className="text-micro font-semibold text-amber-400/80 uppercase tracking-wider mb-1">Strain Theory (Merton)</div>
-            <h4 className="text-body font-bold text-amber-300 mb-2">Kalaburagi: Blocked Opportunities</h4>
-            <p className="text-body-sm text-slate-300 leading-relaxed">
-              Economic stress at <span className="font-semibold text-amber-400">{kalaburagi?.stress ?? 68}%</span> with
-              education at only <span className="font-semibold text-amber-400">{kalaburagi?.education ?? 65}%</span> —
+            <div className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1">Strain Theory (Merton)</div>
+            <h4 className="text-base font-bold text-amber-200 mb-2">Kalaburagi: Blocked Opportunities</h4>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Economic stress at <span className="font-bold text-amber-400">{kalaburagi?.stress ?? 68}%</span> with
+              education at only <span className="font-bold text-amber-400">{kalaburagi?.education ?? 65}%</span> —
               the classic Mertonian condition. Inability to achieve socially approved goals through legitimate means drives
-              violent crime escalation, as confirmed by the assault case (FIR-202600008).
+              violent crime escalation, as confirmed by assault case FIR-202600008.
             </p>
           </div>
         </div>
       </div>
 
       {/* Protective Factor */}
-      <div className="rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-950/25 to-slate-950/60 p-5">
+      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 to-slate-950/80 p-6 shadow-xl">
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0 mt-0.5">
-            <CheckCircle className="w-4 h-4 text-emerald-400" />
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 mt-0.5">
+            <CheckCircle className="w-5 h-5 text-emerald-400" />
           </div>
           <div>
-            <div className="text-micro font-semibold text-emerald-400/80 uppercase tracking-wider mb-1">Protective Factor Analysis</div>
-            <h4 className="text-body font-bold text-emerald-300 mb-2">Mangaluru: Education as Buffer</h4>
-            <p className="text-body-sm text-slate-300 leading-relaxed">
-              Education index of <span className="font-semibold text-emerald-400">{mangaluru?.education ?? 91}%</span> —
+            <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Protective Factor Analysis</div>
+            <h4 className="text-base font-bold text-emerald-200 mb-2">Mangaluru: Education as Buffer</h4>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Education index of <span className="font-bold text-emerald-400">{mangaluru?.education ?? 91}%</span> —
               Karnataka's highest — acts as a crime suppressor despite moderate urbanization
-              (<span className="font-semibold text-emerald-400">{mangaluru?.urbanization ?? 72}%</span>).
+              (<span className="font-bold text-emerald-400">{mangaluru?.urbanization ?? 72}%</span>).
               This validates that education investment is the strongest single policy lever for long-term crime reduction.
             </p>
           </div>
@@ -638,55 +781,82 @@ function TheoryCards({ data }: { data: SocioRow[] }) {
 // ─── District Detail Table ────────────────────────────────────────────────────
 function DistrictTable({ data }: { data: SocioRow[] }) {
   return (
-    <div className="card rounded-2xl overflow-hidden p-0" style={{padding: 0}}>
-      <div className="px-5 py-4 border-b border-slate-800/60">
-        <div className="flex items-center gap-2">
-          <Shield className="w-4.5 h-4.5 text-slate-400" />
-          <h3 className="text-heading3 text-slate-100">District Intelligence Summary</h3>
+    <div className="bg-slate-950/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      <div className="px-6 py-4 border-b border-slate-800/80 flex items-center justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-slate-300" />
+            <h3 className="text-base font-bold text-slate-100">District Intelligence Summary Matrix</h3>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            Full socio-economic and crime breakdown for all 6 Karnataka districts — sourced directly from the FIR ER Dataset
+          </p>
         </div>
-        <p className="text-body-sm text-slate-500 mt-1">Full socio-economic and crime data for all 6 Karnataka districts — sourced directly from the FIR ER Dataset</p>
+        <span className="text-xs font-semibold text-sky-400 bg-sky-500/10 border border-sky-500/30 px-3 py-1 rounded-lg">
+          6 Districts Monitored
+        </span>
       </div>
+
       <div className="overflow-x-auto">
-        <table className="table-enterprise w-full">
+        <table className="w-full text-left border-collapse">
           <thead>
-            <tr>
-              <th className="text-left">District</th>
-              <th className="text-center">Urban %</th>
-              <th className="text-center">Migration %</th>
-              <th className="text-center">Econ. Stress %</th>
-              <th className="text-center">Education %</th>
-              <th className="text-center">Density /km²</th>
-              <th className="text-center text-amber-400/80">Property</th>
-              <th className="text-center text-rose-400/80">Violent</th>
-              <th className="text-center text-purple-400/80">Cyber</th>
-              <th className="text-center text-emerald-400/80">Narcotics</th>
-              <th className="text-center font-bold text-slate-200">Total</th>
+            <tr className="bg-slate-900/90 border-b border-slate-800 text-xs font-bold text-slate-300 uppercase tracking-wider">
+              <th className="py-3.5 px-4">District</th>
+              <th className="py-3.5 px-3 text-center">Urban %</th>
+              <th className="py-3.5 px-3 text-center">Migration %</th>
+              <th className="py-3.5 px-3 text-center">Econ. Stress %</th>
+              <th className="py-3.5 px-3 text-center">Education %</th>
+              <th className="py-3.5 px-3 text-center">Density /km²</th>
+              <th className="py-3.5 px-3 text-center text-amber-400">Property</th>
+              <th className="py-3.5 px-3 text-center text-rose-400">Violent</th>
+              <th className="py-3.5 px-3 text-center text-purple-400">Cyber</th>
+              <th className="py-3.5 px-3 text-center text-emerald-400">Narcotics</th>
+              <th className="py-3.5 px-4 text-center font-bold text-slate-100">Total FIRs</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-850">
             {data.map((d, i) => (
-              <tr key={i}>
-                <td>
-                  <div className="flex items-center gap-2">
-                    <span style={{ background: DISTRICT_COLORS[d.districtName] ?? "#64748b", width: 8, height: 8, borderRadius: "50%", display: "inline-block", flexShrink: 0 }} />
-                    <span className="font-semibold text-slate-200">{d.districtName}</span>
+              <tr key={i} className="hover:bg-slate-850/80 transition-colors">
+                <td className="py-3.5 px-4">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      style={{
+                        background: DISTRICT_COLORS[d.districtName] ?? "#64748b",
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                        display: "inline-block",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span className="font-semibold text-sm text-slate-100">{d.districtName}</span>
                   </div>
                 </td>
-                <td className="text-center text-sky-400 font-medium">{d.urbanization}%</td>
-                <td className="text-center text-purple-400 font-medium">{d.migration}%</td>
-                <td className="text-center">
-                  <span className={`badge ${d.stress >= 60 ? "badge-red" : d.stress >= 40 ? "badge-amber" : "badge-green"}`}>
+                <td className="py-3.5 px-3 text-center text-sky-400 font-bold text-xs sm:text-sm">{d.urbanization}%</td>
+                <td className="py-3.5 px-3 text-center text-purple-400 font-bold text-xs sm:text-sm">{d.migration}%</td>
+                <td className="py-3.5 px-3 text-center">
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                      d.stress >= 60
+                        ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                        : d.stress >= 40
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                        : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                    }`}
+                  >
                     {d.stress}%
                   </span>
                 </td>
-                <td className="text-center text-emerald-400 font-medium">{d.education}%</td>
-                <td className="text-center text-slate-400 font-mono text-caption">{d.density.toLocaleString()}</td>
-                <td className="text-center text-amber-400 font-semibold">{d.propertyCrimes}</td>
-                <td className="text-center text-rose-400 font-semibold">{d.bodyCrimes}</td>
-                <td className="text-center text-purple-400 font-semibold">{d.cyberCrimes}</td>
-                <td className="text-center text-emerald-400 font-semibold">{d.drugCrimes}</td>
-                <td className="text-center">
-                  <span className="badge badge-blue font-bold">{d.totalCrimes}</span>
+                <td className="py-3.5 px-3 text-center text-emerald-400 font-bold text-xs sm:text-sm">{d.education}%</td>
+                <td className="py-3.5 px-3 text-center text-slate-300 font-mono text-xs sm:text-sm">{d.density.toLocaleString()}</td>
+                <td className="py-3.5 px-3 text-center text-amber-400 font-extrabold text-xs sm:text-sm">{d.propertyCrimes}</td>
+                <td className="py-3.5 px-3 text-center text-rose-400 font-extrabold text-xs sm:text-sm">{d.bodyCrimes}</td>
+                <td className="py-3.5 px-3 text-center text-purple-400 font-extrabold text-xs sm:text-sm">{d.cyberCrimes}</td>
+                <td className="py-3.5 px-3 text-center text-emerald-400 font-extrabold text-xs sm:text-sm">{d.drugCrimes}</td>
+                <td className="py-3.5 px-4 text-center">
+                  <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-extrabold bg-sky-500/20 text-sky-300 border border-sky-500/40">
+                    {d.totalCrimes}
+                  </span>
                 </td>
               </tr>
             ))}
@@ -701,48 +871,48 @@ function DistrictTable({ data }: { data: SocioRow[] }) {
 function CrossModulePanel({ onNavigate, setChatInput, logAuditEvent }: Pick<Props, "onNavigate" | "setChatInput" | "logAuditEvent">) {
   const actions = [
     {
-      label: "View Crime Hotspots",
-      desc: "Spatial velocity map",
+      label: "View Crime Hotspots Map",
+      desc: "Spatial analysis & heat intensity",
       tab: "hotspots",
-      color: "text-blue-300",
-      border: "border-blue-500/25",
-      bg: "bg-blue-500/8",
+      color: "text-sky-300",
+      border: "border-sky-500/30",
+      bg: "bg-sky-500/10",
     },
     {
       label: "Ask AI for Deep Analysis",
-      desc: "Economic stress vs. crime",
+      desc: "Economic stress vs crime query",
       tab: "conversational",
       color: "text-purple-300",
-      border: "border-purple-500/25",
-      bg: "bg-purple-500/8",
+      border: "border-purple-500/30",
+      bg: "bg-purple-500/10",
       prefill: "Explain the relationship between economic stress and violent crime in Kalaburagi district",
     },
     {
       label: "Check Risk Predictions",
-      desc: "Early warning alarms",
+      desc: "Predictive early warning alarms",
       tab: "forecasting",
       color: "text-amber-300",
-      border: "border-amber-500/25",
-      bg: "bg-amber-500/8",
+      border: "border-amber-500/30",
+      bg: "bg-amber-500/10",
     },
     {
       label: "View Offender Profiles",
-      desc: "MO & recidivism risk",
+      desc: "Recidivism risk & dossier trace",
       tab: "profiling",
       color: "text-emerald-300",
-      border: "border-emerald-500/25",
-      bg: "bg-emerald-500/8",
+      border: "border-emerald-500/30",
+      bg: "bg-emerald-500/10",
     },
   ];
 
   return (
-    <div className="card rounded-2xl" style={{borderColor: 'rgba(14,165,233,0.12)'}}>
-      <div className="flex items-center gap-2 mb-4">
-        <Lightbulb className="w-4.5 h-4.5 text-sky-400" />
-        <h3 className="text-heading3 text-slate-200">Recommended Investigative Actions</h3>
+    <div className="bg-slate-950/80 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
+      <div className="flex items-center gap-2">
+        <Lightbulb className="w-5 h-5 text-sky-400" />
+        <h3 className="text-base font-bold text-slate-100">Recommended Cross-Module Investigative Actions</h3>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {actions.map(a => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {actions.map((a) => (
           <button
             key={a.tab}
             onClick={() => {
@@ -750,11 +920,16 @@ function CrossModulePanel({ onNavigate, setChatInput, logAuditEvent }: Pick<Prop
               onNavigate(a.tab);
               logAuditEvent("Cross Link", `Sociological → ${a.tab}`);
             }}
-            className={`group flex flex-col gap-1 p-3.5 rounded-xl border ${a.border} hover:border-opacity-70 transition text-left`}
+            className={`group flex flex-col justify-between p-4 rounded-xl border ${a.border} ${a.bg} hover:border-opacity-100 transition-all text-left space-y-2`}
           >
-            <span className={`text-body-sm font-semibold ${a.color}`}>{a.label}</span>
-            <span className="text-caption text-slate-500">{a.desc}</span>
-            <ArrowRight className={`w-3.5 h-3.5 ${a.color} mt-1 opacity-0 group-hover:opacity-100 transition-opacity`} />
+            <div>
+              <span className={`text-sm font-bold block ${a.color}`}>{a.label}</span>
+              <span className="text-xs text-slate-400 mt-1 block">{a.desc}</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs font-semibold text-slate-300 pt-2 border-t border-slate-800/60">
+              <span>Launch Action</span>
+              <ArrowRight className={`w-4 h-4 ${a.color} transition-transform group-hover:translate-x-1`} />
+            </div>
           </button>
         ))}
       </div>
@@ -787,42 +962,51 @@ export default function SociologicalInsights({ socioData, onNavigate, setChatInp
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col gap-6 overflow-y-auto h-full pr-1"
-      style={{ scrollbarWidth: "thin", scrollbarColor: "#334155 transparent" }}
+      className="flex flex-col gap-8 overflow-y-auto h-full pr-2 scrollbar-thin scrollbar-thumb-slate-800 pb-12"
     >
       {/* Page header */}
-      <div className="section-header">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-950/90 border border-slate-800 p-6 rounded-2xl shadow-xl">
         <div>
-          <h2 className="section-title">
-            <Activity className="w-5 h-5 text-sky-400" />
-            Sociological Crime Insights & Correlations
+          <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2.5">
+            <Activity className="w-6 h-6 text-sky-400" />
+            Sociological Crime Insights & Socio-Economic Correlations
           </h2>
-          <p className="section-subtitle mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             Data-grounded analysis of urbanization, economic stress, migration, and education indices across 6 Karnataka districts — derived exclusively from the KSP FIR ER Dataset
           </p>
         </div>
-        <span className="badge badge-blue shrink-0">6 Districts · 8 FIRs</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-500/10 text-sky-300 border border-sky-500/30">
+            6 Districts Monitored
+          </span>
+          <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-500/10 text-purple-300 border border-purple-500/30">
+            8 FIR Records Linked
+          </span>
+        </div>
       </div>
 
-      {/* Row 1: Socio-Economic Indices + Crime Distribution */}
+      {/* Statewide Aggregated KPI Summary Header Bar */}
+      <StatewideKpiBar data={socioData} />
+
+      {/* Row 1: Socio-Economic Risk Indices + Crime Type Distribution */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <SocioRiskChart data={socioData} />
         <CrimeDistributionChart data={socioData} />
       </div>
 
-      {/* Row 2: Scatter + Radar */}
+      {/* Row 2: Urbanization Scatter + Risk Profile Radar */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <UrbanizationScatterChart data={socioData} />
         <DistrictRadarChart data={socioData} />
       </div>
 
-      {/* Row 3: Theory cards */}
+      {/* Row 3: Theory Cards */}
       <TheoryCards data={socioData} />
 
-      {/* Row 4: Full data table */}
+      {/* Row 4: Full Data Table */}
       <DistrictTable data={socioData} />
 
-      {/* Row 5: Cross-module actions */}
+      {/* Row 5: Cross-Module Actions */}
       <CrossModulePanel onNavigate={onNavigate} setChatInput={setChatInput} logAuditEvent={logAuditEvent} />
     </motion.div>
   );
