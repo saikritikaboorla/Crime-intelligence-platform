@@ -42,6 +42,28 @@ import LoginPage from "./components/LoginPage";
 import HeatmapAnalytics from "./components/HeatmapAnalytics";
 import { mockFinancialTransactions } from "./mockData";
 
+type DiscoveryOption = {
+  id: number;
+  name: string;
+  count: number;
+  branchId?: number;
+  districtId?: number;
+};
+
+type DiscoveryFilters = {
+  crimeBranches: DiscoveryOption[];
+  crimeSubBranches: DiscoveryOption[];
+  districts: DiscoveryOption[];
+  stations: DiscoveryOption[];
+};
+
+const emptyDiscoveryFilters: DiscoveryFilters = {
+  crimeBranches: [],
+  crimeSubBranches: [],
+  districts: [],
+  stations: []
+};
+
 export default function App() {
   // Auth gate
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -67,6 +89,11 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentCitation, setCurrentCitation] = useState<any | null>(null);
+  const [discoveryFilters, setDiscoveryFilters] = useState<DiscoveryFilters>(emptyDiscoveryFilters);
+  const [selectedCrimeBranch, setSelectedCrimeBranch] = useState("");
+  const [selectedCrimeSubBranch, setSelectedCrimeSubBranch] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [selectedStation, setSelectedStation] = useState("");
 
   // Dynamic analytics data state
   const [trendData, setTrendData] = useState<any>({ crimeByMonth: [], crimeByType: [], hotspots: [] });
@@ -120,6 +147,7 @@ export default function App() {
     fetchForecasting();
     fetchHeatmap();
     fetchAuditLogs();
+    fetchDiscoveryFilters();
   }, []);
 
   useEffect(() => {
@@ -243,6 +271,16 @@ export default function App() {
       setAuditLogs(data);
     } catch (err) {
       console.error("Error fetching audit logs:", err);
+    }
+  };
+
+  const fetchDiscoveryFilters = async () => {
+    try {
+      const res = await fetch("/api/discovery/filters");
+      const data = await res.json();
+      setDiscoveryFilters(data);
+    } catch (err) {
+      console.error("Error fetching discovery filters:", err);
     }
   };
 
@@ -417,6 +455,42 @@ export default function App() {
     }
   };
 
+  const handleFilterSearch = () => {
+    if (isChatLoading) {
+      showToast("Please wait for the current query to complete.", "info");
+      return;
+    }
+
+    const branch = discoveryFilters.crimeBranches.find(item => String(item.id) === selectedCrimeBranch);
+    const subBranch = discoveryFilters.crimeSubBranches.find(item => String(item.id) === selectedCrimeSubBranch);
+    const district = discoveryFilters.districts.find(item => String(item.id) === selectedDistrict);
+    const station = discoveryFilters.stations.find(item => String(item.id) === selectedStation);
+
+    if (!branch && !subBranch && !district && !station) {
+      showToast("Choose at least one crime branch, district, or station filter.", "info");
+      return;
+    }
+
+    const parts = ["Find FIRs"];
+    if (subBranch) parts.push(`for sub-branch ${subBranch.name}`);
+    else if (branch) parts.push(`for crime branch ${branch.name}`);
+    if (district) parts.push(`in district ${district.name}`);
+    if (station) parts.push(`at ${station.name}`);
+
+    const query = parts.join(" ");
+    setSelectedLanguage("en");
+    setChatInput(query);
+    logAuditEvent("Filter Search", `Generated filtered chat query: ${query}`, query);
+    handleSendMessage(undefined, query);
+  };
+
+  const clearDiscoveryFilters = () => {
+    setSelectedCrimeBranch("");
+    setSelectedCrimeSubBranch("");
+    setSelectedDistrict("");
+    setSelectedStation("");
+  };
+
   // Download printable transcript (FR-1)
   const downloadChatHistory = () => {
     logAuditEvent("PDF Export", "Triggered conversation history transcript local packaging.");
@@ -488,6 +562,9 @@ export default function App() {
       language: "en"
     }]);
   };
+
+  const filteredCrimeSubBranches = discoveryFilters.crimeSubBranches.filter(item => !selectedCrimeBranch || item.branchId === Number(selectedCrimeBranch));
+  const filteredStations = discoveryFilters.stations.filter(item => !selectedDistrict || item.districtId === Number(selectedDistrict));
 
   return (
     <AnimatePresence mode="wait">
@@ -1033,7 +1110,72 @@ export default function App() {
                           </p>
                         </div>
 
-                        {/* Schema Variable Directory */}
+                        {/* FIR Discovery Filters */}
+                        <div className="space-y-2 pt-2 border-t border-slate-800/50">
+                          <h4 className="dossier-label text-slate-500 flex items-center gap-1.5">
+                            <Filter className="w-3.5 h-3.5 text-amber-500" />
+                            Find FIR by Filters
+                          </h4>
+                          <div className="space-y-2">
+                            <select
+                              value={selectedCrimeBranch}
+                              onChange={(e) => {
+                                setSelectedCrimeBranch(e.target.value);
+                                setSelectedCrimeSubBranch("");
+                              }}
+                              className="input text-xs py-2"
+                            >
+                              <option value="">Any crime branch</option>
+                              {discoveryFilters.crimeBranches.map(item => (
+                                <option key={item.id} value={item.id}>{item.name} ({item.count})</option>
+                              ))}
+                            </select>
+                            <select
+                              value={selectedCrimeSubBranch}
+                              onChange={(e) => setSelectedCrimeSubBranch(e.target.value)}
+                              className="input text-xs py-2"
+                            >
+                              <option value="">Any sub-branch</option>
+                              {filteredCrimeSubBranches.map(item => (
+                                <option key={item.id} value={item.id}>{item.name} ({item.count})</option>
+                              ))}
+                            </select>
+                            <select
+                              value={selectedDistrict}
+                              onChange={(e) => {
+                                setSelectedDistrict(e.target.value);
+                                setSelectedStation("");
+                              }}
+                              className="input text-xs py-2"
+                            >
+                              <option value="">Any district</option>
+                              {discoveryFilters.districts.map(item => (
+                                <option key={item.id} value={item.id}>{item.name} ({item.count})</option>
+                              ))}
+                            </select>
+                            <select
+                              value={selectedStation}
+                              onChange={(e) => setSelectedStation(e.target.value)}
+                              className="input text-xs py-2"
+                            >
+                              <option value="">Any police station</option>
+                              {filteredStations.map(item => (
+                                <option key={item.id} value={item.id}>{item.name} ({item.count})</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 pt-1">
+                            <button type="button" onClick={handleFilterSearch} className="btn btn-primary btn-sm justify-center">
+                              <Search className="w-3.5 h-3.5" />
+                              Search
+                            </button>
+                            <button type="button" onClick={clearDiscoveryFilters} className="btn btn-secondary btn-sm justify-center">
+                              Clear
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Database Variables */}
                         <div className="space-y-1.5 pt-2 border-t border-slate-800/50">
                           <h4 className="dossier-label text-slate-500">Database Variables</h4>
                           <div className="space-y-1 font-mono text-micro">

@@ -48,6 +48,68 @@ const officerName  = (id: number) => mockEmployees.find(e => e.EmployeeID === id
 const rankName     = (id: number) => csvRanks.find(r => r.RankID === id)?.RankName ?? "";
 const courtName    = (id: number) => csvCourts.find(c => c.CourtID === id)?.CourtName ?? "Unknown Court";
 
+function formatCaseList(cases: typeof mockCases, context: string) {
+  if (!cases.length) {
+    return {
+      text: `No FIRs matched ${context}. Try widening the crime branch, district, or police station filter.`,
+      citations: []
+    };
+  }
+
+  const rows = cases.slice(0, 6).map((c, idx) => {
+    const accused = mockAccused.filter(a => a.CaseMasterID === c.CaseMasterID).map(a => a.AccusedName);
+    const victims = mockVictims.filter(v => v.CaseMasterID === c.CaseMasterID).map(v => v.VictimName);
+    return `${idx + 1}. FIR ${c.CrimeNo} - ${crimeSubHead(c.CrimeMinorHeadID)}, ${stationName(c.PoliceStationID)}\n   Status: ${statusName(c.CaseStatusID)} | Registered: ${c.CrimeRegisteredDate}\n   Accused: ${accused.join(", ") || "Not recorded"} | Victims: ${victims.join(", ") || "Not recorded"}`;
+  });
+
+  const text = `Found ${cases.length} matching FIR${cases.length === 1 ? "" : "s"} for ${context}:\n\n${rows.join("\n\n")}\n\nUse any FIR number above for a full case summary, or ask a follow-up such as "analyze network for FIR ${cases[0].CrimeNo}".`;
+  const citations = cases.slice(0, 6).map(c => ({
+    firNo: c.CrimeNo,
+    caseId: c.CaseMasterID,
+    title: `${crimeSubHead(c.CrimeMinorHeadID)} - ${stationName(c.PoliceStationID)}`,
+    reason: `Matched ${context}`
+  }));
+
+  return { text, citations };
+}
+
+function findCasesByDiscoveryTerms(message: string) {
+  const q = message.toLowerCase();
+  const matchedHead = mockCrimeHeads.find(h => h.Active && q.includes(h.CrimeGroupName.toLowerCase()));
+  const matchedSubHead = mockCrimeSubHeads.find(h => q.includes(h.CrimeSubHeadName.toLowerCase()));
+  const matchedDistrict = mockDistricts.find(d => q.includes(d.DistrictName.toLowerCase()));
+  const matchedStation = mockUnits.find(u => q.includes(u.UnitName.toLowerCase()));
+  const isDiscoveryQuery = q.includes("find fir") || q.includes("show fir") || q.includes("list fir") || q.includes("matching fir");
+
+  if (!matchedHead && !matchedSubHead && !matchedDistrict && !matchedStation && !isDiscoveryQuery) return null;
+
+  let cases = [...mockCases];
+  const criteria: string[] = [];
+
+  if (matchedSubHead) {
+    cases = cases.filter(c => c.CrimeMinorHeadID === matchedSubHead.CrimeSubHeadID);
+    criteria.push(`sub-branch ${matchedSubHead.CrimeSubHeadName}`);
+  } else if (matchedHead) {
+    cases = cases.filter(c => c.CrimeMajorHeadID === matchedHead.CrimeHeadID);
+    criteria.push(`crime branch ${matchedHead.CrimeGroupName}`);
+  }
+
+  if (matchedDistrict) {
+    cases = cases.filter(c => districtOfStation(c.PoliceStationID) === matchedDistrict.DistrictID);
+    criteria.push(`district ${matchedDistrict.DistrictName}`);
+  }
+
+  if (matchedStation) {
+    cases = cases.filter(c => c.PoliceStationID === matchedStation.UnitID);
+    criteria.push(`station ${matchedStation.UnitName}`);
+  }
+
+  if (!criteria.length && isDiscoveryQuery) criteria.push("available CSV case records");
+
+  cases.sort((a, b) => new Date(b.CrimeRegisteredDate).getTime() - new Date(a.CrimeRegisteredDate).getTime());
+  return formatCaseList(cases, criteria.join(", "));
+}
+
 // ── AUDIT LOGS ───────────────────────────────────────────────────────────────
 app.get("/api/audit-logs", (_req, res) => res.json(auditLogs));
 
@@ -58,6 +120,48 @@ app.post("/api/audit-logs", (req, res) => {
     details: details || "Accessed analytical module.", query: query || "" };
   auditLogs.unshift(log);
   res.json(log);
+});
+
+// ── DISCOVERY FILTERS ───────────────────────────────────────────────────────
+app.get("/api/discovery/filters", (_req, res) => {
+  const crimeBranches = mockCrimeHeads
+    .filter(h => h.Active)
+    .map(h => ({
+      id: h.CrimeHeadID,
+      name: h.CrimeGroupName,
+      count: mockCases.filter(c => c.CrimeMajorHeadID === h.CrimeHeadID).length
+    }))
+    .filter(h => h.count > 0);
+
+  const crimeSubBranches = mockCrimeSubHeads
+    .map(h => ({
+      id: h.CrimeSubHeadID,
+      branchId: h.CrimeHeadID,
+      name: h.CrimeSubHeadName,
+      count: mockCases.filter(c => c.CrimeMinorHeadID === h.CrimeSubHeadID).length
+    }))
+    .filter(h => h.count > 0);
+
+  const activeDistrictIds = new Set(mockCases.map(c => districtOfStation(c.PoliceStationID)));
+  const districts = mockDistricts
+    .filter(d => activeDistrictIds.has(d.DistrictID))
+    .map(d => ({
+      id: d.DistrictID,
+      name: d.DistrictName,
+      count: mockCases.filter(c => districtOfStation(c.PoliceStationID) === d.DistrictID).length
+    }));
+
+  const activeStationIds = new Set(mockCases.map(c => c.PoliceStationID));
+  const stations = mockUnits
+    .filter(u => activeStationIds.has(u.UnitID))
+    .map(u => ({
+      id: u.UnitID,
+      districtId: u.DistrictID,
+      name: u.UnitName,
+      count: mockCases.filter(c => c.PoliceStationID === u.UnitID).length
+    }));
+
+  res.json({ crimeBranches, crimeSubBranches, districts, stations });
 });
 
 // ── CONVERSATIONAL AI ────────────────────────────────────────────────────────
@@ -100,7 +204,15 @@ app.post("/api/query", async (req, res) => {
       const total = suspicious.reduce((s, t) => s + t.Amount, 0);
       text = `Financial intelligence summary: ${suspicious.length} suspicious transactions detected totalling ₹${total.toLocaleString("en-IN")}. Key laundering chain: FIR 1004 (Mangaluru phishing) — ₹4 lakh layered across 3 mule accounts to crypto within 75 minutes (Txs 9003–9005, 9018). Active mule accounts: MULE-SBI-8822-0011, MULE-HDFC-1102-0022, MULE-PNB-6677-0055.`;
       citations = suspicious.slice(0,3).map(t => { const c = mockCases.find(x => x.CaseMasterID === t.CaseMasterID); return { firNo: c?.CrimeNo ?? "N/A", caseId: t.CaseMasterID, title: `Tx ${t.TransactionID}: ₹${t.Amount.toLocaleString("en-IN")}`, reason: t.RiskReason ?? "Suspicious transaction" }; });
-    } else if (q.match(/\b10\d{15}\b/) || q.match(/\b202600\d{3}\b/) || q.includes("fir")) {
+    } else {
+      const discoveryResult = findCasesByDiscoveryTerms(message);
+      if (discoveryResult) {
+        text = discoveryResult.text;
+        citations = discoveryResult.citations;
+      }
+    }
+
+    if (text === "I have scanned the KSP database. Please specify a FIR number, suspect name, or district for deeper analysis." && (q.match(/\b10\d{15}\b/) || q.match(/\b202600\d{3}\b/) || q.includes("fir"))) {
       const caseMatch = mockCases.find(c => message.includes(c.CrimeNo) || message.includes(c.CaseNo) || message.includes(String(c.CaseMasterID)));
       if (caseMatch) {
         const accused = mockAccused.filter(a => a.CaseMasterID === caseMatch.CaseMasterID);
@@ -111,11 +223,15 @@ app.post("/api/query", async (req, res) => {
       } else {
         text = `No exact FIR match found. We have ${mockCases.length} active FIRs in the database. Please provide a valid CrimeNo or CaseNo (e.g., 202600001).`;
       }
-    } else if (q.includes("bengaluru") || q.includes("bangalore")) {
+    }
+
+    if (text === "I have scanned the KSP database. Please specify a FIR number, suspect name, or district for deeper analysis." && (q.includes("bengaluru") || q.includes("bangalore"))) {
       const cases = mockCases.filter(c => [201,202,203,204,205].includes(c.PoliceStationID));
       text = `Bengaluru City has ${cases.length} active FIRs. Top offence types: ${[...new Set(cases.map(c => crimeSubHead(c.CrimeMinorHeadID)))].join(", ")}. Koramangala and Cubbon Park are highest-density stations. Key suspects: Ramesh Kumar (A1, 8 cases), Suresh Hegde (A2, 6 cases). Recommend enhanced night patrols near Koramangala Ring Road.`;
       citations = cases.slice(0,3).map(c => ({ firNo: c.CrimeNo, caseId: c.CaseMasterID, title: crimeSubHead(c.CrimeMinorHeadID) + " — " + stationName(c.PoliceStationID), reason: "Bengaluru City jurisdiction" }));
-    } else if (language === "kn") {
+    }
+
+    if (text === "I have scanned the KSP database. Please specify a FIR number, suspect name, or district for deeper analysis." && language === "kn") {
       text = "ಕರ್ನಾಟಕ ರಾಜ್ಯ ಪೊಲೀಸ್ ಅಪರಾಧ ಗುಪ್ತಚರ ವ್ಯವಸ್ಥೆಗೆ ಸ್ವಾಗತ. ದಯವಿಟ್ಟು ಆರೋಪಿ ಹೆಸರು, ಎಫ್‌ಐಆರ್ ಸಂಖ್ಯೆ ಅಥವಾ ಜಿಲ್ಲೆಯ ಹೆಸರು ನಮೂದಿಸಿ.";
     }
 
