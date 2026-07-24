@@ -998,7 +998,7 @@ export default function App() {
                     {/* Right Column: Dynamic Messages scroll window */}
                     <div className="lg:col-span-3 flex flex-col bg-slate-950/40 border border-slate-800/60 rounded-xl overflow-hidden h-[450px]">
                     
-                    <div className="flex-grow p-4 overflow-y-auto space-y-4">
+                    <div className="flex-grow overflow-y-auto space-y-4 p-4 scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
                       {messages.map((m) => (
                         <div
                           key={m.id}

@@ -37,8 +37,7 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
   const [layoutMode, setLayoutMode] = useState<"circular" | "hierarchy">("circular");
   const [spacingFactor, setSpacingFactor] = useState<number>(1.0);
 
-  // Pan and Zoom State
-  const [zoom, setZoom] = useState<number>(1.0);
+  const [zoom, setZoom] = useState<number>(0.65);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -81,61 +80,66 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
 
   // Render SVG Node positions dynamically
   const positionedNodes = useMemo(() => {
-    const width = 800;
-    const height = 500;
+    const width = 1200;
+    const height = 800;
     const center = { x: width / 2, y: height / 2 };
 
     if (layoutMode === "circular") {
-      return nodes.map((node, index) => {
-        let r = 160;
-        if (node.type === "Case") r = 90;
-        else if (node.type === "Account") r = 230;
-        else if (node.type === "Victim") r = 130;
-
-        r = r * spacingFactor;
-
-        const angle = (index / nodes.length) * 2 * Math.PI;
-        const x = center.x + r * Math.cos(angle) + (Math.sin(index * 4) * 20);
-        const y = center.y + r * Math.sin(angle) + (Math.cos(index * 4) * 20);
-
-        return { ...node, x, y };
+      // Group nodes by type and place each type on its own ring
+      const byType: Record<string, any[]> = { Case: [], Suspect: [], Victim: [], Account: [] };
+      nodes.forEach(n => {
+        const key = n.type in byType ? n.type : "Account";
+        byType[key].push(n);
       });
-    } else {
-      // Hierarchy layout: Top (Cases) -> Middle (Suspects/Victims) -> Bottom (Accounts)
-      const cases = nodes.filter(n => n.type === "Case");
-      const people = nodes.filter(n => n.type === "Suspect" || n.type === "Victim");
-      const accounts = nodes.filter(n => n.type === "Account");
+
+      // Ring radii — well-separated
+      const ringRadius: Record<string, number> = {
+        Case: 140 * spacingFactor,
+        Suspect: 280 * spacingFactor,
+        Victim: 400 * spacingFactor,
+        Account: 520 * spacingFactor,
+      };
 
       return nodes.map(node => {
-        let x = center.x;
-        let y = center.y;
-
-        if (node.type === "Case") {
-          const idx = cases.findIndex(n => n.id === node.id);
-          const count = cases.length;
-          const segment = width / (count + 1 || 1);
-          x = segment * (idx + 1);
-          y = 90;
-        } else if (node.type === "Suspect" || node.type === "Victim") {
-          const idx = people.findIndex(n => n.id === node.id);
-          const count = people.length;
-          const segment = width / (count + 1 || 1);
-          x = segment * (idx + 1);
-          y = 250;
-        } else if (node.type === "Account") {
-          const idx = accounts.findIndex(n => n.id === node.id);
-          const count = accounts.length;
-          const segment = width / (count + 1 || 1);
-          x = segment * (idx + 1);
-          y = 410;
-        }
-
-        // Apply relative spacing scale from center
-        x = center.x + (x - center.x) * spacingFactor;
-        y = center.y + (y - center.y) * spacingFactor;
-
-        return { ...node, x, y };
+        const group = byType[node.type] ?? byType.Account;
+        const idx = group.findIndex((n: any) => n.id === node.id);
+        const count = group.length;
+        const r = ringRadius[node.type] ?? 300 * spacingFactor;
+        // Offset each ring start angle slightly to avoid stacking
+        const startAngle = node.type === "Suspect" ? Math.PI / 6 : node.type === "Victim" ? Math.PI / 3 : node.type === "Account" ? Math.PI / 2 : 0;
+        const angle = startAngle + (count > 1 ? (idx / count) * 2 * Math.PI : 0);
+        return {
+          ...node,
+          x: center.x + r * Math.cos(angle),
+          y: center.y + r * Math.sin(angle),
+        };
       });
+    } else {
+      // Hierarchy layout with generous spacing
+      const cases = nodes.filter(n => n.type === "Case");
+      const suspects = nodes.filter(n => n.type === "Suspect");
+      const victims = nodes.filter(n => n.type === "Victim");
+      const accounts = nodes.filter(n => n.type === "Account");
+
+      const placeRow = (group: any[], y: number) =>
+        group.map((node, idx) => ({
+          ...node,
+          x: (width / (group.length + 1)) * (idx + 1),
+          y,
+        }));
+
+      const placed = [
+        ...placeRow(cases,    100),
+        ...placeRow(suspects, 300),
+        ...placeRow(victims,  480),
+        ...placeRow(accounts, 660),
+      ];
+
+      return placed.map(node => ({
+        ...node,
+        x: center.x + (node.x - center.x) * spacingFactor,
+        y: center.y + (node.y - center.y) * spacingFactor,
+      }));
     }
   }, [nodes, spacingFactor, layoutMode]);
 
@@ -254,7 +258,7 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       {/* Sidebar Controls & Refined Details */}
-      <div className="dossier-panel h-full space-y-5">
+      <div className="dossier-panel flex flex-col overflow-hidden" style={{ maxHeight: '520px' }}>
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold tracking-wider uppercase text-amber-500 flex items-center gap-2">
             <Sliders className="w-4 h-4" />
@@ -395,7 +399,7 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
         )}
 
         {/* Detailed Relationship Inspector / Panel */}
-        <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-4 pt-3 border-t border-slate-800/60 scrollbar-thin scrollbar-thumb-slate-800">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-4 pt-3 border-t border-slate-800/60 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           {selectedNodeId && nodeMap.has(selectedNodeId) ? (
             <div className="bg-slate-950/80 rounded-xl border border-slate-800 space-y-3.5 animate-fadeIn overflow-hidden">
               {/* Colored header bar based on node type */}
@@ -579,7 +583,7 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
       </div>
 
       {/* Main Presentation Pane (Interactive SVG Canvas OR Registry Table) */}
-      <div className="lg:col-span-3 flex flex-col h-[520px] bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden relative">
+      <div className="lg:col-span-3 flex flex-col h-[600px] bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden relative">
         {/* Dynamic Dual Tab Render */}
         {viewTab === "graph" ? (
           <>
@@ -632,7 +636,7 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
               onWheel={handleWheel}
-              viewBox="0 0 800 500"
+              viewBox="0 0 1200 800"
             >
               {/* Transform Group carrying the zoom and panning offsets */}
               <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
