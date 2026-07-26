@@ -140,6 +140,40 @@ Deployed on **Zoho Catalyst AppSail** (managed Node.js hosting). Catalyst Data S
 - **Explainable AI:** no black-box outputs — every answer includes its reasoning chain and source citations
 
 ---
+## Installation & Local Setup
+
+### Prerequisites
+
+- Node.js v18 or higher
+- npm
+- Catalyst CLI (for deployment): `npm install -g @zohocrm/catalyst-cli`
+
+### Steps
+
+```bash
+# 1. Clone the repository
+git clone <repository-url>
+cd Crime-intelligence-platform
+
+# 2. Install dependencies
+npm install
+
+# 3. Configure environment variables (optional — AI simulation works without a key)
+cp .env.example .env
+# Edit .env and set GEMINI_API_KEY="your_key_here"
+
+# 4. Start development server
+npm run dev
+# Open http://localhost:3000
+
+# 5. Type check
+npm run lint
+
+# 6. Production build
+npm run build
+
+# 7. Run production server locally
+npm start
 
 ## Setup
 
