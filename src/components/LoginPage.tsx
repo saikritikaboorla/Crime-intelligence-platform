@@ -378,13 +378,13 @@ function RoleCard({ role, isActive, onSelect }: {
       style={{
         background: isActive ? "rgba(37,99,235,0.1)" : "rgba(6,13,31,0.65)",
         border: `1px solid ${isActive ? "rgba(59,130,246,0.45)" : "rgba(30,41,59,0.9)"}`,
-        borderRadius: 12, padding: "11px 14px",
+        borderRadius: 14, padding: "14px 18px",
         boxShadow: isActive ? "0 0 0 1px rgba(59,130,246,0.12) inset, 0 4px 16px rgba(37,99,235,0.1)" : "none",
         outline: "none",
       }}
     >
-      <div className="flex items-center gap-3">
-        <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 text-caption font-bold ${role.iconBg} ${role.iconColor}`}>
+      <div className="flex items-center gap-4">
+        <div className={`w-11 h-11 rounded-xl border flex items-center justify-center shrink-0 text-caption font-bold ${role.iconBg} ${role.iconColor}`}>
           {role.initials}
         </div>
         <div className="flex-1 min-w-0">
@@ -395,10 +395,10 @@ function RoleCard({ role, isActive, onSelect }: {
           <div className="text-micro text-slate-500 mt-1 leading-snug">{roleDesc}</div>
         </div>
         <div
-          className="w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-150"
+          className="w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-150"
           style={{ borderColor: isActive ? "#3b82f6" : "rgba(51,65,85,0.6)", background: isActive ? "#3b82f6" : "transparent" }}
         >
-          {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+          {isActive && <div className="w-2 h-2 rounded-full bg-white" />}
         </div>
       </div>
     </button>
@@ -523,32 +523,32 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         style={{ background: "linear-gradient(to bottom,transparent,rgba(30,41,59,0.6) 20%,rgba(30,41,59,0.6) 80%,transparent)" }} />
 
       {/* Right login panel — scrollable so nothing gets cut off */}
-      <div className="flex-shrink-0 w-full lg:w-[490px] relative z-10 flex flex-col items-center px-6 sm:px-10 py-6 overflow-y-auto">
+      <div className="flex-shrink-0 w-full lg:w-[540px] relative z-10 flex flex-col items-center px-8 sm:px-12 py-8 overflow-y-auto">
         {/* Spacer so content can be scrolled up to */}
-        <div className="flex-shrink-0 h-4 w-full" />
+        <div className="flex-shrink-0 h-6 w-full" />
 
         {/* Top bar with language switcher */}
-        <div className="w-full max-w-[430px] flex justify-between items-center mb-3">
-          <div className="flex lg:hidden items-center gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+        <div className="w-full max-w-[480px] flex justify-between items-center mb-4">
+          <div className="flex lg:hidden items-center gap-4">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
               style={{ background: "linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%)" }}>
-              <Shield className="w-4 h-4 text-white" />
+              <Shield className="w-5 h-5 text-white" />
             </div>
             <div className="text-body-sm font-bold text-slate-100">{t("common.appName")}</div>
           </div>
-          <div className="ml-auto flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-700/60 shadow-lg">
-            <Languages className="w-3.5 h-3.5 text-blue-400 ml-1.5 mr-0.5" />
+          <div className="ml-auto flex items-center gap-2 bg-slate-900/90 p-1.5 rounded-xl border border-slate-700/60 shadow-lg">
+            <Languages className="w-4 h-4 text-blue-400 ml-2 mr-1" />
             <button
               type="button"
               onClick={() => setLanguage("en")}
-              className={`px-2.5 py-1 text-micro font-bold rounded-lg transition ${language === "en" ? "bg-blue-600 text-white shadow" : "text-slate-400 hover:text-slate-200"}`}
+              className={`px-3 py-1.5 text-sm font-bold rounded-lg transition ${language === "en" ? "bg-blue-600 text-white shadow" : "text-slate-400 hover:text-slate-200"}`}
             >
               EN
             </button>
             <button
               type="button"
               onClick={() => setLanguage("kn")}
-              className={`px-2.5 py-1 text-micro font-bold rounded-lg transition ${language === "kn" ? "bg-blue-600 text-white shadow" : "text-slate-400 hover:text-slate-200"}`}
+              className={`px-3 py-1.5 text-sm font-bold rounded-lg transition ${language === "kn" ? "bg-blue-600 text-white shadow" : "text-slate-400 hover:text-slate-200"}`}
             >
               ಕನ್ನಡ
             </button>
@@ -560,39 +560,39 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full max-w-[430px]"
+          className="w-full max-w-[480px]"
           style={{
             background: "rgba(8,15,34,0.92)",
             border: "1px solid rgba(30,41,59,0.9)",
             borderTop: "1px solid rgba(59,130,246,0.22)",
-            borderRadius: 20, padding: "2.1rem",
+            borderRadius: 24, padding: "2.5rem",
             boxShadow: "0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(37,99,235,0.07), 0 0 0 1px rgba(255,255,255,0.03) inset",
             backdropFilter: "blur(28px)",
           }}
         >
           {/* Card header */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
                 style={{ background: "linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%)", boxShadow: "0 3px 14px rgba(37,99,235,0.4)" }}>
-                <Shield className="w-5 h-5 text-white" />
+                <Shield className="w-6 h-6 text-white" />
               </div>
               <div>
                 <div className="text-body-sm font-bold text-slate-200">{t("login.portalTitle")}</div>
                 <div className="text-micro text-slate-500">{t("login.portalSub")}</div>
               </div>
             </div>
-            <h1 className="text-slate-100 font-bold leading-snug mb-1.5"
-              style={{ fontSize: "1.4rem", letterSpacing: "-0.02em" }}>
+            <h1 className="text-slate-100 font-bold leading-snug mb-2"
+              style={{ fontSize: "1.6rem", letterSpacing: "-0.02em" }}>
               {t("login.title")}
             </h1>
             <p className="text-caption text-slate-500">{t("login.subtitle")}</p>
           </div>
 
           {/* Role selector */}
-          <div className="mb-5">
-            <div className="text-label text-slate-500 mb-2.5">{t("login.selectClearance")}</div>
-            <div className="space-y-1.5" role="radiogroup" aria-label="Clearance level">
+          <div className="mb-6">
+            <div className="text-label text-slate-500 mb-3">{t("login.selectClearance")}</div>
+            <div className="space-y-2" role="radiogroup" aria-label="Clearance level">
               {DEMO_ROLES.map(role => (
                 <React.Fragment key={role.id}>
                   <RoleCard role={role} isActive={selectedRole.id === role.id}
@@ -603,33 +603,33 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </div>
 
           {/* Divider */}
-          <div className="mb-4" style={{ height: 1, background: "linear-gradient(90deg,transparent,rgba(30,41,59,0.8) 30%,rgba(30,41,59,0.8) 70%,transparent)" }} />
+          <div className="mb-5" style={{ height: 1, background: "linear-gradient(90deg,transparent,rgba(30,41,59,0.8) 30%,rgba(30,41,59,0.8) 70%,transparent)" }} />
 
           {/* Credentials */}
-          <div className="space-y-2.5 mb-5">
+          <div className="space-y-3 mb-6">
             <div>
-              <label className="text-label text-slate-500 block mb-1.5" htmlFor="login-username">{t("login.username")}</label>
-              <div className="flex items-center gap-2.5"
-                style={{ background: "rgba(6,13,31,0.85)", border: "1px solid rgba(20,30,50,0.95)", borderRadius: 9, padding: "9px 13px" }}>
-                <Lock className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+              <label className="text-label text-slate-500 block mb-2" htmlFor="login-username">{t("login.username")}</label>
+              <div className="flex items-center gap-3"
+                style={{ background: "rgba(6,13,31,0.85)", border: "1px solid rgba(20,30,50,0.95)", borderRadius: 10, padding: "12px 16px" }}>
+                <Lock className="w-4 h-4 text-slate-600 shrink-0" />
                 <span id="login-username" className="text-body-sm text-slate-400 font-mono flex-1 truncate">{credentials.username}</span>
-                <span className="text-micro font-semibold px-1.5 py-0.5 rounded shrink-0"
+                <span className="text-micro font-semibold px-2 py-1 rounded shrink-0"
                   style={{ background: "rgba(37,99,235,0.12)", color: "#60a5fa", border: "1px solid rgba(59,130,246,0.18)" }}>{t("login.demoBadge")}</span>
               </div>
             </div>
             <div>
-              <label className="text-label text-slate-500 block mb-1.5" htmlFor="login-password">{t("login.password")}</label>
-              <div className="flex items-center gap-2.5"
-                style={{ background: "rgba(6,13,31,0.85)", border: "1px solid rgba(20,30,50,0.95)", borderRadius: 9, padding: "9px 13px" }}>
-                <Lock className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+              <label className="text-label text-slate-500 block mb-2" htmlFor="login-password">{t("login.password")}</label>
+              <div className="flex items-center gap-3"
+                style={{ background: "rgba(6,13,31,0.85)", border: "1px solid rgba(20,30,50,0.95)", borderRadius: 10, padding: "12px 16px" }}>
+                <Lock className="w-4 h-4 text-slate-600 shrink-0" />
                 <span id="login-password" className="text-body-sm text-slate-400 font-mono flex-1">
                   {showPassword ? credentials.password : "•".repeat(credentials.password.length)}
                 </span>
                 <button type="button" aria-label={showPassword ? t("login.hide") : t("login.show")}
                   onClick={() => setShowPassword(v => !v)}
-                  style={{ background: "none", border: "none", cursor: "pointer", padding: 2 }}
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
                   className="text-slate-600 hover:text-slate-400 transition shrink-0 rounded">
-                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -638,8 +638,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           <AnimatePresence>
             {error && (
               <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="alert-banner critical mb-4">
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                className="alert-banner critical mb-5">
+                <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
                 <span>{error}</span>
               </motion.div>
             )}
@@ -651,27 +651,27 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <AnimatePresence mode="wait">
               {loginStep === "authenticating" ? (
                 <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="flex items-center gap-2 justify-center">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block shrink-0" />
+                  className="flex items-center gap-3 justify-center">
+                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block shrink-0" />
                   {t("login.authenticating")}
                 </motion.span>
               ) : loginStep === "done" ? (
                 <motion.span key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="flex items-center gap-2 justify-center">
-                  <CheckCircle className="w-4 h-4 shrink-0" /> {t("login.verified")}
+                  className="flex items-center gap-3 justify-center">
+                  <CheckCircle className="w-5 h-5 shrink-0" /> {t("login.verified")}
                 </motion.span>
               ) : (
                 <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="flex items-center gap-2 justify-center">
-                  {t("login.signInBtn")} <ArrowRight className="w-4 h-4 shrink-0" />
+                  className="flex items-center gap-3 justify-center">
+                  {t("login.signInBtn")} <ArrowRight className="w-5 h-5 shrink-0" />
                 </motion.span>
               )}
             </AnimatePresence>
           </button>
 
-          <div className="flex items-start gap-2 mt-5 pt-4"
+          <div className="flex items-start gap-3 mt-6 pt-5"
             style={{ borderTop: "1px solid rgba(15,23,42,0.9)" }}>
-            <Shield className="w-3.5 h-3.5 text-slate-700 shrink-0 mt-0.5" />
+            <Shield className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
             <p className="text-micro text-slate-700 leading-relaxed">
               {t("login.disclaimer")}
             </p>
@@ -679,12 +679,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         </motion.div>
 
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}
-          className="mt-5 mb-6 text-center text-micro text-slate-700 font-mono">
+          className="mt-6 mb-8 text-center text-micro text-slate-700 font-mono">
           {t("login.footer")}
         </motion.p>
 
         {/* Bottom spacer so footer isn't glued to bottom edge */}
-        <div className="flex-shrink-0 h-4 w-full" />
+        <div className="flex-shrink-0 h-6 w-full" />
       </div>
     </div>
   );

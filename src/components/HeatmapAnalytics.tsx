@@ -424,100 +424,100 @@ export default function HeatmapAnalytics({ heatmapData, onNavigate, logAuditEven
   };
 
   return (
-    <div className="space-y-6 flex flex-col h-full overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800">
+    <div className="space-y-8 flex flex-col h-full overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800">
       
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800/60 pb-4 gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800/60 pb-5 gap-4">
         <div>
-          <h2 className="section-title flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-rose-500" />
+          <h2 className="section-title flex items-center gap-3">
+            <MapPin className="w-6 h-6 text-rose-500" />
             {t("heatmap.title")}
           </h2>
           <p className="section-subtitle mt-1">
             {t("heatmap.subtitle")}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             onClick={handleFocusKarnataka}
-            className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-400 text-xs font-bold rounded-lg transition flex items-center gap-1.5"
+            className="px-4 py-2 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-400 text-sm font-bold rounded-lg transition flex items-center gap-2"
           >
-            <Compass className="w-4 h-4" /> Focus Karnataka
+            <Compass className="w-5 h-5" /> Focus Karnataka
           </button>
           <button
             onClick={handleFitIndia}
-            className="px-3 py-1.5 bg-slate-900 border border-slate-700 hover:border-slate-500 text-slate-300 text-xs font-bold rounded-lg transition flex items-center gap-1.5"
+            className="px-4 py-2 bg-slate-900 border border-slate-700 hover:border-slate-500 text-slate-300 text-sm font-bold rounded-lg transition flex items-center gap-2"
           >
-            <MapIcon className="w-4 h-4 text-blue-400" /> Fit India View
+            <MapIcon className="w-5 h-5 text-blue-400" /> Fit India View
           </button>
         </div>
       </div>
 
       {/* ── KPI Stats Cards ────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-xl">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{t("heatmap.metrics.totalCrimes")}</span>
-            <MapPin className="w-4 h-4 text-blue-400" />
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-slate-500 font-semibold uppercase">{t("heatmap.metrics.totalCrimes")}</span>
+            <MapPin className="w-5 h-5 text-blue-400" />
           </div>
-          <div className="text-2xl font-bold text-slate-100">{stats.totalCrimes}</div>
-          <div className="text-xs text-slate-600 mt-1">Geocoded FIR records</div>
+          <div className="text-3xl font-bold text-slate-100">{stats.totalCrimes}</div>
+          <div className="text-sm text-slate-600 mt-1">Geocoded FIR records</div>
         </div>
 
-        <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-xl">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{t("heatmap.metrics.heinousCrimes")}</span>
-            <AlertTriangle className="w-4 h-4 text-rose-400" />
+        <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-slate-500 font-semibold uppercase">{t("heatmap.metrics.heinousCrimes")}</span>
+            <AlertTriangle className="w-5 h-5 text-rose-400" />
           </div>
-          <div className="text-2xl font-bold text-rose-400">{stats.heinousCrimes}</div>
-          <div className="text-xs text-slate-600 mt-1">Critical severity offences</div>
+          <div className="text-3xl font-bold text-rose-400">{stats.heinousCrimes}</div>
+          <div className="text-sm text-slate-600 mt-1">Critical severity offences</div>
         </div>
 
-        <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-xl">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{t("heatmap.metrics.districtsAffected")}</span>
-            <Layers className="w-4 h-4 text-emerald-400" />
+        <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-slate-500 font-semibold uppercase">{t("heatmap.metrics.districtsAffected")}</span>
+            <Layers className="w-5 h-5 text-emerald-400" />
           </div>
-          <div className="text-2xl font-bold text-emerald-400">{stats.districtsAffected}</div>
-          <div className="text-xs text-slate-600 mt-1">Active jurisdictions</div>
+          <div className="text-3xl font-bold text-emerald-400">{stats.districtsAffected}</div>
+          <div className="text-sm text-slate-600 mt-1">Active jurisdictions</div>
         </div>
 
-        <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-xl">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{t("heatmap.metrics.suspiciousTx")}</span>
-            <DollarSign className="w-4 h-4 text-amber-400" />
+        <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-slate-500 font-semibold uppercase">{t("heatmap.metrics.suspiciousTx")}</span>
+            <DollarSign className="w-5 h-5 text-amber-400" />
           </div>
-          <div className="text-2xl font-bold text-amber-400">{stats.suspiciousFinancial}</div>
-          <div className="text-xs text-slate-600 mt-1">Flagged laundering cases</div>
+          <div className="text-3xl font-bold text-amber-400">{stats.suspiciousFinancial}</div>
+          <div className="text-sm text-slate-600 mt-1">Flagged laundering cases</div>
         </div>
 
-        <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-xl">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{t("heatmap.metrics.activeStations")}</span>
-            <Building2 className="w-4 h-4 text-violet-400" />
+        <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-slate-500 font-semibold uppercase">{t("heatmap.metrics.activeStations")}</span>
+            <Building2 className="w-5 h-5 text-violet-400" />
           </div>
-          <div className="text-2xl font-bold text-violet-400">{stats.activeStations}</div>
-          <div className="text-xs text-slate-600 mt-1">Active police stations</div>
+          <div className="text-3xl font-bold text-violet-400">{stats.activeStations}</div>
+          <div className="text-sm text-slate-600 mt-1">Active police stations</div>
         </div>
       </div>
 
       {/* ── Filters Row ───────────────────────────────────────────────────── */}
-      <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-xl">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-amber-500" />
-            <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">Active Filters</span>
+      <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Filter className="w-5 h-5 text-amber-500" />
+            <span className="text-sm font-bold text-amber-500 uppercase tracking-wider">Active Filters</span>
           </div>
-          <span className="text-xs text-slate-500">Showing {filteredData.length} of {heatmapData.length} records</span>
+          <span className="text-sm text-slate-500">Showing {filteredData.length} of {heatmapData.length} records</span>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          <div className="flex flex-col gap-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          <div className="flex flex-col gap-2">
             <label className="text-micro text-slate-500 uppercase font-semibold">Layer</label>
             <select
               value={selectedLayer}
               onChange={e => setSelectedLayer(e.target.value)}
-              className="bg-slate-900 border border-slate-700 text-slate-300 text-xs px-2 py-1.5 rounded-lg focus:outline-none focus:border-amber-500/50"
+              className="bg-slate-900 border border-slate-700 text-slate-300 text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-amber-500/50"
             >
               <option value="all">All Layers</option>
               <option value="case">Crime Incidents</option>
@@ -526,12 +526,12 @@ export default function HeatmapAnalytics({ heatmapData, onNavigate, logAuditEven
             </select>
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             <label className="text-micro text-slate-500 uppercase font-semibold">District</label>
             <select
               value={selectedDistrict}
               onChange={e => setSelectedDistrict(e.target.value)}
-              className="bg-slate-900 border border-slate-700 text-slate-300 text-xs px-2 py-1.5 rounded-lg focus:outline-none focus:border-amber-500/50"
+              className="bg-slate-900 border border-slate-700 text-slate-300 text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-amber-500/50"
             >
               {districts.map(d => (
                 <option key={d} value={d}>{d === "all" ? "All Districts" : d}</option>
@@ -539,12 +539,12 @@ export default function HeatmapAnalytics({ heatmapData, onNavigate, logAuditEven
             </select>
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             <label className="text-micro text-slate-500 uppercase font-semibold">Crime Type</label>
             <select
               value={crimeTypeFilter}
               onChange={e => setCrimeTypeFilter(e.target.value)}
-              className="bg-slate-900 border border-slate-700 text-slate-300 text-xs px-2 py-1.5 rounded-lg focus:outline-none focus:border-amber-500/50"
+              className="bg-slate-900 border border-slate-700 text-slate-300 text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-amber-500/50"
             >
               {crimeTypes.map(t => (
                 <option key={t} value={t}>{t === "all" ? "All Types" : t}</option>
@@ -552,12 +552,12 @@ export default function HeatmapAnalytics({ heatmapData, onNavigate, logAuditEven
             </select>
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             <label className="text-micro text-slate-500 uppercase font-semibold">Year</label>
             <select
               value={yearFilter}
               onChange={e => setYearFilter(e.target.value)}
-              className="bg-slate-900 border border-slate-700 text-slate-300 text-xs px-2 py-1.5 rounded-lg focus:outline-none focus:border-amber-500/50"
+              className="bg-slate-900 border border-slate-700 text-slate-300 text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-amber-500/50"
             >
               {years.map(y => (
                 <option key={y} value={y}>{y === "all" ? "All Years" : y}</option>

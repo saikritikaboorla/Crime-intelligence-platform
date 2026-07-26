@@ -214,62 +214,62 @@ function SocioRiskChart({ data }: { data: SocioRow[] }) {
   };
 
   return (
-    <div className="bg-slate-950/80 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+    <div className="bg-slate-950/80 border border-slate-800 p-8 rounded-2xl space-y-6 shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 rounded-lg bg-sky-500/15 border border-sky-500/25 flex items-center justify-center">
-              <Activity className="w-4 h-4 text-sky-400" />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 rounded-lg bg-sky-500/15 border border-sky-500/25 flex items-center justify-center">
+              <Activity className="w-5 h-5 text-sky-400" />
             </div>
-            <h3 className="text-base font-bold text-slate-100">Socio-Economic Risk Indices by District</h3>
+            <h3 className="text-lg font-bold text-slate-100">Socio-Economic Risk Indices by District</h3>
           </div>
-          <p className="text-xs text-slate-400 ml-9">
+          <p className="text-sm text-slate-400 ml-12">
             Comparative analysis of urbanization, economic stress, migration and education indices across all 6 districts
           </p>
         </div>
       </div>
 
       {/* Chart Canvas */}
-      <div className="h-[380px] w-full pt-2">
+      <div className="h-[450px] w-full pt-4">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 25, right: 20, bottom: 45, left: 10 }} barCategoryGap="20%" barGap={4}>
+          <BarChart data={chartData} margin={{ top: 30, right: 25, bottom: 50, left: 15 }} barCategoryGap="20%" barGap={4}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
             <XAxis
               dataKey="name"
               stroke="#475569"
-              tick={{ fill: "#cbd5e1", fontSize: 13, fontWeight: 700 }}
+              tick={{ fill: "#cbd5e1", fontSize: 14, fontWeight: 700 }}
               tickLine={false}
               axisLine={{ stroke: "#334155" }}
-              label={{ value: "Karnataka Districts", position: "insideBottom", offset: -25, style: { fill: "#94a3b8", fontSize: 12, fontWeight: 600 } }}
+              label={{ value: "Karnataka Districts", position: "insideBottom", offset: -25, style: { fill: "#94a3b8", fontSize: 13, fontWeight: 600 } }}
             />
             <YAxis
               stroke="#475569"
-              tick={{ fill: "#94a3b8", fontSize: 12 }}
+              tick={{ fill: "#94a3b8", fontSize: 13 }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v) => `${v}%`}
               domain={[0, 100]}
-              width={45}
-              label={{ value: "Index Percentage (%)", angle: -90, position: "insideLeft", offset: 10, style: { fill: "#94a3b8", fontSize: 12, fontWeight: 600 } }}
+              width={50}
+              label={{ value: "Index Percentage (%)", angle: -90, position: "insideLeft", offset: 12, style: { fill: "#94a3b8", fontSize: 13, fontWeight: 600 } }}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(51,65,85,0.2)" }} />
             <Legend
-              wrapperStyle={{ fontSize: 13, paddingTop: 16 }}
+              wrapperStyle={{ fontSize: 14, paddingTop: 20 }}
               iconType="square"
-              iconSize={12}
+              iconSize={14}
               formatter={(v) => <span style={{ color: "#cbd5e1", fontWeight: 600 }}>{v}</span>}
             />
-            <Bar dataKey="Urbanization %" fill="#38bdf8" radius={[4, 4, 0, 0]} maxBarSize={22}>
-              <LabelList dataKey="Urbanization %" position="top" style={{ fontSize: 10.5, fill: "#38bdf8", fontWeight: 700 }} formatter={(v: number) => `${v}%`} />
+            <Bar dataKey="Urbanization %" fill="#38bdf8" radius={[4, 4, 0, 0]} maxBarSize={24}>
+              <LabelList dataKey="Urbanization %" position="top" style={{ fontSize: 11, fill: "#38bdf8", fontWeight: 700 }} formatter={(v: number) => `${v}%`} />
             </Bar>
-            <Bar dataKey="Economic Stress %" fill="#f87171" radius={[4, 4, 0, 0]} maxBarSize={22}>
-              <LabelList dataKey="Economic Stress %" position="top" style={{ fontSize: 10.5, fill: "#f87171", fontWeight: 700 }} formatter={(v: number) => `${v}%`} />
+            <Bar dataKey="Economic Stress %" fill="#f87171" radius={[4, 4, 0, 0]} maxBarSize={24}>
+              <LabelList dataKey="Economic Stress %" position="top" style={{ fontSize: 11, fill: "#f87171", fontWeight: 700 }} formatter={(v: number) => `${v}%`} />
             </Bar>
-            <Bar dataKey="Migration Rate %" fill="#c084fc" radius={[4, 4, 0, 0]} maxBarSize={22}>
-              <LabelList dataKey="Migration Rate %" position="top" style={{ fontSize: 10.5, fill: "#c084fc", fontWeight: 700 }} formatter={(v: number) => `${v}%`} />
+            <Bar dataKey="Migration Rate %" fill="#c084fc" radius={[4, 4, 0, 0]} maxBarSize={24}>
+              <LabelList dataKey="Migration Rate %" position="top" style={{ fontSize: 11, fill: "#c084fc", fontWeight: 700 }} formatter={(v: number) => `${v}%`} />
             </Bar>
-            <Bar dataKey="Education Index %" fill="#34d399" radius={[4, 4, 0, 0]} maxBarSize={22}>
-              <LabelList dataKey="Education Index %" position="top" style={{ fontSize: 10.5, fill: "#34d399", fontWeight: 700 }} formatter={(v: number) => `${v}%`} />
+            <Bar dataKey="Education Index %" fill="#34d399" radius={[4, 4, 0, 0]} maxBarSize={24}>
+              <LabelList dataKey="Education Index %" position="top" style={{ fontSize: 11, fill: "#34d399", fontWeight: 700 }} formatter={(v: number) => `${v}%`} />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -328,70 +328,70 @@ function CrimeDistributionChart({ data }: { data: SocioRow[] }) {
   };
 
   return (
-    <div className="bg-slate-950/80 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+    <div className="bg-slate-950/80 border border-slate-800 p-8 rounded-2xl space-y-6 shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 rounded-lg bg-rose-500/15 border border-rose-500/25 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-rose-400" />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 rounded-lg bg-rose-500/15 border border-rose-500/25 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-rose-400" />
             </div>
-            <h3 className="text-base font-bold text-slate-100">Crime Type Distribution by District</h3>
+            <h3 className="text-lg font-bold text-slate-100">Crime Type Distribution by District</h3>
           </div>
-          <p className="text-xs text-slate-400 ml-9">
+          <p className="text-sm text-slate-400 ml-12">
             Stacked breakdown of registered IPC crime head categories across all 6 districts
           </p>
         </div>
 
         {/* Aggregated Crime Head Category Summary Pills */}
-        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-          <span className="px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300">
+        <div className="flex flex-wrap items-center gap-3 text-sm font-semibold">
+          <span className="px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300">
             Property: {totProp} ({((totProp / totAll) * 100).toFixed(0)}%)
           </span>
-          <span className="px-2.5 py-1 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-300">
+          <span className="px-3 py-1.5 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-300">
             Violent: {totViol} ({((totViol / totAll) * 100).toFixed(0)}%)
           </span>
-          <span className="px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/30 text-purple-300">
+          <span className="px-3 py-1.5 rounded-md bg-purple-500/10 border border-purple-500/30 text-purple-300">
             Cyber: {totCyber} ({((totCyber / totAll) * 100).toFixed(0)}%)
           </span>
-          <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
+          <span className="px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
             Narcotics: {totDrug} ({((totDrug / totAll) * 100).toFixed(0)}%)
           </span>
         </div>
       </div>
 
-      <div className="h-[380px] w-full pt-2">
+      <div className="h-[450px] w-full pt-4">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 25, right: 20, bottom: 45, left: 10 }} barCategoryGap="30%">
+          <BarChart data={chartData} margin={{ top: 30, right: 25, bottom: 50, left: 15 }} barCategoryGap="30%">
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
             <XAxis
               dataKey="name"
               stroke="#475569"
-              tick={{ fill: "#cbd5e1", fontSize: 13, fontWeight: 700 }}
+              tick={{ fill: "#cbd5e1", fontSize: 14, fontWeight: 700 }}
               tickLine={false}
               axisLine={{ stroke: "#334155" }}
-              label={{ value: "Karnataka Districts", position: "insideBottom", offset: -25, style: { fill: "#94a3b8", fontSize: 12, fontWeight: 600 } }}
+              label={{ value: "Karnataka Districts", position: "insideBottom", offset: -25, style: { fill: "#94a3b8", fontSize: 13, fontWeight: 600 } }}
             />
             <YAxis
               stroke="#475569"
-              tick={{ fill: "#94a3b8", fontSize: 12 }}
+              tick={{ fill: "#94a3b8", fontSize: 13 }}
               tickLine={false}
               axisLine={false}
               allowDecimals={false}
-              width={35}
-              label={{ value: "FIR Case Count", angle: -90, position: "insideLeft", offset: 10, style: { fill: "#94a3b8", fontSize: 12, fontWeight: 600 } }}
+              width={40}
+              label={{ value: "FIR Case Count", angle: -90, position: "insideLeft", offset: 12, style: { fill: "#94a3b8", fontSize: 13, fontWeight: 600 } }}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(51,65,85,0.2)" }} />
             <Legend
-              wrapperStyle={{ fontSize: 13, paddingTop: 16 }}
+              wrapperStyle={{ fontSize: 14, paddingTop: 20 }}
               iconType="square"
-              iconSize={12}
+              iconSize={14}
               formatter={(v) => <span style={{ color: "#cbd5e1", fontWeight: 600 }}>{v}</span>}
             />
             <Bar dataKey="Property / Theft" stackId="a" fill="#f59e0b" name="Property / Theft" />
             <Bar dataKey="Violent / Assault" stackId="a" fill="#ef4444" name="Violent / Assault" />
             <Bar dataKey="Cyber Fraud" stackId="a" fill="#c084fc" name="Cyber Fraud" />
             <Bar dataKey="Narcotics" stackId="a" fill="#34d399" name="Narcotics" radius={[4, 4, 0, 0]}>
-              <LabelList dataKey="total" position="top" style={{ fontSize: 12, fill: "#fbbf24", fontWeight: 800 }} formatter={(v: number) => `${v} FIRs`} />
+              <LabelList dataKey="total" position="top" style={{ fontSize: 13, fill: "#fbbf24", fontWeight: 800 }} formatter={(v: number) => `${v} FIRs`} />
             </Bar>
           </BarChart>
         </ResponsiveContainer>

@@ -980,27 +980,27 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
   const selectedNodeData = propertyGraph.nodes.find(n => n.id === selectedNodeId);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 h-[800px]">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8 h-[900px]">
       {/* Sidebar */}
-      <div className="bg-slate-950/70 border border-slate-800 rounded-xl overflow-hidden flex flex-col h-[800px] lg:h-auto">
+      <div className="bg-slate-950/70 border border-slate-800 rounded-xl overflow-hidden flex flex-col h-[900px] lg:h-auto w-80">
         {/* Header */}
-        <div className="flex-shrink-0 p-3 lg:p-4 border-b border-slate-800/60 bg-slate-900/40 space-y-2 lg:space-y-3">
+        <div className="flex-shrink-0 p-4 lg:p-5 border-b border-slate-800/60 bg-slate-900/40 space-y-3 lg:space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold tracking-wider uppercase text-amber-500 flex items-center gap-2">
-              <Sliders className="w-4 h-4" /> Intelligence Hub
+            <h3 className="text-sm font-bold tracking-wider uppercase text-amber-500 flex items-center gap-2">
+              <Sliders className="w-5 h-5" /> Intelligence Hub
             </h3>
           </div>
-          <div className="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+          <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-lg border border-slate-800">
             {(["graph", "directory"] as const).map(tab => (
               <button key={tab} onClick={() => setViewTab(tab)}
-                className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold transition ${
+                className={`flex items-center justify-center gap-2 py-2 rounded-md text-sm font-bold transition ${
                   viewTab === tab
                     ? tab === "graph"
                       ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                       : "bg-blue-500/10 text-blue-300 border border-blue-500/20"
                     : "text-slate-400 hover:text-slate-200"
                 }`}>
-                {tab === "graph" ? <Network className="w-3.5 h-3.5" /> : <List className="w-3.5 h-3.5" />}
+                {tab === "graph" ? <Network className="w-4 h-4" /> : <List className="w-4 h-4" />}
                 <span className="capitalize">{tab}</span>
               </button>
             ))}
@@ -1008,24 +1008,24 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto p-3 lg:p-4 space-y-3 lg:space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-5 space-y-4 lg:space-y-5 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
           {/* Search */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
-              <label className="block text-micro text-slate-400 mb-1 font-medium">Search Intelligence</label>
+              <label className="block text-micro text-slate-400 mb-2 font-medium">Search Intelligence</label>
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                <Search className="w-4 h-4 text-slate-500 absolute left-4 top-3" />
                 <input type="text" placeholder="Name, ID, type, location…" value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 text-slate-100 text-xs rounded-lg p-2"
-                  style={{ paddingLeft: "2.25rem" }} />
+                  className="w-full bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-lg p-3"
+                  style={{ paddingLeft: "2.5rem" }} />
               </div>
             </div>
 
             {/* Entity Type Filter */}
             <div>
-              <label className="block text-micro text-slate-400 mb-1 font-medium">Entity Type</label>
-              <div className="flex flex-wrap gap-1">
+              <label className="block text-micro text-slate-400 mb-2 font-medium">Entity Type</label>
+              <div className="flex flex-wrap gap-2">
                 {["All", "Suspect", "Victim", "Case", "BankAccount", "Location"].map(t => (
                   <button key={t} onClick={() => setFilterType(t as EntityType | "All")}
                     className={`py-1 px-2 rounded-md text-micro font-bold border transition ${
@@ -1054,33 +1054,33 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
           </div>
 
           {/* Graph Statistics */}
-          <div className="border-t border-slate-800/60 pt-3">
+          <div className="border-t border-slate-800/60 pt-4">
             <button onClick={() => setShowAdvanced(!showAdvanced)}
-              className="w-full flex items-center justify-between text-micro font-bold text-slate-400 hover:text-slate-200 transition">
-              <span className="flex items-center gap-1.5">
-                <BarChart3 className="w-3.5 h-3.5 text-slate-500" /> Network Statistics
+              className="w-full flex items-center justify-between text-sm font-bold text-slate-400 hover:text-slate-200 transition">
+              <span className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-slate-500" /> Network Statistics
               </span>
-              {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
 
             {showAdvanced && (
-              <div className="space-y-2 mt-3 pt-3 border-t border-slate-900">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-slate-900/50 p-2 rounded-lg border border-slate-800">
+              <div className="space-y-3 mt-4 pt-4 border-t border-slate-900">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800">
                     <div className="text-micro text-slate-500">Nodes</div>
-                    <div className="text-sm font-bold text-amber-400">{graphStats.nodes}</div>
+                    <div className="text-base font-bold text-amber-400">{graphStats.nodes}</div>
                   </div>
-                  <div className="bg-slate-900/50 p-2 rounded-lg border border-slate-800">
+                  <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800">
                     <div className="text-micro text-slate-500">Edges</div>
-                    <div className="text-sm font-bold text-blue-400">{graphStats.edges}</div>
+                    <div className="text-base font-bold text-blue-400">{graphStats.edges}</div>
                   </div>
-                  <div className="bg-slate-900/50 p-2 rounded-lg border border-slate-800">
+                  <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800">
                     <div className="text-micro text-slate-500">Clusters</div>
-                    <div className="text-sm font-bold text-purple-400">{graphStats.communities}</div>
+                    <div className="text-base font-bold text-purple-400">{graphStats.communities}</div>
                   </div>
-                  <div className="bg-slate-900/50 p-2 rounded-lg border border-slate-800">
+                  <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800">
                     <div className="text-micro text-slate-500">Density</div>
-                    <div className="text-sm font-bold text-emerald-400">{graphStats.density.toFixed(3)}</div>
+                    <div className="text-base font-bold text-emerald-400">{graphStats.density.toFixed(3)}</div>
                   </div>
                 </div>
               </div>
@@ -1088,7 +1088,7 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
           </div>
 
           {/* Inspector Panel */}
-          <div className="space-y-4 pt-3 border-t border-slate-800/60">
+          <div className="space-y-5 pt-4 border-t border-slate-800/60">
             {selectedNodeData ? (
               <div className="bg-slate-950/80 rounded-xl border border-slate-800 space-y-3 animate-fadeIn overflow-hidden">
                 <div className="px-3 pt-3 pb-2 border-b border-slate-800">
@@ -1480,9 +1480,9 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
             </div>
 
             {/* Enhanced Legend - all categories (responsive) */}
-            <div className="absolute bottom-4 left-4 z-10 bg-slate-900/95 backdrop-blur-md p-3 lg:p-4 rounded-2xl border border-slate-700/80 shadow-2xl space-y-2 max-w-xs lg:max-w-sm hidden sm:block">
-              <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-700/50 pb-2">Entity Legend</div>
-              <div className="grid grid-cols-2 gap-x-3 lg:gap-x-4 gap-y-1.5">
+            <div className="absolute bottom-5 left-5 z-10 bg-slate-900/95 backdrop-blur-md p-4 lg:p-5 rounded-2xl border border-slate-700/80 shadow-2xl space-y-3 max-w-xs lg:max-w-sm hidden sm:block">
+              <div className="text-sm font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-700/50 pb-3">Entity Legend</div>
+              <div className="grid grid-cols-2 gap-x-4 lg:gap-x-5 gap-y-2">
                 {[
                   { type: "FIR/Case", color: "#f59e0b" },
                   { type: "Suspect", color: "#ef4444" },
@@ -1501,9 +1501,9 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
                   { type: "Weapon", color: "#dc2626" },
                   { type: "Evidence", color: "#eab308" },
                 ].map(item => (
-                  <div key={item.type} className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-                    <span className="text-xs text-slate-300 font-medium">{item.type}</span>
+                  <div key={item.type} className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                    <span className="text-sm text-slate-300 font-medium">{item.type}</span>
                   </div>
                 ))}
               </div>
@@ -1512,54 +1512,54 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
         ) : (
           /* Directory View - fixed scrolling (responsive) */
           <div className="flex-1 flex flex-col h-full bg-slate-950/90 overflow-hidden">
-            <div className="flex-shrink-0 p-3 lg:p-5 border-b border-slate-800/80">
-              <div className="flex items-center justify-between mb-2">
+            <div className="flex-shrink-0 p-4 lg:p-6 border-b border-slate-800/80">
+              <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="text-base lg:text-base font-extrabold text-slate-100 flex items-center gap-2">
-                    <List className="w-5 h-5 text-amber-500" /> Intelligence Directory
+                  <h3 className="text-lg lg:text-lg font-extrabold text-slate-100 flex items-center gap-3">
+                    <List className="w-6 h-6 text-amber-500" /> Intelligence Directory
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Click any entity to center and highlight in graph view</p>
+                  <p className="text-sm text-slate-400 mt-1">Click any entity to center and highlight in graph view</p>
                 </div>
-                <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
+                <span className="text-sm font-bold text-amber-400 bg-amber-500/10 px-4 py-1.5 rounded-full border border-amber-500/30">
                   {filteredNodes.length} Entities
                 </span>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900 p-3 lg:p-5">
+            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900 p-4 lg:p-6">
               <div className="border border-slate-800/80 rounded-xl bg-slate-950">
                 {filteredNodes.length > 0 ? (
                   <div className="divide-y divide-slate-900">
                     {filteredNodes.map((node) => (
                       <div key={node.id}
                         onClick={() => handleDirectoryClick(node.id)}
-                        className={`p-3 hover:bg-slate-900/80 transition flex flex-col md:flex-row md:items-center justify-between gap-3 cursor-pointer group ${
+                        className={`p-4 hover:bg-slate-900/80 transition flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer group ${
                           selectedNodeId === node.id ? "bg-amber-500/10 border-l-4 border-amber-500" : ""
                         }`}>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-micro uppercase px-2 py-0.5 rounded font-extrabold tracking-wider bg-slate-800 text-slate-300">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className="text-micro uppercase px-3 py-1 rounded font-extrabold tracking-wider bg-slate-800 text-slate-300">
                               {node.type}
                             </span>
-                            <span className="text-sm font-bold text-slate-100 group-hover:text-amber-400 transition-colors">{node.label}</span>
+                            <span className="text-base font-bold text-slate-100 group-hover:text-amber-400 transition-colors">{node.label}</span>
                           </div>
-                          <p className="text-xs text-slate-400">
+                          <p className="text-sm text-slate-400">
                             {node.data && Object.entries(node.data).slice(0, 2).map(([k, v]) => (
-                              <span key={k} className="mr-2">{k}: {String(v)}</span>
+                              <span key={k} className="mr-3">{k}: {String(v)}</span>
                             ))}
                           </p>
                         </div>
-                        <button className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded text-xs transition flex items-center gap-1 cursor-pointer active:scale-95 shrink-0">
-                          <Sparkles className="w-3 h-3 fill-slate-950" /> View
+                        <button className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded text-sm transition flex items-center gap-2 cursor-pointer active:scale-95 shrink-0">
+                          <Sparkles className="w-4 h-4 fill-slate-950" /> View
                         </button>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-500">
-                    <Search className="w-8 h-8 text-slate-700 mb-2" />
-                    <p className="text-xs font-bold">No Records Match Filters</p>
-                    <p className="text-micro text-slate-600 mt-1">Try modifying the search query or filters</p>
+                    <Search className="w-10 h-10 text-slate-700 mb-3" />
+                    <p className="text-sm font-bold">No Records Match Filters</p>
+                    <p className="text-micro text-slate-600 mt-2">Try modifying the search query or filters</p>
                   </div>
                 )}
               </div>
