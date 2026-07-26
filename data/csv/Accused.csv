@@ -1,0 +1,61 @@
+AccusedMasterID,CaseMasterID,AccusedName,AgeYear,GenderID,PersonID
+7001,1001,Ramesh Kumar (Ranga),28,1,A1
+7002,1001,Suresh Hegde,30,1,A2
+7003,1002,Kiran Gowda,25,1,A3
+7004,1003,Ramesh Kumar (Ranga),28,1,A1
+7005,1004,Vikram Malhotra,32,1,A4
+7006,1005,Suresh Hegde,30,1,A2
+7007,1006,Raju Nayak,22,1,A5
+7008,1006,Praveen Kamble,24,1,A6
+7009,1007,Ramesh Kumar (Ranga),28,1,A1
+7010,1007,Suresh Hegde,30,1,A2
+7011,1007,Deepak Shetty,27,1,A7
+7012,1008,Aakash Biradar,19,1,A8
+7013,1008,Santosh Rathod,21,1,A9
+7014,1009,Mohammed Faisal,26,1,A10
+7015,1010,Santosh Rathod,21,1,A9
+7016,1011,Kiran Gowda,25,1,A3
+7017,1011,Meghana Singh,23,2,A11
+7018,1012,Nagaraj Kulkarni,34,1,A12
+7019,1013,Vinayak Kamat,30,1,A13
+7020,1014,Rohan Desai,27,1,A14
+7021,1015,Imran Shaikh,24,1,A15
+7022,1016,Unknown Suspect (CCTV Match),25,1,A16
+7023,1017,Shiva Raju,40,1,A17
+7024,1017,Manoj Pai,38,1,A18
+7025,1018,Arjun Nayak,35,1,A19
+7026,1018,Ravi Lambani,32,1,A20
+7027,1018,Santhosh Lambani,29,1,A21
+7028,1019,Muniraju (Local Goon),38,1,A22
+7029,1020,Vikram Malhotra,32,1,A4
+7030,1021,Hanumesh Urs,48,1,A23
+7031,1022,Ramesh Kumar (Ranga),28,1,A1
+7032,1022,Suresh Hegde,30,1,A2
+7033,1023,Suresh Kumar (RTO Clerk),35,1,A24
+7034,1024,Ravi Nayak,32,1,A25
+7035,1025,Kiran Gowda,25,1,A3
+7036,1025,Abdul Rashid,28,1,A26
+7037,1026,Ramesh Kumar (Ranga),28,1,A1
+7038,1026,Vikram Malhotra,32,1,A4
+7039,1027,Gangadhar Nayak,45,1,A27
+7040,1028,Deepak Shetty,27,1,A7
+7041,1028,Rajan Fernandes,33,1,A28
+7042,1029,Suresh Hegde,30,1,A2
+7043,1030,Basavappa Gonal,45,1,A29
+7044,1031,Vikram Malhotra,32,1,A4
+7045,1031,Mohammed Faisal,26,1,A10
+7046,1032,Shivakumar Patil,40,1,A30
+7047,1033,Nagesh Hegde (Father-in-law),55,1,A31
+7048,1033,Padmavathi Hegde (Mother-in-law),52,2,A32
+7049,1033,Ajay Hegde (Husband),29,1,A33
+7050,1034,Vijay Kumar,25,1,A34
+7051,1034,Arun Patil,23,1,A35
+7052,1035,Abdul Rashid,28,1,A26
+7053,1036,Ramesh Kumar (Ranga),28,1,A1
+7054,1036,Kiran Gowda,25,1,A3
+7055,1037,Manoj Pai,38,1,A18
+7056,1037,Ravi Lambani,32,1,A20
+7057,1038,Suresh Hegde,30,1,A2
+7058,1038,Ramesh Kumar (Ranga),28,1,A1
+7059,1039,Ajay Hegde (Husband),29,1,A33
+7060,1040,Unknown Pickpocket,22,1,A36

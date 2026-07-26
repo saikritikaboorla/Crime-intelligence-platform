@@ -1,0 +1,36 @@
+UnitID,UnitName,TypeID,ParentUnit,NationalityID,StateID,DistrictID,Active
+201,Cubbon Park Police Station,1,11,1,10,101,1
+202,Koramangala Police Station,1,11,1,10,101,1
+203,Whitefield Police Station,1,11,1,10,101,1
+204,Yelahanka Police Station,1,11,1,10,101,1
+205,JP Nagar Police Station,1,11,1,10,101,1
+206,Lakshmipuram Police Station,1,12,1,10,102,1
+207,Jayalakshmipuram Police Station,1,12,1,10,102,1
+208,Nazarbad Police Station,1,12,1,10,102,1
+209,Kadri Police Station,1,13,1,10,103,1
+210,Mangaluru Central Police Station,1,13,1,10,103,1
+211,Panambur Police Station,1,13,1,10,103,1
+212,Hubballi Suburban Police Station,1,14,1,10,104,1
+213,Dharwad Police Station,1,14,1,10,104,1
+214,Navanagar Police Station,1,14,1,10,104,1
+215,Belagavi Market Police Station,1,15,1,10,105,1
+216,Tilakwadi Police Station,1,15,1,10,105,1
+217,Kalaburagi Town Police Station,1,16,1,10,106,1
+218,Aland Road Police Station,1,16,1,10,106,1
+219,Shivamogga Town Police Station,1,17,1,10,107,1
+220,Davanagere Town Police Station,1,18,1,10,108,1
+221,Ballari Town Police Station,1,19,1,10,109,1
+222,Vijayapura Town Police Station,1,20,1,10,110,1
+223,Tumakuru Town Police Station,1,21,1,10,111,1
+224,Raichur Town Police Station,1,22,1,10,112,1
+225,Bangarpete Police Station,1,23,1,10,113,1
+226,Udupi Town Police Station,1,24,1,10,114,1
+11,Bengaluru City Commissioner's Office,6,0,1,10,101,1
+12,Mysuru District Police Office,4,0,1,10,102,1
+13,Mangaluru District Police Office,4,0,1,10,103,1
+14,Hubballi-Dharwad District Police Office,4,0,1,10,104,1
+15,Belagavi District Police Office,4,0,1,10,105,1
+16,Kalaburagi District Police Office,4,0,1,10,106,1
+17,Shivamogga District Police Office,4,0,1,10,107,1
+18,Davanagere District Police Office,4,0,1,10,108,1
+19,Ballari District Police Office,4,0,1,10,109,1

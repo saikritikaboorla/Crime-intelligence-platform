@@ -1,0 +1,542 @@
+import React, { useState, useEffect } from "react";
+import { motion } from "motion/react";
+import {
+  Shield, AlertTriangle, Activity, Users, MapPin, TrendingUp,
+  MessageSquare, FileText, BrainCircuit, ArrowRight, CheckCircle,
+  Clock, Zap, Eye, BarChart2, RefreshCw
+} from "lucide-react";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from "recharts";
+import {
+  mockCases, mockAccused, mockDistricts, mockFinancialTransactions
+} from "../mockData";
+import { useLanguage } from "../context/LanguageContext";
+
+// ── Types ──────────────────────────────────────────────────────────────────
+interface MissionControlProps {
+  onNavigate: (tab: string) => void;
+  forecasting: { warnings: any[]; hotspotsRisk: any[] };
+  trendData: { crimeByMonth: any[]; crimeByType: any[]; hotspots: any[] };
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function getRiskColor(risk: number) {
+  if (risk >= 75) return { text: "text-rose-400",   bg: "bg-rose-500/10",   border: "border-rose-500/30"   };
+  if (risk >= 50) return { text: "text-amber-400",  bg: "bg-amber-500/10",  border: "border-amber-500/30"  };
+  return           { text: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/30" };
+}
+
+// ── Subcomponents ──────────────────────────────────────────────────────────
+
+function AIBriefCard() {
+  const { language, t } = useLanguage();
+  const today = new Date().toLocaleDateString(language === "kn" ? "kn-IN" : "en-IN", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric"
+  });
+  return (
+    <div className="card-hero col-span-full">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center shrink-0">
+            <Zap className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <div className="text-label text-blue-400 mb-0.5">{t("missionControl.aiBriefTitle")}</div>
+            <div className="text-micro text-slate-500">{today} · {t("missionControl.aiBriefSubtitle")}</div>
+          </div>
+        </div>
+        <span className="badge badge-blue">{t("common.confidential")}</span>
+      </div>
+      <div className="h-px bg-gradient-to-r from-blue-500/20 via-blue-400/10 to-transparent mt-4 mb-1" />
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-body-sm text-slate-300 leading-relaxed">
+        <div className="space-y-1">
+          <div className="text-caption font-semibold text-slate-400 uppercase tracking-wider">{t("missionControl.threatLandscape")}</div>
+          <p>{t("missionControl.threatLandscapeDesc")}</p>
+        </div>
+        <div className="space-y-1">
+          <div className="text-caption font-semibold text-slate-400 uppercase tracking-wider">{t("missionControl.highPrioritySuspects")}</div>
+          <p>{t("missionControl.highPrioritySuspectsDesc")}</p>
+        </div>
+        <div className="space-y-1">
+          <div className="text-caption font-semibold text-slate-400 uppercase tracking-wider">{t("missionControl.recommendedFocus")}</div>
+          <p>{t("missionControl.recommendedFocusDesc")}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KPIGrid({ onNavigate }: { onNavigate: (t: string) => void }) {
+  const { t } = useLanguage();
+  const activeCases      = mockCases.filter(c => c.CaseStatusID === 2).length;
+  const highRiskSuspects = mockAccused.filter((_, i) => i < 3).length;
+  const hotspotCount     = mockDistricts.filter(d => d.SocioEconomic.economicStressIndex > 40).length;
+  const suspiciousTx     = mockFinancialTransactions.filter(t => t.IsSuspicious).length;
+
+  const kpis = [
+    {
+      label: t("missionControl.kpi.activeCases"),
+      value: activeCases,
+      sub: t("missionControl.kpi.activeCasesSub"),
+      icon: FileText,
+      color: "text-blue-400",
+      bg: "bg-blue-500/10",
+      border: "border-blue-500/20",
+      tab: "decision",
+    },
+    {
+      label: t("missionControl.kpi.highRiskSuspects"),
+      value: highRiskSuspects,
+      sub: t("missionControl.kpi.highRiskSuspectsSub"),
+      icon: Users,
+      color: "text-rose-400",
+      bg: "bg-rose-500/10",
+      border: "border-rose-500/20",
+      tab: "profiling",
+    },
+    {
+      label: t("missionControl.kpi.hotspotDistricts"),
+      value: hotspotCount,
+      sub: t("missionControl.kpi.hotspotDistrictsSub"),
+      icon: MapPin,
+      color: "text-amber-400",
+      bg: "bg-amber-500/10",
+      border: "border-amber-500/20",
+      tab: "hotspots",
+    },
+    {
+      label: t("missionControl.kpi.suspiciousTx"),
+      value: suspiciousTx,
+      sub: t("missionControl.kpi.suspiciousTxSub"),
+      icon: Activity,
+      color: "text-purple-400",
+      bg: "bg-purple-500/10",
+      border: "border-purple-500/20",
+      tab: "financial",
+    },
+  ];
+
+  return (
+    <>
+      {kpis.map((k, i) => {
+        const Icon = k.icon;
+        return (
+          <motion.button
+            key={i}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.07 }}
+            onClick={() => onNavigate(k.tab)}
+            className={`kpi-card text-left group border ${k.border} cursor-pointer`}
+          >
+            <div className={`w-9 h-9 rounded-lg ${k.bg} border ${k.border} flex items-center justify-center mb-3`}>
+              <Icon className={`w-4.5 h-4.5 ${k.color}`} />
+            </div>
+            <div className={`text-display font-black ${k.color} leading-none mb-1 animate-countUp`}>{k.value}</div>
+            <div className="text-body-sm font-semibold text-slate-200">{k.label}</div>
+            <div className="text-caption text-slate-500 mt-0.5">{k.sub}</div>
+            <div className={`mt-3 text-micro font-semibold ${k.color} flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity`}>
+              {t("common.viewDetails")} <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+            </div>
+          </motion.button>
+        );
+      })}
+    </>
+  );
+}
+
+function AlertsPanel({ warnings }: { warnings: any[] }) {
+  const { t } = useLanguage();
+  const displayWarnings = warnings.length > 0 ? warnings.slice(0, 4) : [
+    { id: "W-001", severity: "HIGH",   title: "Repeat Gang Activity — Koramangala",       location: "Bengaluru City",     confidence: 87 },
+    { id: "W-002", severity: "HIGH",   title: "Narcotics Distribution Network Active",     location: "Cubbon Park Area",   confidence: 82 },
+    { id: "W-003", severity: "MEDIUM", title: "Cyber Fraud Surge — Senior Citizen Targets",location: "Mangaluru District", confidence: 74 },
+    { id: "W-004", severity: "MEDIUM", title: "Juvenile Gang Violence Escalation",          location: "Kalaburagi Town",    confidence: 70 },
+  ];
+
+  return (
+    <div className="card rounded-2xl flex flex-col">
+      <div className="section-header mb-3">
+        <div>
+          <div className="section-title text-base">
+            <AlertTriangle className="w-4.5 h-4.5 text-rose-400" />
+            {t("missionControl.alerts.title")}
+          </div>
+          <div className="section-subtitle">{t("missionControl.alerts.subtitle")}</div>
+        </div>
+        <span className="badge badge-red">{displayWarnings.length} {t("missionControl.alerts.activeCount")}</span>
+      </div>
+      <div className="space-y-2 flex-1">
+        {displayWarnings.map((w, i) => {
+          const isHigh = w.severity === "HIGH";
+          return (
+            <motion.div
+              key={w.id}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.06 }}
+              className={`flex items-start gap-3 p-3 rounded-xl border ${isHigh ? "border-rose-500/20 bg-rose-500/5 border-l-2 border-l-rose-500" : "border-amber-500/15 bg-amber-500/5 border-l-2 border-l-amber-400"}`}
+            >
+              <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${isHigh ? "bg-rose-500" : "bg-amber-400"} animate-pulse`} />
+              <div className="min-w-0 flex-1">
+                <div className="text-body-sm font-semibold text-slate-200 leading-snug">{w.title}</div>
+                <div className="text-caption text-slate-500 flex items-center gap-1 mt-0.5">
+                  <MapPin className="w-3 h-3" />{w.location}
+                </div>
+              </div>
+              <span className={`badge shrink-0 ${isHigh ? "badge-red" : "badge-amber"}`}>{w.confidence ?? 80}%</span>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function TrendMiniChart({ data }: { data: any[] }) {
+  const { t } = useLanguage();
+  const chartData = data.length > 0 ? data : [
+    { month: "Jan", Heinous: 1, NonHeinous: 0 },
+    { month: "Feb", Heinous: 1, NonHeinous: 0 },
+    { month: "Mar", Heinous: 1, NonHeinous: 1 },
+    { month: "Apr", Heinous: 1, NonHeinous: 0 },
+    { month: "May", Heinous: 2, NonHeinous: 1 },
+    { month: "Jun", Heinous: 1, NonHeinous: 1 },
+  ];
+
+  return (
+    <div className="card rounded-2xl">
+      <div className="section-header mb-3">
+        <div>
+          <div className="section-title text-base">
+            <TrendingUp className="w-4.5 h-4.5 text-emerald-400" />
+            {t("missionControl.trends.title")}
+          </div>
+          <div className="section-subtitle">{t("missionControl.trends.subtitle")}</div>
+        </div>
+      </div>
+      <div className="h-40 bg-gradient-to-b from-transparent to-slate-950/20">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+            <defs>
+              <linearGradient id="mc-heinous" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor="#f43f5e" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="mc-nonheinous" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor="#f59e0b" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(51,65,85,0.4)" />
+            <XAxis dataKey="month" stroke="#475569" fontSize={10} tickLine={false} />
+            <YAxis stroke="#475569" fontSize={10} tickLine={false} allowDecimals={false} />
+            <Tooltip
+              contentStyle={{ background: "rgba(2,6,23,0.95)", border: "1px solid rgba(51,65,85,0.8)", borderRadius: 8 }}
+              labelStyle={{ color: "#e2e8f0", fontWeight: 600 }}
+              itemStyle={{ color: "#94a3b8" }}
+            />
+            <Area type="monotone" dataKey="Heinous"    stroke="#f43f5e" fill="url(#mc-heinous)"    strokeWidth={2} name={t("missionControl.trends.heinous")} />
+            <Area type="monotone" dataKey="NonHeinous" stroke="#f59e0b" fill="url(#mc-nonheinous)" strokeWidth={2} name={t("missionControl.trends.nonHeinous")} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex gap-4 mt-2">
+        <span className="flex items-center gap-1.5 text-caption text-slate-500"><span className="w-2.5 h-2.5 rounded-sm bg-rose-500/60 inline-block" />{t("missionControl.trends.heinous")}</span>
+        <span className="flex items-center gap-1.5 text-caption text-slate-500"><span className="w-2.5 h-2.5 rounded-sm bg-amber-500/60 inline-block" />{t("missionControl.trends.nonHeinous")}</span>
+      </div>
+    </div>
+  );
+}
+
+function TopCrimesPanel() {
+  const { t } = useLanguage();
+  const crimes = [
+    { name: "Robbery / Theft",       count: 4, pct: 50, color: "bg-amber-400" },
+    { name: "Murder / Assault",       count: 2, pct: 25, color: "bg-rose-500"  },
+    { name: "Cyber Fraud",            count: 1, pct: 12, color: "bg-purple-400"},
+    { name: "Narcotics Trafficking",  count: 1, pct: 13, color: "bg-emerald-400"},
+  ];
+  return (
+    <div className="card rounded-2xl">
+      <div className="section-header mb-3">
+        <div>
+          <div className="section-title text-base">
+            <BarChart2 className="w-4.5 h-4.5 text-purple-400" />
+            {t("missionControl.topCrimes.title")}
+          </div>
+          <div className="section-subtitle">{t("missionControl.topCrimes.subtitle")}</div>
+        </div>
+      </div>
+      <div className="space-y-3">
+        {crimes.map((c, i) => (
+          <div key={i}>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-body-sm text-slate-300 font-medium">{c.name}</span>
+              <span className="text-caption text-slate-500 font-mono">{c.count} {t("missionControl.topCrimes.cases")}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="confidence-bar flex-1">
+                <motion.div
+                  className={`confidence-fill ${c.color}`}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${c.pct}%` }}
+                  transition={{ delay: i * 0.1 + 0.3, duration: 0.6 }}
+                />
+              </div>
+              <span className="text-micro text-slate-600 font-mono">{c.pct}%</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ActivityTimeline() {
+  const { t } = useLanguage();
+  const events = [
+    { time: "06:30", action: "FIR 202600005 — Murder case update", type: "critical", tab: "decision" },
+    { time: "Yesterday", action: "Financial trace flagged — 3-phase crypto laundering", type: "warning", tab: "financial" },
+    { time: "2 days ago", action: "Ramesh Kumar linked to 3rd property theft FIR", type: "info",    tab: "profiling" },
+    { time: "3 days ago", action: "Kalaburagi early warning alarm activated", type: "warning", tab: "forecasting" },
+    { time: "4 days ago", action: "Cyber fraud arrest — Vikram Malhotra, Mangaluru", type: "info",    tab: "decision" },
+  ];
+  const dot: Record<string,string> = { critical: "bg-rose-500", warning: "bg-amber-400", info: "bg-blue-400" };
+
+  return (
+    <div className="card rounded-2xl">
+      <div className="section-header mb-3">
+        <div>
+          <div className="section-title text-base">
+            <Clock className="w-4.5 h-4.5 text-sky-400" />
+            {t("missionControl.recentActivity.title")}
+          </div>
+          <div className="section-subtitle">{t("missionControl.recentActivity.subtitle")}</div>
+        </div>
+      </div>
+      <div className="timeline-track space-y-4">
+        {events.map((e, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -6 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.07 }}
+            className="relative"
+          >
+            <span className={`timeline-dot ${dot[e.type]}`} style={e.type === 'critical' ? {boxShadow: '0 0 6px rgba(239, 68, 68, 0.5)'} : undefined} />
+            <div className="text-body-sm text-slate-300 font-medium leading-snug">{e.action}</div>
+            <div className="text-caption text-slate-500 mt-0.5">{e.time}</div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AIRecommendations({ onNavigate }: { onNavigate: (t: string) => void }) {
+  const { t } = useLanguage();
+  const recs = [
+    { icon: Eye,          text: "Review Ramesh Kumar cross-case financial links",         tab: "profiling",   color: "text-amber-400",  bg: "bg-amber-500/10",  border: "border-amber-500/20"  },
+    { icon: BrainCircuit, text: "Run decision support on FIR-202600004 (Phishing)",        tab: "decision",    color: "text-blue-400",   bg: "bg-blue-500/10",   border: "border-blue-500/20"   },
+    { icon: AlertTriangle,text: "Acknowledge Kalaburagi patrol deployment advisory",      tab: "forecasting", color: "text-rose-400",   bg: "bg-rose-500/10",   border: "border-rose-500/20"   },
+    { icon: Activity,     text: "Initiate bank freeze on Suresh Hegde's SBI account",     tab: "financial",   color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" },
+  ];
+  return (
+    <div className="card rounded-2xl">
+      <div className="h-0.5 rounded-t-2xl bg-gradient-to-r from-indigo-500/40 via-purple-500/20 to-transparent -mt-0 mb-4" />
+      <div className="section-header mb-3">
+        <div>
+          <div className="section-title text-base">
+            <BrainCircuit className="w-4.5 h-4.5 text-indigo-400" />
+            {t("missionControl.aiRecs.title")}
+          </div>
+          <div className="section-subtitle">{t("missionControl.aiRecs.subtitle")}</div>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {recs.map((r, i) => {
+          const Icon = r.icon;
+          return (
+            <motion.button
+              key={i}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+              onClick={() => onNavigate(r.tab)}
+              className={`w-full text-left flex items-center gap-3 p-3 rounded-xl border ${r.border} ${r.bg} group transition hover:opacity-90`}
+            >
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${r.bg} border ${r.border}`}>
+                <Icon className={`w-3.5 h-3.5 ${r.color}`} />
+              </div>
+              <span className="text-body-sm text-slate-300 flex-1">{r.text}</span>
+              <ArrowRight className={`w-3.5 h-3.5 ${r.color} shrink-0 opacity-0 group-hover:opacity-100 transition-opacity`} />
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function QuickActions({ onNavigate }: { onNavigate: (t: string) => void }) {
+  const { t } = useLanguage();
+  const actions = [
+    { icon: MessageSquare, label: t("missionControl.quickActions.aiChat"),    sub: t("missionControl.quickActions.aiChatSub"),  tab: "conversational", color: "text-amber-400",  bg: "from-amber-500/10",  border: "border-amber-500/25"  },
+    { icon: Users,         label: t("missionControl.quickActions.graph"),  sub: t("missionControl.quickActions.graphSub"),  tab: "network",        color: "text-emerald-400",bg: "from-emerald-500/10",border: "border-emerald-500/25"},
+    { icon: TrendingUp,    label: t("missionControl.quickActions.analytics"),       sub: t("missionControl.quickActions.analyticsSub"),      tab: "hotspots",       color: "text-sky-400",    bg: "from-sky-500/10",    border: "border-sky-500/25"    },
+    { icon: FileText,      label: t("missionControl.quickActions.caseReports"),       sub: t("missionControl.quickActions.caseReportsSub"),       tab: "decision",       color: "text-indigo-400", bg: "from-indigo-500/10", border: "border-indigo-500/25" },
+  ];
+  return (
+    <div className="card-elevated col-span-full rounded-2xl">
+      <div className="text-label text-slate-400 mb-4">{t("missionControl.quickActions.title")}</div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {actions.map((a, i) => {
+          const Icon = a.icon;
+          return (
+            <motion.button
+              key={a.tab}
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.06 }}
+              onClick={() => onNavigate(a.tab)}
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border ${a.border} bg-gradient-to-b ${a.bg} to-transparent group hover:border-opacity-60 hover:shadow-lg transition`}
+            >
+              <div className={`w-10 h-10 rounded-xl border ${a.border} flex items-center justify-center bg-slate-950/60`}>
+                <Icon className={`w-5 h-5 ${a.color}`} />
+              </div>
+              <div className="text-center">
+                <div className={`text-body-sm font-semibold ${a.color}`}>{a.label}</div>
+                <div className="text-caption text-slate-500">{a.sub}</div>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DistrictRiskTable({ hotspotsRisk }: { hotspotsRisk: any[] }) {
+  const { t } = useLanguage();
+  const rows = hotspotsRisk.length > 0 ? hotspotsRisk : mockDistricts.map(d => ({
+    name: d.DistrictName,
+    risk: d.SocioEconomic.economicStressIndex,
+    activeTrend: d.SocioEconomic.economicStressIndex > 50 ? "Rising" : "Stable",
+  }));
+
+  return (
+    <div className="card rounded-2xl">
+      <div className="section-header mb-3">
+        <div>
+          <div className="section-title text-base">
+            <MapPin className="w-4.5 h-4.5 text-rose-400" />
+            {t("missionControl.districtRisk.title")}
+          </div>
+          <div className="section-subtitle">{t("missionControl.districtRisk.subtitle")}</div>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {rows.slice(0, 6).map((h: any, i: number) => {
+          const c = getRiskColor(h.risk);
+          return (
+            <div key={i} className="flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="text-body-sm text-slate-300 font-medium truncate">{h.name}</div>
+                <div className="text-caption text-slate-500">{h.activeTrend} {t("missionControl.districtRisk.trendSuffix")}</div>
+              </div>
+              <div className="w-24">
+                <div className="confidence-bar mb-1">
+                  <motion.div
+                    className={`confidence-fill ${c.text.replace("text-", "bg-").replace("-400", "-500")}`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${h.risk}%` }}
+                    transition={{ delay: i * 0.08, duration: 0.5 }}
+                  />
+                </div>
+              </div>
+              <span className={`badge shrink-0 ${c.bg} ${c.text} ${c.border}`}>{h.risk}%</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Main export ────────────────────────────────────────────────────────────
+export default function MissionControl({ onNavigate, forecasting, trendData }: MissionControlProps) {
+  const { t } = useLanguage();
+  const [lastRefresh, setLastRefresh] = useState(new Date().toLocaleTimeString());
+
+  useEffect(() => {
+    const id = setInterval(() => setLastRefresh(new Date().toLocaleTimeString()), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <motion.div
+      key="tab_mission"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
+      className="h-full overflow-y-auto pr-1 page-transition"
+      style={{ scrollbarWidth: "thin", scrollbarColor: "#334155 transparent" }}
+    >
+      {/* Page header — single, unified */}
+      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap pb-4 border-b border-slate-800/50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/25 flex items-center justify-center shrink-0">
+            <Shield className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h1 className="text-display text-slate-50 leading-tight tracking-tight">{t("missionControl.title")}</h1>
+            <p style={{fontSize: '13px', color: '#4b5a72', marginTop: '4px'}}>{t("missionControl.subtitle")}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-caption text-emerald-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            {t("common.allSystemsOperational")}
+          </div>
+          <span className="badge badge-blue">FY 2026</span>
+          <div className="flex items-center gap-1.5 text-caption text-slate-500">
+            <RefreshCw className="w-3 h-3" />
+            {lastRefresh}
+          </div>
+        </div>
+      </div>
+
+      {/* Row 1: AI Brief (full width) */}
+      <div className="grid grid-cols-1 gap-4 mb-5">
+        <AIBriefCard />
+      </div>
+
+      {/* Row 2: KPI cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5 stagger-children">
+        <KPIGrid onNavigate={onNavigate} />
+      </div>
+
+      {/* Row 3: Quick actions (full width) */}
+      <div className="grid grid-cols-1 gap-4 mb-5">
+        <QuickActions onNavigate={onNavigate} />
+      </div>
+
+      {/* Row 4: Alerts | Trend chart | District risk */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+        <AlertsPanel warnings={forecasting?.warnings ?? []} />
+        <TrendMiniChart data={trendData?.crimeByMonth ?? []} />
+        <DistrictRiskTable hotspotsRisk={forecasting?.hotspotsRisk ?? []} />
+      </div>
+
+      {/* Row 5: Top crimes | AI recs | Timeline */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-6">
+        <TopCrimesPanel />
+        <AIRecommendations onNavigate={onNavigate} />
+        <ActivityTimeline />
+      </div>
+    </motion.div>
+  );
+}

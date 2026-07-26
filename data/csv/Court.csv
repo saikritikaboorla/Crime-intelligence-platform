@@ -1,0 +1,21 @@
+CourtID,CourtName,DistrictID,StateID,Active
+301,City Civil & Sessions Court Bengaluru,101,10,1
+302,Additional Sessions Court Bengaluru (City),101,10,1
+303,Fast Track Court No.1 Bengaluru,101,10,1
+304,POCSO Court Bengaluru,101,10,1
+305,Sessions Court Mysuru,102,10,1
+306,Additional Sessions Court Mysuru,102,10,1
+307,Principal District and Sessions Court Dakshina Kannada (Mangaluru),103,10,1
+308,Fast Track Court Mangaluru,103,10,1
+309,Principal District and Sessions Court Dharwad (Hubballi),104,10,1
+310,Additional Sessions Court Hubballi-Dharwad,104,10,1
+311,Principal District and Sessions Court Belagavi,105,10,1
+312,Fast Track Court Belagavi,105,10,1
+313,Principal District and Sessions Court Kalaburagi,106,10,1
+314,Additional Sessions Court Kalaburagi,106,10,1
+315,Principal District and Sessions Court Shivamogga,107,10,1
+316,Sessions Court Davanagere,108,10,1
+317,Sessions Court Ballari,109,10,1
+318,Principal District Court Vijayapura,110,10,1
+319,Sessions Court Tumakuru,111,10,1
+320,Sessions Court Raichur,112,10,1

@@ -1,0 +1,80 @@
+ActCode,SectionCode,SectionDescription,Active
+IPC,302,Punishment for Murder,1
+IPC,304,Punishment for Culpable Homicide not amounting to Murder,1
+IPC,307,Attempt to Murder,1
+IPC,323,Punishment for voluntarily causing hurt,1
+IPC,324,Voluntarily causing hurt by dangerous weapons,1
+IPC,325,Punishment for voluntarily causing grievous hurt,1
+IPC,326,Voluntarily causing grievous hurt by dangerous weapons,1
+IPC,354,Assault or criminal force to woman with intent to outrage her modesty,1
+IPC,363,Punishment for kidnapping,1
+IPC,376,Punishment for rape,1
+IPC,379,Punishment for theft,1
+IPC,380,Theft in dwelling house or building used as human dwelling,1
+IPC,382,Theft after preparation made for causing death or hurt in order to commit theft,1
+IPC,384,Punishment for extortion,1
+IPC,386,Extortion by putting a person in fear of death or grievous hurt,1
+IPC,392,Punishment for robbery,1
+IPC,395,Punishment for dacoity,1
+IPC,397,Robbery or dacoity with attempt to cause death or grievous hurt,1
+IPC,406,Punishment for criminal breach of trust,1
+IPC,407,Criminal breach of trust by carrier or warehouse-keeper,1
+IPC,409,Criminal breach of trust by public servant,1
+IPC,420,Cheating and dishonestly inducing delivery of property,1
+IPC,427,Mischief causing damage to the amount of fifty rupees,1
+IPC,436,Mischief by fire or explosive substance with intent to destroy house,1
+IPC,447,Punishment for criminal trespass,1
+IPC,448,Punishment for house-trespass,1
+IPC,498A,Husband or relative of husband of a woman subjecting her to cruelty,1
+IPC,120B,Punishment of criminal conspiracy,1
+IPC,34,Acts done by several persons in furtherance of common intention,1
+IPC,147,Punishment for rioting,1
+IPC,148,Rioting armed with deadly weapon,1
+IPC,149,Every member of unlawful assembly guilty of offence committed in prosecution of common objects,1
+IPC,201,Causing disappearance of evidence of offence,1
+IPC,411,Dishonestly receiving stolen property,1
+IPC,413,Habitually dealing in stolen property,1
+BNS,103,Murder,1
+BNS,105,Culpable Homicide not amounting to Murder,1
+BNS,109,Attempt to commit murder,1
+BNS,115,Voluntarily causing hurt,1
+BNS,117,Voluntarily causing grievous hurt by dangerous weapons or means,1
+BNS,303,Theft,1
+BNS,304,Theft in dwelling house or place of worship,1
+BNS,309,Extortion,1
+BNS,310,Putting person in fear of death or of grievous hurt in order to commit extortion,1
+BNS,310A,Robbery,1
+BNS,311,Dacoity,1
+BNS,318,Cheating,1
+BNS,316,Criminal Breach of Trust,1
+BNS,352,Assault or criminal force to woman with intent to outrage modesty,1
+BNS,64,Rape,1
+NDPS,8,Prohibition on production manufacture possession sale purchase,1
+NDPS,20,Punishment for contravention in relation to cannabis,1
+NDPS,21,Punishment for contravention in relation to manufactured drugs,1
+NDPS,22,Punishment for contravention in relation to psychotropic substances,1
+NDPS,27A,Punishment for financing illicit traffic and harbouring offenders,1
+NDPS,29,Abetment and criminal conspiracy,1
+IT,43,Penalty and compensation for damage to computer systems,1
+IT,66,Computer related offences,1
+IT,66A,Punishment for sending offensive messages through communication service,0
+IT,66B,Punishment for dishonestly receiving stolen computer resource or communication device,1
+IT,66C,Punishment for identity theft,1
+IT,66D,Punishment for cheating by personation by using computer resource,1
+IT,66E,Punishment for violation of privacy,1
+IT,67,Punishment for publishing or transmitting obscene material in electronic form,1
+IT,70,Protected system,1
+IT,72,Penalty for breach of confidentiality and privacy,1
+POCSO,4,Punishment for penetrative sexual assault,1
+POCSO,6,Punishment for aggravated penetrative sexual assault,1
+POCSO,8,Punishment for sexual assault,1
+POCSO,12,Punishment for sexual harassment,1
+ARMS,25,Punishment for certain offences,1
+ARMS,27,Use of arms,1
+SC_ST,3,Atrocities against SC/ST members,1
+MVA,184,Driving dangerously,1
+MVA,185,Driving by a drunken person or by a person under the influence of drugs,1
+PC,7,Public servant taking gratification other than legal remuneration,1
+PC,13,Criminal misconduct by a public servant,1
+IPC,507,Criminal intimidation by anonymous communication,1
+IPC,332,Voluntarily causing hurt to deter public servant from duty,1
