@@ -44,6 +44,7 @@ import MissionControl from "./components/MissionControl";
 import SociologicalInsights from "./components/SociologicalInsights";
 import LoginPage from "./components/LoginPage";
 import HeatmapAnalytics from "./components/HeatmapAnalytics";
+import CrimeTrends from "./components/CrimeTrends";
 import { detectInputLanguage, type Lang } from "./i18n/translations";
 import type { FinancialTransaction } from "./types";
 
@@ -1626,167 +1627,16 @@ export default function App() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
-                className="flex flex-col h-full grow gap-6 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800"
+                className="flex flex-col h-full grow overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800"
               >
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800/60 pb-4 gap-2">
-                  <div>
-                    <h2 className="section-title">
-                      <TrendingUp className="w-5 h-5 text-amber-500" />
-                      {t("trends")}
-                    </h2>
-                    <p className="section-subtitle mt-1">{t("trendsDesc")}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-micro text-slate-600 mb-4 overflow-x-auto whitespace-nowrap pb-1">
-                  <span className="text-slate-700">Mission Control</span>
-                  <span className="text-slate-800">›</span>
-                  <span className="text-amber-500/70 font-semibold">Hotspots & Trends</span>
-                  <span className="text-slate-800">›</span>
-                  <span className="text-slate-700">Sociological Insights</span>
-                  <span className="text-slate-800">›</span>
-                  <span className="text-slate-700">Forecasting</span>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 grow min-h-[400px]">
-                  {/* Left Column: Operational Intel Dossier */}
-                  <div className="dossier-panel">
-                    <div className="space-y-4">
-                      <div className="pb-3 border-b border-slate-800/70">
-                        <h3 className="text-label text-amber-500/90">Hotspot Intel Dossier</h3>
-                        <p className="text-micro text-slate-600 font-mono mt-1 uppercase">MODULE: HOTZONE_SPATIAL_VELOCITY</p>
-                      </div>
-
-                      {/* Purpose */}
-                      <div className="space-y-1.5">
-                        <h4 className="dossier-label text-slate-500">{t("crimeSolverPurpose")}</h4>
-                        <p className="text-caption text-slate-400 leading-relaxed">
-                          Computes geographical crime velocity. Use to schedule police beats, dispatch warning alerts, and compare spatial trends against demographic factors.
-                        </p>
-                      </div>
-
-                      {/* Schema Variable Directory */}
-                      <div className="space-y-1.5 pt-2 border-t border-slate-800/50">
-                        <h4 className="dossier-label text-slate-500">{t("databaseVariables")}</h4>
-                        <div className="space-y-1 font-mono text-micro">
-                          <div className="dossier-var-row">
-                            <span className="text-amber-500">Hotspot risk</span>
-                            <span className="text-slate-600">Cluster %</span>
-                          </div>
-                          <div className="dossier-var-row">
-                            <span className="text-amber-500">Velocity</span>
-                            <span className="text-slate-600">Growth rate</span>
-                          </div>
-                          <div className="dossier-var-row">
-                            <span className="text-amber-500">Class head</span>
-                            <span className="text-slate-600">IPC Category</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* INTER-LINK WORKFLOW CONTROLS */}
-                    <div className="pt-3 border-t border-slate-800/50 space-y-1.5">
-                      <h4 className="dossier-label text-amber-500/70">{t("crossModuleActions")}</h4>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab("sociological");
-                          logAuditEvent("Cross Link", "Transitioned from Hotspots to Sociological correlation analysis.");
-                        }}
-                        className="cross-action-btn"
-                      >
-                        <span>Compare Socio-drivers</span>
-                        <span>→</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab("forecasting");
-                          logAuditEvent("Cross Link", "Transitioned from Hotspots to Predictive Forecasting warnings.");
-                        }}
-                        className="cross-action-btn"
-                      >
-                        <span>Review Dispatch Beats</span>
-                        <span>→</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Right 3 columns: Interactive content fitting the page */}
-                  <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4 h-[450px] overflow-y-auto">
-                    {/* District interactive heat list */}
-                    <div className="bg-slate-950/60 border border-slate-800/80 p-4 rounded-xl flex flex-col justify-between md:col-span-1 h-full">
-                      <h3 className="text-micro font-bold uppercase tracking-wider text-amber-500 border-b border-slate-800 pb-2">{t("activeDistrictGrid")}</h3>
-                      <div className="flex-1 overflow-y-auto space-y-2 mt-3 pr-1">
-                        {forecasting.hotspotsRisk && forecasting.hotspotsRisk.map((h: any, idx: number) => {
-                          const scoreColor = h.risk > 80 ? "text-rose-400" : h.risk > 60 ? "text-amber-400" : "text-emerald-400";
-                          return (
-                            <div key={idx} className="bg-slate-900 border border-slate-800/60 p-3 rounded-lg flex items-center justify-between gap-2" style={{ minHeight: '48px' }}>
-                              <div className="flex items-center gap-2 min-w-0">
-                                <MapPin className="w-3.5 h-3.5 text-rose-500 animate-bounce shrink-0" />
-                                <div className="min-w-0">
-                                  <div className="text-body-sm font-bold text-slate-200 truncate">{h.name}</div>
-                                  <div className="text-micro text-slate-500 truncate">{h.activeTrend} trend</div>
-                                </div>
-                              </div>
-                              <div className="text-right shrink-0">
-                                <div className={`text-micro font-bold ${scoreColor}`}>Risk: {h.risk}%</div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Crime distribution charts side-by-side */}
-                    <div className="md:col-span-2 space-y-3 h-full flex flex-col justify-between">
-                      {/* Area Chart */}
-                      <div className="bg-slate-950/60 border border-slate-800/80 p-3.5 rounded-xl flex-1 flex flex-col justify-between">
-                        <h3 className="text-micro font-bold uppercase tracking-wider text-amber-500">{t("crimeIncidentsMonth")}</h3>
-                        <div className="h-[140px] w-full mt-2">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={trendData.crimeByMonth || []}>
-                              <defs>
-                                <linearGradient id="colorHeinous" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.4}/>
-                                  <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
-                                </linearGradient>
-                                <linearGradient id="colorNonHeinous" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/>
-                                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
-                                </linearGradient>
-                              </defs>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                              <XAxis dataKey="month" stroke="#64748b" fontSize={9} />
-                              <YAxis stroke="#64748b" fontSize={9} />
-                              <Tooltip contentStyle={{ backgroundColor: "#020617", border: "1px solid #334155" }} />
-                              <Area type="monotone" dataKey="Heinous" stroke="#f43f5e" fillOpacity={1} fill="url(#colorHeinous)" name="Heinous" />
-                              <Area type="monotone" dataKey="NonHeinous" stroke="#f59e0b" fillOpacity={1} fill="url(#colorNonHeinous)" name="Non-Heinous" />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-
-                      {/* Bar Chart */}
-                      <div className="bg-slate-950/60 border border-slate-800/80 p-3.5 rounded-xl flex-1 flex flex-col justify-between">
-                        <h3 className="text-micro font-bold uppercase tracking-wider text-amber-500">{t("crimeHeadDistribution")}</h3>
-                        <div className="h-[140px] w-full mt-2">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={trendData.crimeByType || []}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                              <XAxis dataKey="name" stroke="#64748b" fontSize={8} />
-                              <YAxis stroke="#64748b" fontSize={9} />
-                              <Tooltip contentStyle={{ backgroundColor: "#020617", border: "1px solid #334155" }} />
-                              <Bar dataKey="value" fill="#10b981" radius={[3, 3, 0, 0]} name="Count" />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <CrimeTrends
+                  onNavigate={handleTabChange}
+                  logAuditEvent={logAuditEvent}
+                  legacyTrendData={trendData}
+                />
               </motion.div>
             )}
+
 
             {activeTab === "sociological" && (
               <SociologicalInsights

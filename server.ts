@@ -528,6 +528,220 @@ app.get("/api/analytics/trends", (_req, res) => {
   res.json({ crimeByMonth, crimeByType, hotspots });
 });
 
+// ── TRENDS DETAILED (filtered, with insights) ────────────────────────────────
+app.get("/api/analytics/trends-detailed", (req, res) => {
+  const { districtId, categoryId, monthKey } = req.query as Record<string, string | undefined>;
+
+  // Build lookup maps
+  const districtMap = new Map(mockDistricts.map(d => [d.DistrictID, d.DistrictName]));
+  const unitDistrictMap = new Map(mockUnits.filter(u => u.TypeID === 1).map(u => [u.UnitID, u.DistrictID]));
+
+  // Determine districts that have at least one case
+  const activeDids = [...new Set(mockCases.map(c => unitDistrictMap.get(c.PoliceStationID)).filter((d): d is number => d !== undefined))];
+  const availableDistricts = activeDids
+    .map(id => ({ id, name: districtMap.get(id) ?? "Unknown" }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  // Crime categories that have at least one case
+  const activeCatIds = [...new Set(mockCases.map(c => c.CrimeMajorHeadID))];
+  const availableCategories = activeCatIds
+    .map(id => ({ id, name: mockCrimeHeads.find(h => h.CrimeHeadID === id)?.CrimeGroupName ?? "Unknown" }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  // Available months (derived from actual data)
+  const availableMonthKeys = [...new Set(mockCases.map(c => {
+    const d = new Date(c.CrimeRegisteredDate);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }))].sort();
+
+  const monthLabelMap: Record<string, string> = {};
+  availableMonthKeys.forEach(k => {
+    const [yr, mo] = k.split("-");
+    const d = new Date(parseInt(yr), parseInt(mo) - 1, 1);
+    monthLabelMap[k] = d.toLocaleString("en-US", { month: "short", year: "numeric" });
+  });
+
+  const availableMonths = availableMonthKeys.map(k => ({ key: k, label: monthLabelMap[k] ?? k }));
+
+  // ── Apply filters ──
+  const appliedFilters: string[] = [];
+  let filtered = mockCases;
+
+  const parsedDistrictId = districtId ? parseInt(districtId, 10) : null;
+  const parsedCategoryId = categoryId ? parseInt(categoryId, 10) : null;
+
+  if (parsedDistrictId) {
+    filtered = filtered.filter(c => unitDistrictMap.get(c.PoliceStationID) === parsedDistrictId);
+    const dn = districtMap.get(parsedDistrictId) ?? districtId;
+    appliedFilters.push(`District: ${dn}`);
+  }
+
+  if (parsedCategoryId) {
+    filtered = filtered.filter(c => c.CrimeMajorHeadID === parsedCategoryId);
+    const cn = mockCrimeHeads.find(h => h.CrimeHeadID === parsedCategoryId)?.CrimeGroupName ?? categoryId;
+    appliedFilters.push(`Category: ${cn}`);
+  }
+
+  if (monthKey) {
+    const [yr, mo] = monthKey.split("-").map(Number);
+    filtered = filtered.filter(c => {
+      const d = new Date(c.CrimeRegisteredDate);
+      return d.getFullYear() === yr && (d.getMonth() + 1) === mo;
+    });
+    appliedFilters.push(`Month: ${monthLabelMap[monthKey] ?? monthKey}`);
+  }
+
+  // ── crimeByMonth ──
+  // Group by month key from filtered set
+  const monthMap = new Map<string, { monthKey: string; month: string; total: number; Heinous: number; NonHeinous: number }>();
+  filtered.forEach(c => {
+    const d = new Date(c.CrimeRegisteredDate);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = d.toLocaleString("en-US", { month: "short", year: "numeric" });
+    if (!monthMap.has(key)) {
+      monthMap.set(key, { monthKey: key, month: label, total: 0, Heinous: 0, NonHeinous: 0 });
+    }
+    const entry = monthMap.get(key)!;
+    entry.total++;
+    if (c.GravityOffenceID === 1) entry.Heinous++;
+    else entry.NonHeinous++;
+  });
+  const crimeByMonth = [...monthMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, v]) => v);
+
+  // ── crimeByType ──
+  const subHeadMap = new Map<number, { name: string; fullName: string; category: string; value: number }>();
+  filtered.forEach(c => {
+    const sub = mockCrimeSubHeads.find(s => s.CrimeSubHeadID === c.CrimeMinorHeadID);
+    if (!sub) return;
+    const cat = mockCrimeHeads.find(h => h.CrimeHeadID === sub.CrimeHeadID)?.CrimeGroupName ?? "Unknown";
+    if (!subHeadMap.has(sub.CrimeSubHeadID)) {
+      // Truncate name for X-axis (max 14 chars), keep fullName for tooltip
+      const shortName = sub.CrimeSubHeadName.length > 14
+        ? sub.CrimeSubHeadName.slice(0, 13) + "…"
+        : sub.CrimeSubHeadName;
+      subHeadMap.set(sub.CrimeSubHeadID, { name: shortName, fullName: sub.CrimeSubHeadName, category: cat, value: 0 });
+    }
+    subHeadMap.get(sub.CrimeSubHeadID)!.value++;
+  });
+  const crimeByType = [...subHeadMap.values()]
+    .filter(i => i.value > 0)
+    .sort((a, b) => b.value - a.value);
+
+  // ── districts grid ──
+  const districtRows = activeDids.map(dId => {
+    const cases = filtered.filter(c => unitDistrictMap.get(c.PoliceStationID) === dId);
+    const allCasesInDistrict = mockCases.filter(c => unitDistrictMap.get(c.PoliceStationID) === dId);
+    const heinous = cases.filter(c => c.GravityOffenceID === 1).length;
+    const district = mockDistricts.find(d => d.DistrictID === dId);
+    const recentCases = cases.filter(c => new Date(c.CrimeRegisteredDate) >= new Date("2026-05-01")).length;
+    const risk = Math.min(99, Math.round(
+      (heinous / Math.max(cases.length, 1)) * 40 +
+      ((district?.SocioEconomic.economicStressIndex ?? 0) / 100) * 30 +
+      (recentCases / Math.max(cases.length, 1)) * 20 +
+      ((district?.SocioEconomic.migrationRate ?? 0) / 20) * 10
+    ));
+    const trend = recentCases > cases.length / 2 ? "UPWARD" : recentCases === 0 ? "DOWNWARD" : "STABLE";
+    return {
+      districtId: dId,
+      name: districtMap.get(dId) ?? "Unknown",
+      risk,
+      activeTrend: trend,
+      totalCases: cases.length,
+      heinousCases: heinous,
+      allCases: allCasesInDistrict.length,
+    };
+  }).sort((a, b) => b.risk - a.risk);
+
+  // ── Summary ──
+  const dates = filtered.map(c => new Date(c.CrimeRegisteredDate)).sort((a, b) => a.getTime() - b.getTime());
+  const dateRange = dates.length >= 2
+    ? `${dates[0].toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} – ${dates[dates.length - 1].toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}`
+    : dates.length === 1
+      ? dates[0].toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+      : "No data";
+
+  // ── Trend Insights (only from real calculated data) ──
+  const insights: { label: string; value: string; direction: "up" | "down" | "neutral" }[] = [];
+
+  if (crimeByType.length > 0) {
+    const topCat = crimeByType[0];
+    insights.push({
+      label: "Highest Crime Sub-Category",
+      value: `${topCat.fullName} — ${topCat.value} case${topCat.value !== 1 ? "s" : ""} (${topCat.category})`,
+      direction: "up",
+    });
+  }
+
+  if (crimeByType.length > 1) {
+    const bottomCat = crimeByType[crimeByType.length - 1];
+    insights.push({
+      label: "Lowest Crime Sub-Category",
+      value: `${bottomCat.fullName} — ${bottomCat.value} case${bottomCat.value !== 1 ? "s" : ""} (${bottomCat.category})`,
+      direction: "down",
+    });
+  }
+
+  if (crimeByMonth.length >= 2) {
+    const last = crimeByMonth[crimeByMonth.length - 1];
+    const prev = crimeByMonth[crimeByMonth.length - 2];
+    const diff = last.total - prev.total;
+    const pct = prev.total > 0 ? Math.round((diff / prev.total) * 100) : null;
+    if (diff !== 0) {
+      insights.push({
+        label: "Month-over-Month Change",
+        value: `${last.month}: ${diff > 0 ? "+" : ""}${diff} cases vs ${prev.month}${pct !== null ? ` (${diff > 0 ? "+" : ""}${pct}%)` : ""}`,
+        direction: diff > 0 ? "up" : "down",
+      });
+    }
+  }
+
+  if (crimeByMonth.length > 0) {
+    const peakMonth = crimeByMonth.reduce((best, m) => m.total > best.total ? m : best, crimeByMonth[0]);
+    insights.push({
+      label: "Peak Crime Period",
+      value: `${peakMonth.month} — ${peakMonth.total} case${peakMonth.total !== 1 ? "s" : ""} registered`,
+      direction: "neutral",
+    });
+  }
+
+  if (districtRows.length > 0 && filtered.length > 0) {
+    const topDistrict = districtRows[0];
+    if (topDistrict.totalCases > 0) {
+      insights.push({
+        label: "Highest Risk District",
+        value: `${topDistrict.name} — Risk score ${topDistrict.risk}%, ${topDistrict.totalCases} case${topDistrict.totalCases !== 1 ? "s" : ""}`,
+        direction: "up",
+      });
+    }
+  }
+
+  const heinousTotal = filtered.filter(c => c.GravityOffenceID === 1).length;
+  if (filtered.length > 0) {
+    const heinousPct = Math.round((heinousTotal / filtered.length) * 100);
+    insights.push({
+      label: "Heinous Offence Share",
+      value: `${heinousTotal} of ${filtered.length} cases (${heinousPct}%) classified as heinous`,
+      direction: heinousPct > 40 ? "up" : heinousPct < 20 ? "down" : "neutral",
+    });
+  }
+
+  res.json({
+    crimeByMonth,
+    crimeByType,
+    districts: districtRows,
+    filters: { availableDistricts, availableCategories, availableMonths },
+    summary: {
+      totalRecordsAnalyzed: mockCases.length,
+      filteredRecords: filtered.length,
+      dateRange,
+      appliedFilters,
+    },
+    insights,
+  });
+});
+
 // ── NETWORK ──────────────────────────────────────────────────────────────────
 app.get("/api/analytics/network", (_req, res) => {
   const nodes: any[] = [];
