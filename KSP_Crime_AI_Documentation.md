@@ -154,8 +154,6 @@ A layered architecture keeps the chatbot, the analytics engine, and the raw data
 | **Deployment** | Docker + Kubernetes, on-prem / government cloud (e.g. MeghRaj / NIC cloud) | Containerization makes the system portable across environments; Kubernetes gives you scaling and resilience; government cloud/on-prem satisfies data-sovereignty requirements typical for police data. |
 | **PDF Export** | ReportLab (Python) or Puppeteer (headless Chrome → PDF) | Both are reliable ways to turn a conversation transcript into a clean, downloadable PDF. |
 
-> 🔹 **Simple Explanation:** Every tool here is chosen for one of three reasons: (1) it's the *industry-standard* tool for that exact job (Neo4j for relationships, Postgres for structured data), (2) it keeps your stack *simple* by staying in one language ecosystem (Python across AI + backend), or (3) it respects the *hard constraint* that this is police data — meaning security, explainability, and the ability to run without depending on the public internet (on-prem options) all matter more than they would in a typical consumer app.
-
 ---
 
 ## 8. Module Design
@@ -190,8 +188,6 @@ Sub-components: Citation Tracker (attaches source record IDs to every claim), Re
 **Module 10 — Secure Role-Based Access & Governance**
 Sub-components: Identity Provider Integration, Permission Engine, Audit Logger, Data Masking layer for sensitive fields.
 
-> 🔹 **Simple Explanation:** Each of the 10 modules from the original problem statement becomes its own "mini-app" inside the bigger system, with clearly separated pieces. Building it this way means you (or a teammate) can work on, say, the Forecasting module without breaking the Chat module — they only talk to each other through defined APIs.
-
 ---
 
 ## 9. Database Design
@@ -223,8 +219,6 @@ This is what powers "who is connected to whom" queries instantly.
 Stores an embedding (a numeric fingerprint of meaning) for each FIR's narrative/MO description, so "find similar past cases" is a fast similarity search rather than a slow manual comparison.
 
 **Sync strategy:** A scheduled ETL job periodically reads new/updated Catalyst records and updates the Graph and Vector stores — the relational DB always stays the single source of truth.
-
-> 🔹 **Simple Explanation:** You keep the original Catalyst database untouched as the "official record" (source of truth). Alongside it, you build two *helper copies* of the same data, reshaped for specific jobs: a **graph copy** (great for "who's connected to whom") and a **vector copy** (great for "find similar cases"). A background job keeps these helper copies updated automatically, so your AI Layer always has the right shape of data instantly available, without ever slowing down or risking the original database.
 
 ---
 
@@ -258,8 +252,6 @@ Historical crime data → feature engineering (time, location, socio-economic in
 **10.7 Context & Memory**
 A short-term conversation memory (session-based) lets users ask follow-ups ("what about the last 3 months instead?") without repeating the full question; a longer-term memory can store analyst-confirmed insights for reuse.
 
-> 🔹 **Simple Explanation:** The AI never "makes things up" from its training — it always fetches real data first (RAG), and only then writes a nice sentence describing what it found. On top of that, you add a "criminology knowledge" layer so the system doesn't just say "crime went up here" but can relate that to known social/criminological explanations — grounded reasoning, not guessing. Every single answer keeps a receipt (citation) so investigators can double-check it, which is essential when this feeds real investigations.
-
 ---
 
 ## 11. Future Scope
@@ -273,8 +265,6 @@ A short-term conversation memory (session-based) lets users ask follow-ups ("wha
 - **Citizen-facing safe version** — a heavily restricted, anonymized subset for public safety awareness (crime-heatmap style), without exposing sensitive case data.
 - **Federated learning** across districts to improve forecasting models without centralizing all raw data.
 - **Integration with judiciary/court case-tracking systems** to close the loop from FIR → investigation → trial outcome, enriching offender profiling with actual conviction data.
-
-> 🔹 **Simple Explanation:** This section is your "not now, but later" list — good ideas that would make the system more powerful but aren't needed for a first working version (MVP). Keeping them written down prevents scope creep now while giving you a roadmap for after the initial version proves itself.
 
 ---
 
