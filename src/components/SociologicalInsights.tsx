@@ -515,14 +515,64 @@ function CrimeDistributionChart({ data }: { data: SocioRow[] }) {
 }
 
 // ─── Chart 3: Urbanization × Crime Scatter ──────────────────────────────────
+//
+// DATA NOTE — "Bengaluru" duplication:
+//   The API returns 14 districts. Two of them start with "Bengaluru":
+//   • "Bengaluru City"  (DistrictID 101, urban=92, 14 FIRs)
+//   • "Bengaluru Rural" (DistrictID 113, urban=55,  0 FIRs)
+//   Both are genuine, distinct CSV records. The old code used .split(" ")[0]
+//   as the label, causing both to render as "Bengaluru". Fix: use a stable
+//   short-name map that gives each district a unique, unambiguous label.
+//   The old YAxis domain [0,5] also clipped Bengaluru City's 14 FIRs entirely.
+//   Fix: derive domain dynamically from actual data.
+//
 function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
-  const labelOffsets: Record<string, { dx: number; dy: number; textAnchor: "middle" | "start" | "end" }> = {
-    "Bengaluru City":               { dx: 0,   dy: -26, textAnchor: "middle" },
-    "Mysuru":                       { dx: 24,  dy: -4,  textAnchor: "start"  },
-    "Mangaluru (Dakshina Kannada)": { dx: -24, dy: -4,  textAnchor: "end"    },
-    "Hubballi-Dharwad":             { dx: 0,   dy: -26, textAnchor: "middle" },
-    "Belagavi":                     { dx: 24,  dy: 16,  textAnchor: "start"  },
-    "Kalaburagi":                   { dx: -24, dy: 16,  textAnchor: "end"    },
+  // Stable short labels — unique per district, derived from the CSV district names
+  const SHORT_LABELS: Record<string, string> = {
+    "Bengaluru City":               "B.City",
+    "Bengaluru Rural":              "B.Rural",
+    "Mysuru":                       "Mysuru",
+    "Mangaluru (Dakshina Kannada)": "Mangaluru",
+    "Hubballi-Dharwad":             "Hubballi",
+    "Belagavi":                     "Belagavi",
+    "Kalaburagi":                   "Kalaburagi",
+    "Shivamogga":                   "Shivamogga",
+    "Davanagere":                   "Davanagere",
+    "Ballari":                      "Ballari",
+    "Vijayapura":                   "Vijayapura",
+    "Tumakuru":                     "Tumakuru",
+    "Raichur":                      "Raichur",
+    "Udupi":                        "Udupi",
+  };
+
+  // Derive Y axis ceiling from real data so no district is clipped
+  const maxFIRs = Math.max(...data.map((d) => d.totalCrimes), 1);
+  const yMax = Math.ceil(maxFIRs / 5) * 5 + 2; // round up to next 5 + headroom
+
+  // Bubble radius: cap at 22px so large districts don't crowd others
+  const maxR = 22;
+  const minR = 7;
+  const rScale = maxFIRs > 0 ? (maxR - minR) / maxFIRs : 1;
+  const bubbleR = (n: number) => minR + n * rScale;
+
+  // Per-district label offset — hand-tuned to avoid overlap at 14 districts
+  // Districts with 0 FIRs all land on Y=0; spread their labels horizontally
+  const labelOffsets: Record<string, { dx: number; dy: number; anchor: "middle" | "start" | "end" }> = {
+    "Bengaluru City":               { dx:  0,   dy: -30, anchor: "middle" },
+    "Mysuru":                       { dx:  28,  dy:  -8, anchor: "start"  },
+    "Mangaluru (Dakshina Kannada)": { dx: -28,  dy:  -8, anchor: "end"    },
+    "Hubballi-Dharwad":             { dx:  28,  dy:   8, anchor: "start"  },
+    "Belagavi":                     { dx:  0,   dy: -26, anchor: "middle" },
+    "Kalaburagi":                   { dx: -28,  dy:   8, anchor: "end"    },
+    // Zero-FIR districts — staggered up/down to prevent stacking
+    "Shivamogga":                   { dx:  0,   dy: -22, anchor: "middle" },
+    "Davanagere":                   { dx:  0,   dy:  18, anchor: "middle" },
+    "Ballari":                      { dx:  0,   dy: -22, anchor: "middle" },
+    "Vijayapura":                   { dx:  0,   dy:  18, anchor: "middle" },
+    "Tumakuru":                     { dx:  0,   dy: -22, anchor: "middle" },
+    "Raichur":                      { dx:  0,   dy:  18, anchor: "middle" },
+    "Bengaluru Rural":              { dx:  0,   dy: -22, anchor: "middle" },
+    "Udupi":                        { dx:  0,   dy:  18, anchor: "middle" },
   };
 
   const chartData = data.map((d) => ({
@@ -530,9 +580,10 @@ function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
     totalCrimes:  d.totalCrimes,
     stress:       d.stress,
     districtName: d.districtName,
-    shortName:    d.districtName.split(" ")[0],
+    shortName:    SHORT_LABELS[d.districtName] ?? d.districtName.split(" ")[0],
     color:        DISTRICT_COLORS[d.districtName] ?? "#64748b",
-    offset:       labelOffsets[d.districtName] ?? { dx: 0, dy: -22, textAnchor: "middle" as const },
+    offset:       labelOffsets[d.districtName] ?? { dx: 0, dy: -22, anchor: "middle" as const },
+    r:            bubbleR(d.totalCrimes),
   }));
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -542,8 +593,8 @@ function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
     return (
       <TooltipBox>
         <p style={{ color: d.color, fontWeight: 700, marginBottom: 6, fontSize: 14 }}>{d.districtName}</p>
-        <p style={{ color: "#94a3b8", fontSize: 12.5 }}>Urbanization: <span style={{ color: "#f8fafc", fontWeight: 700 }}>{d.urbanization}%</span></p>
-        <p style={{ color: "#94a3b8", fontSize: 12.5 }}>Total FIRs: <span style={{ color: "#fbbf24", fontWeight: 700 }}>{d.totalCrimes}</span></p>
+        <p style={{ color: "#94a3b8", fontSize: 12.5 }}>Urbanization Index: <span style={{ color: "#f8fafc", fontWeight: 700 }}>{d.urbanization}%</span></p>
+        <p style={{ color: "#94a3b8", fontSize: 12.5 }}>Total FIR Cases: <span style={{ color: "#fbbf24", fontWeight: 700 }}>{d.totalCrimes}</span></p>
         <p style={{ color: "#94a3b8", fontSize: 12.5 }}>Economic Stress: <span style={{ color: "#f87171", fontWeight: 700 }}>{d.stress}%</span></p>
         <p style={{ color: "#64748b", fontSize: 11, marginTop: 6, borderTop: "1px solid #1e293b", paddingTop: 4 }}>
           Positive association observed (urbanization ↑, FIR count ↑)
@@ -562,47 +613,52 @@ function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
           <div>
             <h3 className="text-base font-bold text-slate-100">Urbanization vs. Total FIR Cases</h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Scatter plot — urbanization index vs. FIR count. Circle size ∝ case count. Hover for district values.
+              All {data.length} Karnataka districts (CSV-sourced). Circle size ∝ FIR count. Hover for exact values.
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg shrink-0">
-          {DISTRICT_KEYS.map((d) => (
-            <span key={d} className="flex items-center gap-1.5 text-slate-300">
-              <span style={{ background: DISTRICT_COLORS[d], width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
-              {d.split(" ")[0]}
-            </span>
-          ))}
-        </div>
       </div>
 
-      <div className="h-[380px] w-full pt-2">
+      {/* Chart — height scaled to give all 14 districts room */}
+      <div className="h-[460px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <ScatterChart margin={{ top: 25, right: 35, bottom: 45, left: 10 }}>
+          <ScatterChart margin={{ top: 20, right: 50, bottom: 55, left: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
             <XAxis
               type="number"
               dataKey="urbanization"
               name="Urbanization"
-              domain={[25, 100]}
+              domain={[20, 100]}
+              ticks={[20, 30, 40, 50, 60, 70, 80, 90, 100]}
               stroke="#475569"
-              tick={{ fill: "#cbd5e1", fontSize: 12, fontWeight: 600 }}
+              tick={{ fill: "#cbd5e1", fontSize: 11, fontWeight: 600 }}
               tickLine={false}
               tickFormatter={(v) => `${v}%`}
-              label={{ value: "Urbanization Index (%)", position: "insideBottom", offset: -28, fill: "#94a3b8", fontSize: 12, fontWeight: 600 }}
+              label={{
+                value: "Urbanization Index (%) — from District.csv",
+                position: "insideBottom",
+                offset: -35,
+                style: { fill: "#94a3b8", fontSize: 11, fontWeight: 600 },
+              }}
             />
             <YAxis
               type="number"
               dataKey="totalCrimes"
-              name="Total Cases"
-              domain={[0, 5]}
+              name="Total FIR Cases"
+              domain={[0, yMax]}
               allowDecimals={false}
               stroke="#475569"
-              tick={{ fill: "#94a3b8", fontSize: 12 }}
+              tick={{ fill: "#94a3b8", fontSize: 11 }}
               tickLine={false}
               axisLine={false}
-              width={32}
-              label={{ value: "FIR Cases", angle: -90, position: "insideLeft", offset: 10, fill: "#94a3b8", fontSize: 12, fontWeight: 600 }}
+              width={38}
+              label={{
+                value: "Registered FIR Cases",
+                angle: -90,
+                position: "insideLeft",
+                offset: 12,
+                style: { fill: "#94a3b8", fontSize: 11, fontWeight: 600 },
+              }}
             />
             <Tooltip content={<CustomTooltip />} cursor={false} />
             <Scatter
@@ -610,18 +666,36 @@ function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
               data={chartData}
               shape={(props: any) => {
                 const { cx, cy, payload } = props;
-                const r = 14 + payload.totalCrimes * 7;
-                const { dx, dy, textAnchor } = payload.offset;
-                const labelW = payload.shortName.length * 8 + 16;
-                const labelX = cx + dx - labelW * (textAnchor === "end" ? 1 : textAnchor === "middle" ? 0.5 : 0);
+                const r = payload.r;
+                const { dx, dy, anchor } = payload.offset;
+                const labelText = payload.shortName;
+                const charW = 6.5;
+                const labelW = labelText.length * charW + 12;
+                const labelX = cx + dx - labelW * (anchor === "end" ? 1 : anchor === "middle" ? 0.5 : 0);
                 return (
                   <g>
-                    <circle cx={cx} cy={cy} r={r} fill={payload.color} fillOpacity={0.2} stroke={payload.color} strokeWidth={2.5} />
-                    <circle cx={cx} cy={cy} r={5} fill={payload.color} />
-                    <rect x={labelX} y={cy + dy - 12} width={labelW} height={18} rx={4} ry={4}
-                      fill="#030712" stroke={payload.color} strokeWidth="1" />
-                    <text x={cx + dx} y={cy + dy} textAnchor={textAnchor} fill="#f8fafc" fontSize="11.5" fontWeight="700">
-                      {payload.shortName}
+                    {/* Outer glow ring */}
+                    <circle cx={cx} cy={cy} r={r} fill={payload.color} fillOpacity={0.18} stroke={payload.color} strokeWidth={2} />
+                    {/* Centre dot */}
+                    <circle cx={cx} cy={cy} r={4} fill={payload.color} />
+                    {/* Label badge */}
+                    <rect
+                      x={labelX} y={cy + dy - 11}
+                      width={labelW} height={16}
+                      rx={3} ry={3}
+                      fill="#020617"
+                      stroke={payload.color}
+                      strokeWidth={0.8}
+                      fillOpacity={0.92}
+                    />
+                    <text
+                      x={cx + dx} y={cy + dy + 1}
+                      textAnchor={anchor}
+                      fill="#f1f5f9"
+                      fontSize="10"
+                      fontWeight="700"
+                    >
+                      {labelText}
                     </text>
                   </g>
                 );
@@ -631,10 +705,23 @@ function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
         </ResponsiveContainer>
       </div>
 
+      {/* Compact legend showing all 14 districts */}
+      <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-1.5 bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+        {chartData.map((d) => (
+          <div key={d.districtName} className="flex items-center gap-1.5 min-w-0">
+            <span className="shrink-0 w-2 h-2 rounded-full" style={{ background: d.color }} />
+            <span className="text-xs text-slate-400 truncate" title={d.districtName}>{d.shortName}</span>
+            {d.totalCrimes > 0 && (
+              <span className="text-xs font-bold ml-auto shrink-0" style={{ color: d.color }}>{d.totalCrimes}</span>
+            )}
+          </div>
+        ))}
+      </div>
+
       <AIInsightCard
         accentClass="border-emerald-500/20"
-        keyFinding="Higher urbanization is associated with more reported FIRs — but Kalaburagi's low count likely reflects under-reporting given its 68% economic stress."
-        observation="There is a positive association between urbanization and FIR case count. Bengaluru (92% urban, most cases) sits at top-right; Kalaburagi (35% urban, fewest cases) sits at bottom-left — despite the highest economic stress in the dataset."
+        keyFinding="Higher urbanization is associated with more reported FIRs — Bengaluru City (92%, 14 FIRs) leads; 8 districts with 0 FIRs likely reflect under-reporting rather than absence of crime."
+        observation="All 14 CSV districts are plotted. Bengaluru City (DistrictID 101, urban=92%) and Bengaluru Rural (DistrictID 113, urban=55%) are distinct records — both are shown with unique labels. Districts with 0 registered FIRs cluster along the X-axis; their socio-economic stress indices suggest under-reporting."
         whyMatters="Urban crime is more visible and more likely to be reported. Relying solely on FIR counts risks underestimating rural threat levels, particularly for domestic and violent crime in low-urbanization districts."
         action="Establish mobile reporting units and anonymous tip lines in Kalaburagi and Belagavi. Weight district-level risk assessments with socio-economic stress indices, not just FIR counts alone."
       />
@@ -643,36 +730,55 @@ function UrbanizationScatterChart({ data }: { data: SocioRow[] }) {
 }
 
 // ─── Chart 4: Multi-Dimensional Risk Radar ────────────────────────────────────
+//
+// DATA NOTE — Dimension sources (all from District.csv):
+//   • Urbanization  — UrbanizationIndex (0–100, already %)
+//   • Econ. Stress  — EconomicStressIndex (0–100, already %)
+//   • Migration     — MigrationRate (raw %, range ~4–18 in dataset).
+//                     Normalised to 0–100 relative to dataset max to make
+//                     it comparable on the same radar scale as other dims.
+//   • Crime Load    — totalCrimes from FIR dataset, normalised to 0–100
+//                     relative to the actual dataset maximum (not a fixed /4
+//                     divisor which produced values > 100 for Bengaluru City).
+//   • Low Education — 100 – EducationLevelIndex (inverted so "higher = worse")
+//
 function DistrictRadarChart({ data }: { data: SocioRow[] }) {
   const radarMetrics = [
-    { key: "urbanization", label: "Urbanization"  },
-    { key: "stress",       label: "Econ. Stress"  },
-    { key: "migration",    label: "Migration"     },
-    { key: "crimeLoad",    label: "Crime Load"    },
-    { key: "eduInverse",   label: "Low Education" },
+    { key: "urbanization", label: "Urbanization",         desc: "UrbanizationIndex (District.csv)"           },
+    { key: "stress",       label: "Econ. Stress",         desc: "EconomicStressIndex (District.csv)"         },
+    { key: "migNorm",      label: "Migration",            desc: "MigrationRate normalised 0–100"             },
+    { key: "crimeLoad",    label: "Crime Load",           desc: "FIR count normalised 0–100 vs dataset max"  },
+    { key: "eduInverse",   label: "Low Education",        desc: "100 − EducationLevelIndex (District.csv)"   },
   ];
 
   const [selectedDistrict, setSelectedDistrict] = useState<string>(data[0]?.districtName ?? "");
 
+  // Derive normalisation ceilings from actual data — no hardcoded divisors
+  const maxMigration  = Math.max(...data.map((d) => d.migration),  1);
+  const maxTotalCrimes = Math.max(...data.map((d) => d.totalCrimes), 1);
+
   const enriched = data.map((d) => ({
     ...d,
-    crimeLoad:  Math.round((d.totalCrimes / 4) * 100),
+    migNorm:    Math.round((d.migration    / maxMigration)   * 100),
+    crimeLoad:  Math.round((d.totalCrimes  / maxTotalCrimes) * 100),
     eduInverse: 100 - d.education,
   }));
 
+  // Statewide benchmark — computed over the same enriched set
+  const n = enriched.length;
   const statewideAvg = {
-    urbanization: Math.round(data.reduce((s, d) => s + d.urbanization, 0) / data.length),
-    stress:       Math.round(data.reduce((s, d) => s + d.stress,       0) / data.length),
-    migration:    Math.round(data.reduce((s, d) => s + d.migration,    0) / data.length),
-    crimeLoad:    Math.round((data.reduce((s, d) => s + d.totalCrimes, 0) / (data.length * 4)) * 100),
-    eduInverse:   Math.round(100 - data.reduce((s, d) => s + d.education, 0) / data.length),
+    urbanization: Math.round(enriched.reduce((s, d) => s + d.urbanization, 0) / n),
+    stress:       Math.round(enriched.reduce((s, d) => s + d.stress,       0) / n),
+    migNorm:      Math.round(enriched.reduce((s, d) => s + d.migNorm,      0) / n),
+    crimeLoad:    Math.round(enriched.reduce((s, d) => s + d.crimeLoad,    0) / n),
+    eduInverse:   Math.round(enriched.reduce((s, d) => s + d.eduInverse,   0) / n),
   };
 
   const selected = enriched.find((d) => d.districtName === selectedDistrict);
 
   const radarChartData = selected
     ? radarMetrics.map((m) => ({
-        metric:       m.label,
+        metric:        m.label,
         districtValue: (selected as any)[m.key] as number,
         statewideAvg:  (statewideAvg as any)[m.key] as number,
         fullMark:      100,
@@ -683,6 +789,7 @@ function DistrictRadarChart({ data }: { data: SocioRow[] }) {
 
   return (
     <div className="bg-slate-950/80 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-800/80 pb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -692,18 +799,22 @@ function DistrictRadarChart({ data }: { data: SocioRow[] }) {
             <h3 className="text-base font-bold text-slate-100">Multi-Dimensional Risk Profile Radar</h3>
           </div>
           <p className="text-xs text-slate-400 ml-9">
-            District risk profile vs. statewide benchmark. Select a district below.
+            District risk profile vs. statewide benchmark. All 5 dimensions sourced from District.csv + FIR data.
           </p>
         </div>
+        {/* District selector */}
         <div className="flex flex-wrap gap-1.5 shrink-0">
           {data.map((d) => {
-            const short = d.districtName.split(" ")[0];
+            const short = d.districtName.split(" ")[0] === "Bengaluru"
+              ? (d.districtName.includes("Rural") ? "B.Rural" : "B.City")
+              : d.districtName.split(" ")[0];
             const active = d.districtName === selectedDistrict;
             return (
               <button
                 key={d.districtName}
                 onClick={() => setSelectedDistrict(d.districtName)}
-                className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
+                title={d.districtName}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
                   active
                     ? "border-sky-500 text-sky-300 bg-sky-500/20 shadow-md"
                     : "border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 bg-slate-900/60"
@@ -716,40 +827,101 @@ function DistrictRadarChart({ data }: { data: SocioRow[] }) {
         </div>
       </div>
 
+      {/* Radar dimension legend */}
+      <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 bg-slate-900/60 border border-slate-800 p-3 rounded-xl text-xs">
+        {radarMetrics.map((m) => (
+          <div key={m.key} className="text-center">
+            <div className="font-bold text-slate-200">{m.label}</div>
+            <div className="text-slate-500 mt-0.5 leading-tight">{m.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Legend chips */}
       <div className="flex items-center gap-4 text-xs font-semibold bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg w-fit">
         <span className="flex items-center gap-1.5" style={{ color }}>
           <span className="w-3 h-3 rounded-full" style={{ background: color }} />
           {selectedDistrict}
         </span>
         <span className="flex items-center gap-1.5 text-sky-400">
-          <span className="w-4 h-0 border-t-2 border-dashed border-sky-400" />
+          <span className="w-4 h-0 border-t-2 border-dashed border-sky-400 inline-block" />
           Statewide Average
         </span>
       </div>
 
-      <div className="h-[360px] w-full">
+      {/* Radar — enlarged margins so axis labels are never clipped */}
+      <div className="h-[440px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <RadarChart data={radarChartData} margin={{ top: 15, right: 30, bottom: 15, left: 30 }}>
+          <RadarChart
+            data={radarChartData}
+            margin={{ top: 40, right: 60, bottom: 40, left: 60 }}
+          >
             <PolarGrid stroke="#1e293b" />
-            <PolarAngleAxis dataKey="metric" tick={{ fill: "#cbd5e1", fontSize: 12, fontWeight: 700 }} />
-            <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: "#64748b", fontSize: 11 }} tickCount={5} axisLine={false} />
-            <Radar name={selected?.districtName ?? ""} dataKey="districtValue" stroke={color} fill={color} fillOpacity={0.35} strokeWidth={3} />
-            <Radar name="Statewide Average" dataKey="statewideAvg" stroke="#38bdf8" strokeDasharray="4 4" fill="#38bdf8" fillOpacity={0.08} strokeWidth={2} />
+            <PolarAngleAxis
+              dataKey="metric"
+              tick={{ fill: "#e2e8f0", fontSize: 12, fontWeight: 700 }}
+              tickLine={false}
+            />
+            <PolarRadiusAxis
+              angle={90}
+              domain={[0, 100]}
+              tick={{ fill: "#64748b", fontSize: 10 }}
+              tickCount={6}
+              axisLine={false}
+              tickFormatter={(v) => `${v}`}
+            />
+            <Radar
+              name={selected?.districtName ?? ""}
+              dataKey="districtValue"
+              stroke={color}
+              fill={color}
+              fillOpacity={0.35}
+              strokeWidth={2.5}
+            />
+            <Radar
+              name="Statewide Average"
+              dataKey="statewideAvg"
+              stroke="#38bdf8"
+              strokeDasharray="5 4"
+              fill="#38bdf8"
+              fillOpacity={0.07}
+              strokeWidth={1.5}
+            />
             <Tooltip
-              contentStyle={{ background: "rgba(2,6,23,0.98)", border: "1px solid rgba(51,65,85,0.9)", borderRadius: 10, fontSize: 13, color: "#f8fafc" }}
-              formatter={(v: any, name: any) => [`${v} pts`, name === "districtValue" ? selectedDistrict : "Statewide Avg"]}
-              labelFormatter={(l) => <span style={{ color, fontWeight: 700 }}>Indicator: {l}</span>}
+              contentStyle={{
+                background: "rgba(2,6,23,0.98)",
+                border: "1px solid rgba(51,65,85,0.9)",
+                borderRadius: 10,
+                fontSize: 12,
+                color: "#f8fafc",
+              }}
+              formatter={(v: any, name: any) => [
+                `${v} / 100`,
+                name === "districtValue" ? selectedDistrict : "Statewide Avg",
+              ]}
+              labelFormatter={(l) => {
+                const meta = radarMetrics.find((m) => m.label === l);
+                return (
+                  <span style={{ color, fontWeight: 700 }}>
+                    {l}{meta ? ` — ${meta.desc}` : ""}
+                  </span>
+                );
+              }}
             />
           </RadarChart>
         </ResponsiveContainer>
       </div>
 
+      {/* Per-district value strip */}
       {selected && (
         <div className="grid grid-cols-5 gap-2 bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
           {radarMetrics.map((m) => (
             <div key={m.key} className="text-center">
-              <div className="text-sm font-extrabold" style={{ color }}>{(selected as any)[m.key]}</div>
+              <div className="text-sm font-extrabold" style={{ color }}>
+                {(selected as any)[m.key]}
+              </div>
               <div className="text-xs font-semibold text-slate-500 mt-0.5">{m.label}</div>
+              <div className="text-xs text-slate-600 leading-tight">(0–100)</div>
             </div>
           ))}
         </div>
@@ -758,7 +930,7 @@ function DistrictRadarChart({ data }: { data: SocioRow[] }) {
       <AIInsightCard
         accentClass="border-indigo-500/20"
         keyFinding="Kalaburagi's radar is skewed toward high stress and low education — a compound risk profile inconsistent with its low FIR count."
-        observation="Kalaburagi presents an unbalanced risk profile: high economic stress (68%), high low-education score (35%), and significant migration pressure — yet a relatively low FIR count. This pattern is consistent with under-reporting rather than low incidence."
+        observation="Kalaburagi presents an unbalanced risk profile: high economic stress (68/100), high low-education score (35/100), and significant normalised migration — yet a relatively low FIR count. This pattern is consistent with under-reporting rather than low incidence."
         whyMatters="A radar view surfaces compound risk that single-metric analysis misses. Districts with ≥3 elevated risk axes are more likely to experience rapid crime escalation if conditions worsen."
         action="Use radar profiles during annual resource allocation reviews. Districts with three or more elevated risk indicators should receive prioritised policing budgets, social welfare integration, and dedicated community liaisons."
       />
