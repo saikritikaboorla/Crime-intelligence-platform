@@ -827,6 +827,97 @@ app.get("/api/analytics/sociological", (_req, res) => {
   res.json(result);
 });
 
+// ── DEMOGRAPHICS ─────────────────────────────────────────────────────────────
+// Derived from Accused.csv, Victim.csv, ComplainantDetails.csv, OccupationMaster.csv
+app.get("/api/analytics/demographics", (_req, res) => {
+  const ageBand = (age: number): string => {
+    if (age <= 0)  return "Unknown";
+    if (age <= 24) return "18–24";
+    if (age <= 30) return "25–30";
+    if (age <= 40) return "31–40";
+    if (age <= 50) return "41–50";
+    return "51+";
+  };
+
+  // ── Accused: raw appearance rows (60), grouped by age band
+  const accAgeBands: Record<string, number> = {};
+  const accGender = { Male: 0, Female: 0 };
+  mockAccused.forEach(a => {
+    const b = ageBand(a.AgeYear);
+    if (b !== "Unknown") accAgeBands[b] = (accAgeBands[b] || 0) + 1;
+    if (a.GenderID === 1) accGender.Male++;
+    else if (a.GenderID === 2) accGender.Female++;
+  });
+
+  // Accused age band → crime type (using all accused rows)
+  const headNames: Record<number, string> = {
+    1: "Against Body", 2: "Against Property", 3: "Cyber/Financial",
+    4: "Narcotics", 5: "Against Women", 6: "Against Children",
+    7: "SC/ST", 8: "Public Order", 9: "Corruption", 10: "Road"
+  };
+  const caseHeadMap: Record<number, number> = {};
+  mockCases.forEach(c => { caseHeadMap[c.CaseMasterID] = c.CrimeMajorHeadID; });
+
+  const ageCrimeMatrix: Record<string, Record<string, number>> = {};
+  const orderedBands = ["18–24", "25–30", "31–40", "41–50", "51+"];
+  orderedBands.forEach(b => { ageCrimeMatrix[b] = {}; });
+  mockAccused.forEach(a => {
+    const band = ageBand(a.AgeYear);
+    if (band === "Unknown") return;
+    const headName = headNames[caseHeadMap[a.CaseMasterID]] || "Other";
+    ageCrimeMatrix[band][headName] = (ageCrimeMatrix[band][headName] || 0) + 1;
+  });
+
+  // ── Victims: age bands + gender (exclude AgeYear=0 placeholders)
+  const realVictims = mockVictims.filter(v => v.AgeYear > 0);
+  const vicAgeBands: Record<string, number> = {};
+  const vicGender = { Male: 0, Female: 0 };
+  realVictims.forEach(v => {
+    const a = v.AgeYear;
+    const b = a < 18 ? "<18" : a <= 30 ? "18–30" : a <= 45 ? "31–45" : a <= 60 ? "46–60" : "61+";
+    vicAgeBands[b] = (vicAgeBands[b] || 0) + 1;
+    if (v.GenderID === 1) vicGender.Male++;
+    else if (v.GenderID === 2) vicGender.Female++;
+  });
+
+  // ── Complainant occupation groups (sourced from ComplainantDetails.csv + OccupationMaster.csv)
+  const occGroups: Record<string, number[]> = {
+    "Private/Professional": [9, 10, 11, 14, 19, 20, 21, 24],
+    "Govt / Police":        [12, 13],
+    "Homemaker / Retired":  [15, 17],
+    "Trader / Self-Employed": [6, 7, 8],
+    "Labour / Agriculture": [1, 2, 3, 4, 5, 25],
+    "Student":              [16],
+    "Unemployed":           [18],
+  };
+  const occCount: Record<string, number> = {};
+  mockComplainants.forEach(c => {
+    let group = "Other";
+    for (const [g, ids] of Object.entries(occGroups)) {
+      if (ids.includes(c.OccupationID)) { group = g; break; }
+    }
+    occCount[group] = (occCount[group] || 0) + 1;
+  });
+
+  res.json({
+    accused: {
+      totalRows: mockAccused.length,
+      gender: accGender,
+      ageBands: accAgeBands,
+      ageCrimeMatrix,
+    },
+    victims: {
+      totalWithAge: realVictims.length,
+      gender: vicGender,
+      ageBands: vicAgeBands,
+    },
+    complainants: {
+      total: mockComplainants.length,
+      occupationGroups: occCount,
+    },
+  });
+});
+
 // ── OFFENDER PROFILING ───────────────────────────────────────────────────────
 app.get("/api/analytics/offenders", (_req, res) => {
   // Group accused by PersonID
