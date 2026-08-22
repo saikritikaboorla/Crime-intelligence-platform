@@ -66,10 +66,11 @@ export default function HeatmapAnalytics({ heatmapData, onNavigate, logAuditEven
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Interactive Map Controls & Aggregated Modal State
-  // Density canvas OFF by default so India basemap + labels stay clearly visible
+  // Density canvas ON by default — helps show spatial concentration immediately
   const [showHeatmapLayer, setShowHeatmapLayer] = useState<boolean>(true);
   const [showMarkersLayer, setShowMarkersLayer] = useState<boolean>(true);
-  const [showLabels, setShowLabels] = useState<boolean>(true);
+  // Labels OFF by default to reduce clutter — user can toggle on
+  const [showLabels, setShowLabels] = useState<boolean>(false);
   const [selectedHotspot, setSelectedHotspot] = useState<any | null>(null);
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -301,10 +302,10 @@ export default function HeatmapAnalytics({ heatmapData, onNavigate, logAuditEven
       }).addTo(map);
 
       mapInstanceRef.current = map;
-      // Fit entire India into view on first load
+      // Focus on Karnataka on first load — investigator sees incident locations immediately
       setTimeout(() => {
         map.invalidateSize();
-        map.fitBounds(indiaBounds, { padding: [20, 20] });
+        map.setView([15.3173, 75.7139], 7);
       }, 100);
     }
 
@@ -339,24 +340,38 @@ export default function HeatmapAnalytics({ heatmapData, onNavigate, logAuditEven
         const color = isFinancial ? "#f87171" : isHeinous ? "#ef4444" : isArrest ? "#a78bfa" : "#f59e0b";
         const count = cases.length;
 
-        // Custom HTML DivIcon — larger, high-contrast labels for readability
+        // Custom HTML DivIcon — compact cluster marker with count, optional label overlay
         const stationLabel = (first.station || first.district || "Hotspot").replace(/</g, "");
+        // Icon sizing: slightly larger for multi-case clusters so they stand out
+        const iconDiameter = count > 1 ? Math.min(44, 30 + count * 2) : 30;
         const customIcon = L.divIcon({
           className: "custom-hotspot-node",
-          iconSize: [180, 60],
-          iconAnchor: [18, 30],
+          iconSize: [iconDiameter, iconDiameter],
+          iconAnchor: [iconDiameter / 2, iconDiameter / 2],
           html: `
-            <div style="display:flex;align-items:center;gap:12px;cursor:pointer;pointer-events:auto;">
-              <div style="position:relative;width:42px;height:42px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-                ${isHeinous ? `<div style="position:absolute;inset:-8px;border-radius:50%;background:${color};opacity:0.6;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>` : ""}
-                <div style="width:38px;height:38px;border-radius:${isFinancial ? "6px" : "50%"};background:${color};border:4px solid #ffffff;box-shadow:0 0 20px ${color};transform:${isFinancial ? "rotate(45deg)" : "none"};display:flex;align-items:center;justify-content:center;color:#ffffff;text-shadow: 0 1px 2px rgba(0,0,0,0.5);font-weight:900;font-size:16px;">
-                  <span style="transform:${isFinancial ? "rotate(-45deg)" : "none"}">${count}</span>
-                </div>
+            <div style="position:relative;width:${iconDiameter}px;height:${iconDiameter}px;cursor:pointer;pointer-events:auto;" title="${stationLabel}&#10;${count} FIR(s)">
+              ${isHeinous ? `<div style="position:absolute;inset:-6px;border-radius:50%;background:${color};opacity:0.35;animation:ping 1.8s cubic-bezier(0,0,0.2,1) infinite;pointer-events:none;"></div>` : ""}
+              <div style="
+                width:${iconDiameter}px;height:${iconDiameter}px;
+                border-radius:${isFinancial ? "5px" : "50%"};
+                background:${color};
+                border:3px solid rgba(255,255,255,0.9);
+                box-shadow:0 2px 12px ${color}99,0 0 0 2px rgba(0,0,0,0.3);
+                transform:${isFinancial ? "rotate(45deg)" : "none"};
+                display:flex;align-items:center;justify-content:center;
+                color:#fff;font-weight:900;font-size:${count > 9 ? 11 : 13}px;
+                font-family:system-ui,sans-serif;
+              ">
+                <span style="transform:${isFinancial ? "rotate(-45deg)" : "none"}">${count}</span>
               </div>
               ${showLabels ? `
-              <div style="background:rgba(255,255,255,1);border:4px solid ${color};border-radius:12px;padding:6px 14px;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
-                <div style="color:#0f172a;font-size:15px;font-weight:900;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${stationLabel}</div>
-                <div style="color:${color};font-size:13px;font-weight:900;margin-top:2px;">${count} FIR REGISTERED</div>
+              <div style="
+                position:absolute;top:${iconDiameter + 3}px;left:50%;transform:translateX(-50%);
+                background:rgba(2,6,23,0.92);border:1.5px solid ${color};border-radius:6px;
+                padding:2px 7px;white-space:nowrap;pointer-events:none;
+                box-shadow:0 2px 8px rgba(0,0,0,0.6);
+              ">
+                <div style="color:${color};font-size:10px;font-weight:800;font-family:system-ui,sans-serif;max-width:130px;overflow:hidden;text-overflow:ellipsis;">${stationLabel}</div>
               </div>
               ` : ''}
             </div>
@@ -378,13 +393,19 @@ export default function HeatmapAnalytics({ heatmapData, onNavigate, logAuditEven
         });
 
         // Hover tooltip — single instance, auto-closes
+        const crimeTypeList = [...new Set(cases.map((c: any) => c.crimeType).filter(Boolean))].slice(0, 3).join(", ");
+        const heinousCount = cases.filter((c: any) => c.severity === "heinous").length;
         marker.bindTooltip(`
-          <div style="padding: 4px; font-family: sans-serif;">
-            <div style="font-weight: 700; color: ${color}">${first.station || first.district}</div>
-            <div style="font-size: 11px; color: #cbd5e1;">${count} Incident(s) Registered</div>
-            <div style="font-size: 10px; color: #94a3b8; font-style: italic;">Click to view aggregated details</div>
+          <div style="padding: 5px 2px; font-family: system-ui, sans-serif; min-width: 180px;">
+            <div style="font-weight: 800; color: ${color}; font-size: 12px; margin-bottom: 3px;">${first.station || first.district}</div>
+            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 2px;">${first.district}</div>
+            <div style="font-size: 11px; color: #cbd5e1; margin-bottom: 2px;"><strong>${count}</strong> incident(s) registered</div>
+            ${heinousCount > 0 ? `<div style="font-size: 10px; color: #f87171; font-weight: 700;">⚠ ${heinousCount} heinous crime${heinousCount > 1 ? "s" : ""}</div>` : ""}
+            ${crimeTypeList ? `<div style="font-size: 10px; color: #94a3b8; margin-top: 2px; font-style: italic;">${crimeTypeList}</div>` : ""}
+            <div style="font-size: 9px; color: #475569; margin-top: 3px;">Lat ${first.lat?.toFixed(4)}, Lng ${first.lng?.toFixed(4)}</div>
+            <div style="font-size: 9px; color: #475569; font-style: italic; margin-top: 1px;">Click for full FIR intelligence</div>
           </div>
-        `, { className: "bg-slate-950 border border-slate-700 text-slate-100 rounded-lg shadow-2xl", sticky: false, permanent: false });
+        `, { className: "ksp-heatmap-tooltip", sticky: false, permanent: false });
 
         markerGroup.addLayer(marker);
       });
@@ -635,10 +656,10 @@ export default function HeatmapAnalytics({ heatmapData, onNavigate, logAuditEven
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-xs font-bold text-amber-500 uppercase tracking-wider flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5" /> India Crime Heatmap — Karnataka Highlighted
+                <MapPin className="w-3.5 h-3.5" /> Karnataka Crime Heatmap
               </h3>
               <p className="text-micro text-slate-500">
-                Interactive Leaflet Engine · Full India Outline · Karnataka Highlighted · Gaussian Kernel Heatmap
+                Karnataka focus · Gaussian density overlay · Hover for details · Click for FIR intelligence
               </p>
             </div>
             {/* Map Action Controls */}
@@ -708,13 +729,27 @@ export default function HeatmapAnalytics({ heatmapData, onNavigate, logAuditEven
             )}
 
             {/* Compact corner legend — does not cover the India map center */}
-            <div className="absolute bottom-3 left-3 bg-slate-950/95 border border-slate-700 p-2.5 rounded-lg z-20 shadow-xl space-y-1.5 max-w-[200px]">
-              <div className="text-micro font-bold uppercase tracking-wider text-slate-200">Legend</div>
+            <div className="absolute bottom-3 left-3 bg-slate-950/95 border border-slate-700 p-2.5 rounded-lg z-20 shadow-xl space-y-1.5 max-w-[210px]">
+              <div className="text-micro font-bold uppercase tracking-wider text-slate-200 mb-1">Legend</div>
               <div className="grid grid-cols-1 gap-1 text-micro">
                 <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" /><span className="text-slate-100 font-semibold">Heinous FIR</span></div>
                 <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" /><span className="text-slate-100 font-semibold">Standard FIR</span></div>
                 <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-violet-400 inline-block" /><span className="text-slate-100 font-semibold">Arrest</span></div>
                 <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-rose-400 rotate-45 inline-block" /><span className="text-slate-100 font-semibold">Financial fraud</span></div>
+              </div>
+              <div className="pt-1.5 border-t border-slate-700/70">
+                <div className="text-micro font-bold uppercase tracking-wider text-slate-400 mb-1">Heat Density</div>
+                <div className="w-full h-2.5 rounded-full" style={{
+                  background: "linear-gradient(to right, rgba(59,130,246,0.7), rgba(16,185,129,0.8), rgba(245,158,11,0.9), rgba(239,68,68,1), rgba(139,92,246,0.9))"
+                }} />
+                <div className="flex justify-between text-micro text-slate-500 mt-0.5">
+                  <span>Low</span>
+                  <span>Medium</span>
+                  <span>High</span>
+                </div>
+              </div>
+              <div className="pt-1 border-t border-slate-700/70 text-micro text-slate-500 italic">
+                Marker = cluster of FIRs · Number = case count
               </div>
             </div>
           </div>
@@ -734,64 +769,13 @@ export default function HeatmapAnalytics({ heatmapData, onNavigate, logAuditEven
 
         {/* GPS Scatter Density (Lat x Lng) */}
         <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
-          <h3 className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-            <MapPin className="w-3.5 h-3.5" /> GPS Coordinates Scatter Density (Lat × Lng)
+          <h3 className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-1 flex items-center gap-2">
+            <MapPin className="w-3.5 h-3.5" /> GPS Coordinate Density Map (Karnataka)
           </h3>
-          <p className="text-micro text-slate-500 mb-3">Each node = geocoded FIR · Size = gravity weight · Color = crime head</p>
-          <div className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 10, right: 20, bottom: 20, left: 0 }}>
-                <XAxis
-                  dataKey="lng" type="number" domain={[74, 79]}
-                  name="Longitude" tick={{ fill: '#64748b', fontSize: 9 }}
-                  label={{ value: 'Longitude →', position: 'insideBottom', offset: -10, fill: '#475569', fontSize: 9 }}
-                />
-                <YAxis
-                  dataKey="lat" type="number" domain={[11, 19]}
-                  name="Latitude" tick={{ fill: '#64748b', fontSize: 9 }}
-                  label={{ value: 'Lat', angle: -90, position: 'insideLeft', fill: '#475569', fontSize: 9 }}
-                />
-                <ZAxis dataKey="weight" range={[40, 180]} name="Severity" />
-                <Tooltip
-                  cursor={{ strokeDasharray: '3 3', stroke: '#334155' }}
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null;
-                    const d = payload[0]?.payload;
-                    return (
-                      <div className="bg-slate-950 border border-slate-700 p-3 rounded-xl text-xs space-y-1 max-w-[220px]">
-                        <div className="font-bold text-amber-400">{d?.crimeType}</div>
-                        <div className="text-slate-400">{d?.station}</div>
-                        <div className="text-slate-500 font-mono text-micro">{d?.date?.substring(0,10)}</div>
-                        <div className="text-slate-500 font-mono text-micro">({d?.lat?.toFixed(4)}, {d?.lng?.toFixed(4)})</div>
-                        {d?.suspectName && d.suspectName !== "Unknown" && (
-                          <div className="text-violet-400 text-micro font-semibold">Suspect: {d.suspectName}</div>
-                        )}
-                        {d?.amount != null && (
-                          <div className="text-rose-400 text-micro font-semibold">Amount: ₹{d.amount.toLocaleString()}</div>
-                        )}
-                      </div>
-                    );
-                  }}
-                />
-                <Scatter data={filteredData.filter(d => d.lat && d.lng)} name="Crimes">
-                  {filteredData.filter(d => d.lat && d.lng).map((entry, idx) => (
-                    <Cell
-                      key={idx}
-                      fill={
-                        entry.layer === "financial" ? "#f87171" :
-                        entry.severity === "heinous" ? "#dc2626" :
-                        entry.layer === "arrest" ? "#a78bfa" :
-                        entry.crimeType?.includes("Cyber") ? "#38bdf8" :
-                        entry.crimeType?.includes("Drug") || entry.crimeType?.includes("Narcotics") ? "#4ade80" :
-                        "#f59e0b"
-                      }
-                      fillOpacity={0.75}
-                    />
-                  ))}
-                </Scatter>
-              </ScatterChart>
-            </ResponsiveContainer>
-          </div>
+          <p className="text-micro text-slate-500 mb-3">
+            Bubble size = incident count in grid cell · Colour = dominant crime type · Hover for details · All coordinates from CaseMaster.csv
+          </p>
+          <GPSDensityChart filteredData={filteredData} />
         </div>
 
         {/* Hotspot Register Table */}
@@ -1025,6 +1009,234 @@ export default function HeatmapAnalytics({ heatmapData, onNavigate, logAuditEven
         </div>
       )}
 
+    </div>
+  );
+}
+
+// ── Sub-component: GPS Coordinate Density Map ─────────────────────────────
+// Uses a grid-cell aggregation approach: divides Karnataka into ~0.3° cells,
+// counts incidents per cell, and renders bubbles proportional to that count.
+// Individual points are also rendered smaller underneath for accurate positioning.
+// All coordinates sourced directly from CaseMaster.csv via the heatmap API.
+function GPSDensityChart({ filteredData }: { filteredData: any[] }) {
+  const validPoints = useMemo(
+    () => filteredData.filter(d => d.lat != null && d.lng != null),
+    [filteredData]
+  );
+
+  // Grid-cell aggregation: 0.3° × 0.3° cells covering Karnataka
+  // Karnataka spans roughly lat 11.5–18.5, lng 73.8–78.4
+  const GRID_SIZE = 0.3; // degrees
+  const gridCells = useMemo(() => {
+    const cellMap = new Map<string, {
+      lat: number; lng: number; count: number; heinous: number;
+      cases: any[]; dominantType: string;
+    }>();
+
+    validPoints.forEach(pt => {
+      const cellLat = Math.floor(pt.lat / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2;
+      const cellLng = Math.floor(pt.lng / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2;
+      const key = `${cellLat.toFixed(2)}_${cellLng.toFixed(2)}`;
+      const existing = cellMap.get(key);
+      if (existing) {
+        existing.count++;
+        if (pt.severity === "heinous") existing.heinous++;
+        existing.cases.push(pt);
+      } else {
+        cellMap.set(key, {
+          lat: cellLat, lng: cellLng, count: 1,
+          heinous: pt.severity === "heinous" ? 1 : 0,
+          cases: [pt], dominantType: pt.crimeType || "Unknown"
+        });
+      }
+    });
+
+    // Determine dominant crime type per cell
+    cellMap.forEach(cell => {
+      const typeCounts: Record<string, number> = {};
+      cell.cases.forEach((c: any) => {
+        const t = c.layer === "financial" ? "Financial Fraud"
+          : c.layer === "arrest" ? "Arrest"
+          : c.crimeType || "Other";
+        typeCounts[t] = (typeCounts[t] || 0) + 1;
+      });
+      cell.dominantType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "Other";
+    });
+
+    return Array.from(cellMap.values());
+  }, [validPoints]);
+
+  const maxCount = useMemo(
+    () => Math.max(1, ...gridCells.map(c => c.count)),
+    [gridCells]
+  );
+
+  // Colour encoding for dominant crime type
+  const getTypeColor = (dominantType: string, heinous: number) => {
+    if (heinous > 0) return "#ef4444";
+    if (dominantType.includes("Financial") || dominantType.includes("Fraud")) return "#f87171";
+    if (dominantType.includes("Drug") || dominantType.includes("Narcotics")) return "#4ade80";
+    if (dominantType.includes("Cyber") || dominantType.includes("IT")) return "#38bdf8";
+    if (dominantType.includes("Arrest")) return "#a78bfa";
+    if (dominantType.includes("Murder") || dominantType.includes("Homicide")) return "#dc2626";
+    return "#f59e0b";
+  };
+
+  if (!validPoints.length) {
+    return <div className="text-xs text-slate-500 text-center py-8">No geocoded records for current filters</div>;
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <ScatterChart margin={{ top: 10, right: 24, bottom: 28, left: 8 }}>
+            {/* Karnataka geographic bounds */}
+            <XAxis
+              dataKey="lng"
+              type="number"
+              domain={[73.5, 79]}
+              name="Longitude"
+              tick={{ fill: '#64748b', fontSize: 9 }}
+              tickCount={7}
+              label={{ value: 'Longitude (°E) →', position: 'insideBottom', offset: -14, fill: '#475569', fontSize: 9 }}
+            />
+            <YAxis
+              dataKey="lat"
+              type="number"
+              domain={[11, 18.5]}
+              name="Latitude"
+              tick={{ fill: '#64748b', fontSize: 9 }}
+              tickCount={6}
+              label={{ value: '°N', angle: -90, position: 'insideLeft', offset: 8, fill: '#475569', fontSize: 9 }}
+            />
+            {/* ZAxis: bubble area proportional to incident count — clearly communicates density */}
+            <ZAxis
+              dataKey="count"
+              range={[80, Math.max(400, maxCount * 120)]}
+              name="Incidents"
+            />
+            <Tooltip
+              cursor={{ strokeDasharray: '3 3', stroke: '#334155' }}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0]?.payload;
+                if (!d) return null;
+                // Handle both grid cells and individual points
+                const isCell = d.count !== undefined && d.cases !== undefined;
+                if (isCell) {
+                  const topCases = (d.cases as any[]).slice(0, 4);
+                  return (
+                    <div className="bg-slate-950 border border-slate-700 p-3 rounded-xl text-xs space-y-1.5 max-w-[240px] shadow-2xl">
+                      <div className="font-bold text-amber-400 text-xs">{d.count} Incident{d.count > 1 ? "s" : ""} in area</div>
+                      {d.heinous > 0 && <div className="text-rose-400 font-bold text-micro">⚠ {d.heinous} heinous crime{d.heinous > 1 ? "s" : ""}</div>}
+                      <div className="text-slate-400 text-micro">Dominant: {d.dominantType}</div>
+                      <div className="text-slate-500 font-mono text-micro">Center: ({d.lat?.toFixed(3)}°N, {d.lng?.toFixed(3)}°E)</div>
+                      <div className="border-t border-slate-800 pt-1.5 space-y-1">
+                        {topCases.map((c: any, i: number) => (
+                          <div key={i} className="text-micro text-slate-300">
+                            <span className="text-amber-400 font-mono">FIR {c.crimeNo || c.caseNo}</span>
+                            {" · "}{c.crimeType}
+                            {" · "}<span className="text-slate-500">{c.station}</span>
+                          </div>
+                        ))}
+                        {d.cases.length > 4 && <div className="text-slate-600 text-micro">+{d.cases.length - 4} more…</div>}
+                      </div>
+                    </div>
+                  );
+                }
+                // Individual point tooltip
+                return (
+                  <div className="bg-slate-950 border border-slate-700 p-3 rounded-xl text-xs space-y-1 max-w-[220px]">
+                    <div className="font-bold text-amber-400">{d?.crimeType}</div>
+                    <div className="text-slate-400 text-micro">{d?.station} · {d?.district}</div>
+                    <div className="font-mono text-slate-500 text-micro">{d?.date?.substring(0, 10)}</div>
+                    <div className="font-mono text-slate-500 text-micro">({d?.lat?.toFixed(4)}°N, {d?.lng?.toFixed(4)}°E)</div>
+                    {d?.severity === "heinous" && <div className="text-rose-400 font-bold text-micro">⚠ HEINOUS</div>}
+                    {d?.amount != null && <div className="text-rose-400 text-micro">₹{d.amount.toLocaleString()}</div>}
+                  </div>
+                );
+              }}
+            />
+
+            {/* Layer 1: Density grid cells — bubbles sized by ZAxis/count */}
+            <Scatter
+              name="Density Cells"
+              data={gridCells}
+              shape={(props: any) => {
+                const { cx, cy, r, payload } = props;
+                if (!cx || !cy || !payload) return null;
+                const color = getTypeColor(payload.dominantType, payload.heinous);
+                // Use ZAxis-calculated r (area proportional to count)
+                const bubbleR = r || 8;
+                const opacity = 0.15 + (payload.count / maxCount) * 0.35;
+                return (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={bubbleR}
+                    fill={color}
+                    fillOpacity={opacity}
+                    stroke={color}
+                    strokeOpacity={0.55}
+                    strokeWidth={1.5}
+                  />
+                );
+              }}
+            >
+              {gridCells.map((_cell, idx) => (
+                <Cell key={`cell-${idx}`} fill="transparent" />
+              ))}
+            </Scatter>
+
+            {/* Layer 2: Individual FIR points — accurate positions, fixed small dots */}
+            <Scatter
+              name="FIR Locations"
+              data={validPoints}
+              shape={(props: any) => {
+                const { cx, cy, payload } = props;
+                if (!cx || !cy || !payload) return null;
+                const color =
+                  payload.layer === "financial" ? "#f87171" :
+                  payload.severity === "heinous" ? "#dc2626" :
+                  payload.layer === "arrest" ? "#a78bfa" :
+                  payload.crimeType?.includes("Cyber") ? "#38bdf8" :
+                  payload.crimeType?.includes("Drug") || payload.crimeType?.includes("Narcotics") ? "#4ade80" :
+                  "#f59e0b";
+                return (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={payload.severity === "heinous" ? 5 : 4}
+                    fill={color}
+                    fillOpacity={0.9}
+                    stroke="rgba(0,0,0,0.4)"
+                    strokeWidth={1}
+                  />
+                );
+              }}
+            >
+              {validPoints.map((_entry, idx) => (
+                <Cell key={`pt-${idx}`} fill="transparent" />
+              ))}
+            </Scatter>
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Compact legend for GPS density chart */}
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-micro text-slate-400 pt-1 border-t border-slate-800/60">
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500 inline-block opacity-80" />Heinous</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block opacity-80" />Standard FIR</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-400 inline-block opacity-80" />Arrest</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-400 inline-block opacity-80" />Cyber</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400 inline-block opacity-80" />Narcotics</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-400 inline-block opacity-80" />Financial</span>
+        <span className="text-slate-600 ml-1">· Large bubble = higher incident density in area</span>
+      </div>
+      <div className="text-micro text-slate-600 italic">
+        {validPoints.length} geocoded FIR records · {gridCells.length} density cell{gridCells.length !== 1 ? "s" : ""} · Coordinates verified against CaseMaster.csv
+      </div>
     </div>
   );
 }

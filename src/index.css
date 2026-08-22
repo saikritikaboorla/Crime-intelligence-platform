@@ -837,6 +837,32 @@ p, .text-body-lg, .text-heading3 {
 .recharts-legend-item-text { font-size: var(--type-meta-size) !important; color: var(--color-text-secondary) !important; }
 
 /* ─────────────────────────────────────────────────────────────
+   KSP HEATMAP — LEAFLET TOOLTIP STYLING
+   ───────────────────────────────────────────────────────────── */
+
+.ksp-heatmap-tooltip {
+  background: rgba(2, 6, 23, 0.97) !important;
+  border: 1px solid rgba(71, 85, 105, 0.8) !important;
+  border-radius: 10px !important;
+  padding: 8px 12px !important;
+  color: #e2e8f0 !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7) !important;
+  max-width: 220px !important;
+}
+
+.ksp-heatmap-tooltip .leaflet-tooltip-top::before,
+.ksp-heatmap-tooltip::before {
+  border-top-color: rgba(71, 85, 105, 0.8) !important;
+}
+
+/* Custom hotspot node — remove leaflet's default white background box */
+.leaflet-div-icon.custom-hotspot-node {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
    LOGIN PAGE — ANIMATIONS & STYLES
    ───────────────────────────────────────────────────────────── */
 
