@@ -1052,7 +1052,7 @@ export default function App() {
 
           {/* Dynamic Panel Canvas */}
           <div className="flex-1 overflow-hidden p-4 sm:p-6 flex flex-col">
-            <div className="border rounded-2xl flex-1 flex flex-col relative overflow-hidden p-5 sm:p-6" style={{background: 'rgba(15,21,33,0.5)', borderColor: 'rgba(30,39,56,0.5)', backdropFilter: 'blur(4px)', boxShadow: '0 0 60px rgba(0,0,0,0.3) inset, 0 2px 0 rgba(59,130,246,0.04) inset'}}>
+            <div className={`border rounded-2xl flex-1 flex flex-col relative p-5 sm:p-6 ${activeTab === "network" ? "overflow-y-auto" : "overflow-hidden"}`} style={{background: 'rgba(15,21,33,0.5)', borderColor: 'rgba(30,39,56,0.5)', backdropFilter: 'blur(4px)', boxShadow: '0 0 60px rgba(0,0,0,0.3) inset, 0 2px 0 rgba(59,130,246,0.04) inset'}}>
             
             <AnimatePresence mode="wait">
               {activeTab === "mission" && (
@@ -1548,9 +1548,9 @@ export default function App() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
-                className="flex flex-col h-full grow gap-6"
+                className="flex flex-col gap-6 overflow-y-auto flex-1 min-h-0 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
               >
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800/60 pb-5 gap-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800/60 pb-5 gap-3 flex-shrink-0">
                   <div>
                     <h2 className="section-title">
                       <Users className="w-5 h-5 text-emerald-400" />
@@ -1560,8 +1560,8 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="w-full grow flex flex-col gap-6">
-                  <div className="flex-1 min-h-[600px]">
+                <div className="w-full flex flex-col gap-6">
+                  <div style={{ minHeight: "680px" }}>
                     <NetworkGraph
                       nodes={networkData.nodes || []}
                       edges={networkData.edges || []}
