@@ -222,7 +222,7 @@ function SocioRiskChart({ data }: { data: SocioRow[] }) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 10, right: 20, bottom: 50, left: 20 }}
             barCategoryGap="22%" barGap={3}
-            onClick={(bd) => {
+            onClick={(bd: any) => {
               if (!bd?.activePayload?.length) return;
               const fn = bd.activePayload[0]?.payload?.fullName;
               setSelected(active.find(d => d.districtName === fn) ?? null);
@@ -782,89 +782,111 @@ function DistrictRadarChart({ data }: { data: SocioRow[] }) {
   const color = DISTRICT_COLORS[selectedDistrict] ?? "#38bdf8";
 
   return (
-    <div className="bg-slate-950/80 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-800/80 pb-3">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center shrink-0">
-              <Target className="w-4 h-4 text-indigo-400" />
-            </div>
+    <div className="bg-slate-950/80 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-4">
+      {/* Header with Title & Legend Badges */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center shrink-0">
+            <Target className="w-4 h-4 text-indigo-400" />
+          </div>
+          <div>
             <h3 className="text-base font-bold text-slate-100">Multi-Dimensional Risk Profile Radar</h3>
+            <p className="text-xs text-slate-400">District profile vs. statewide average across 5 key indicators</p>
           </div>
-          <p className="text-xs text-slate-400 ml-9">District profile vs. statewide average. All 5 axes from District.csv + FIR data. Select a district:</p>
         </div>
-        <div className="flex flex-wrap gap-1.5 shrink-0">
-          {active.map(d => {
-            const short = d.districtName === "Bengaluru City" ? "B.City"
-              : d.districtName === "Mangaluru (Dakshina Kannada)" ? "Mangaluru"
-              : d.districtName.split(" ")[0];
-            const isActive = d.districtName === selectedDistrict;
-            return (
-              <button key={d.districtName} onClick={() => setSelectedDistrict(d.districtName)} title={d.districtName}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
-                  isActive ? "border-sky-500 text-sky-300 bg-sky-500/20" : "border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 bg-slate-900/60"
-                }`}>
-                {short}
-              </button>
-            );
-          })}
+
+        <div className="flex items-center gap-3 text-xs font-semibold bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg shrink-0">
+          <span className="flex items-center gap-1.5" style={{ color }}>
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
+            {selectedDistrict}
+          </span>
+          <span className="flex items-center gap-1.5 text-sky-400">
+            <span className="w-3 h-0 border-t-2 border-dashed border-sky-400 inline-block" />
+            Statewide Avg
+          </span>
         </div>
       </div>
 
-      {/* Dimension legend */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-slate-900/60 border border-slate-800 p-3 rounded-xl text-xs">
-        {radarMetrics.map(m => (
-          <div key={m.key} className="text-center">
-            <div className="font-bold text-slate-200">{m.label}</div>
-            <div className="text-slate-500 mt-0.5 leading-tight">{m.desc}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex items-center gap-4 text-xs font-semibold bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg w-fit">
-        <span className="flex items-center gap-1.5" style={{ color }}>
-          <span className="w-3 h-3 rounded-full" style={{ background: color }} />
-          {selectedDistrict}
-        </span>
-        <span className="flex items-center gap-1.5 text-sky-400">
-          <span className="w-4 h-0 border-t-2 border-dashed border-sky-400 inline-block" />
-          Statewide Avg (6 active districts)
-        </span>
-      </div>
-
-      <div className="h-[420px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <RadarChart data={radarData} margin={{ top: 40, right: 60, bottom: 40, left: 60 }}>
-            <PolarGrid stroke="#1e293b" />
-            <PolarAngleAxis dataKey="metric" tick={{ fill: "#e2e8f0", fontSize: 12, fontWeight: 700 }} tickLine={false} />
-            <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: "#64748b", fontSize: 10 }}
-              tickCount={6} axisLine={false} tickFormatter={v => `${v}`} />
-            <Radar name={selected?.districtName ?? ""} dataKey="districtValue" stroke={color} fill={color} fillOpacity={0.35} strokeWidth={2.5} />
-            <Radar name="Statewide Avg" dataKey="statewideAvg" stroke="#38bdf8" strokeDasharray="5 4" fill="#38bdf8" fillOpacity={0.07} strokeWidth={1.5} />
-            <Tooltip
-              contentStyle={{ background: "rgba(2,6,23,0.98)", border: "1px solid rgba(51,65,85,0.9)", borderRadius: 10, fontSize: 12, color: "#f8fafc" }}
-              formatter={(v: any, name: any) => [`${v} / 100`, name === "districtValue" ? selectedDistrict : "Statewide Avg"]}
-              labelFormatter={(l: any) => {
-                const m = radarMetrics.find(x => x.label === l);
-                return <span style={{ color, fontWeight: 700 }}>{l}{m ? ` — ${m.desc}` : ""}</span>;
-              }}
-            />
-          </RadarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {selected && (
-        <div className="grid grid-cols-5 gap-2 bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
-          {radarMetrics.map(m => (
-            <div key={m.key} className="text-center">
-              <div className="text-sm font-extrabold" style={{ color }}>{(selected as any)[m.key]}</div>
-              <div className="text-xs font-semibold text-slate-500 mt-0.5">{m.label}</div>
-              <div className="text-xs text-slate-700">(0–100)</div>
+      {/* Side-by-Side 2-Column Compact Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+        {/* Left Column: District Selector & Live Scorecard (5 cols) */}
+        <div className="lg:col-span-5 space-y-3">
+          <div>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+              Select District:
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+              {active.map(d => {
+                const short = d.districtName === "Bengaluru City" ? "B.City"
+                  : d.districtName === "Mangaluru (Dakshina Kannada)" ? "Mangaluru"
+                  : d.districtName.split(" ")[0];
+                const isActive = d.districtName === selectedDistrict;
+                return (
+                  <button key={d.districtName} onClick={() => setSelectedDistrict(d.districtName)} title={d.districtName}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all text-left flex items-center justify-between ${
+                      isActive ? "border-sky-500 text-sky-300 bg-sky-500/20 shadow-sm" : "border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 bg-slate-900/60"
+                    }`}>
+                    <span className="truncate">{short}</span>
+                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />}
+                  </button>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      )}
+          </div>
 
+          {/* Metric Values Scorecard */}
+          {selected && (
+            <div className="bg-slate-900/70 border border-slate-800/80 p-3 rounded-xl space-y-2">
+              <div className="text-xs font-bold text-slate-300 border-b border-slate-800 pb-1 flex justify-between items-center">
+                <span>Indicator Scorecard</span>
+                <span className="text-slate-500 text-[10px]">Scale 0–100</span>
+              </div>
+              <div className="grid grid-cols-1 gap-1.5 text-xs">
+                {radarMetrics.map(m => {
+                  const val = (selected as any)[m.key] as number;
+                  const avgVal = (avg as any)[m.key] as number;
+                  return (
+                    <div key={m.key} className="flex items-center justify-between py-0.5 border-b border-slate-800/40 last:border-0">
+                      <div className="min-w-0 pr-2">
+                        <span className="font-semibold text-slate-200 block truncate">{m.label}</span>
+                        <span className="text-[10px] text-slate-500 block truncate">{m.desc}</span>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="font-extrabold text-xs block" style={{ color }}>{val}</span>
+                        <span className="text-[10px] text-slate-500 block">Avg: {avgVal}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Radar Chart Canvas (7 cols, compact height ~320px) */}
+        <div className="lg:col-span-7 h-[320px] w-full bg-slate-900/40 border border-slate-800/60 rounded-xl p-2 flex items-center justify-center">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart data={radarData} margin={{ top: 20, right: 35, bottom: 20, left: 35 }}>
+              <PolarGrid stroke="#1e293b" />
+              <PolarAngleAxis dataKey="metric" tick={{ fill: "#cbd5e1", fontSize: 11, fontWeight: 700 }} tickLine={false} />
+              <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: "#64748b", fontSize: 9 }}
+                tickCount={6} axisLine={false} tickFormatter={v => `${v}`} />
+              <Radar name={selected?.districtName ?? ""} dataKey="districtValue" stroke={color} fill={color} fillOpacity={0.35} strokeWidth={2.5} />
+              <Radar name="Statewide Avg" dataKey="statewideAvg" stroke="#38bdf8" strokeDasharray="5 4" fill="#38bdf8" fillOpacity={0.07} strokeWidth={1.5} />
+              <Tooltip
+                contentStyle={{ background: "rgba(2,6,23,0.98)", border: "1px solid rgba(51,65,85,0.9)", borderRadius: 10, fontSize: 12, color: "#f8fafc" }}
+                formatter={(v: any, name: any) => [`${v} / 100`, name === "districtValue" ? selectedDistrict : "Statewide Avg"]}
+                labelFormatter={(l: any) => {
+                  const m = radarMetrics.find(x => x.label === l);
+                  return <span style={{ color, fontWeight: 700 }}>{l}{m ? ` — ${m.desc}` : ""}</span>;
+                }}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* AI Insight Card */}
       <AIInsightCard
         accentClass="border-indigo-500/20"
         keyFinding="Kalaburagi's radar shows high stress (68/100), low education (35/100) and elevated migration — a compound risk profile associated with under-reporting rather than low incidence."
@@ -982,19 +1004,39 @@ function CrossModulePanel({ onNavigate, setChatInput, logAuditEvent }: Pick<Prop
 export default function SociologicalInsights({ socioData, onNavigate, setChatInput, logAuditEvent }: Props) {
   const { t } = useLanguage();
   const [demo, setDemo] = useState<DemoData | null>(null);
+  const [localData, setLocalData] = useState<SocioRow[]>(socioData && socioData.length > 0 ? socioData : []);
+
+  useEffect(() => {
+    if (socioData && socioData.length > 0) {
+      setLocalData(socioData);
+    }
+  }, [socioData]);
 
   useEffect(() => {
     fetch("/api/analytics/demographics")
       .then(r => r.json())
       .then(setDemo)
       .catch(err => console.error("Demographics fetch error:", err));
+
+    if (!socioData || socioData.length === 0) {
+      fetch("/api/analytics/sociological")
+        .then(r => r.json())
+        .then(res => {
+          if (Array.isArray(res) && res.length > 0) {
+            setLocalData(res);
+          }
+        })
+        .catch(err => console.error("Socio fetch error:", err));
+    }
   }, []);
 
-  if (!socioData || socioData.length === 0) {
+  const activeData = localData.length > 0 ? localData : socioData;
+
+  if (!activeData || activeData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3">
         <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center">
-          <Activity className="w-5 h-5 text-slate-500" />
+          <Activity className="w-5 h-5 text-slate-500 animate-pulse" />
         </div>
         <p className="text-sm text-slate-500">Loading sociological data…</p>
       </div>
@@ -1022,28 +1064,28 @@ export default function SociologicalInsights({ socioData, onNavigate, setChatInp
         <div className="flex items-center gap-2 shrink-0">
           <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-500/10 text-sky-300 border border-sky-500/30">6 Active Districts</span>
           <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-500/10 text-purple-300 border border-purple-500/30">
-            {socioData.filter(d => d.totalCrimes > 0).reduce((s,d) => s + d.totalCrimes, 0)} FIR Cases
+            {activeData.filter(d => d.totalCrimes > 0).reduce((s,d) => s + d.totalCrimes, 0)} FIR Cases
           </span>
         </div>
       </div>
 
       {/* 1. Key indicators */}
-      <StatewideKpiBar data={socioData} demo={demo} />
+      <StatewideKpiBar data={activeData} demo={demo} />
 
       {/* 2. Main socio-economic comparison */}
-      <SocioRiskChart data={socioData} />
+      <SocioRiskChart data={activeData} />
 
       {/* 3. Demographic crime patterns */}
       <DemographicCrimeSection demo={demo} />
 
       {/* 4 & 5. Risk factors + radar side by side at 2xl */}
       <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
-        <SocialRiskFactors data={socioData} />
-        <DistrictRadarChart data={socioData} />
+        <SocialRiskFactors data={activeData} />
+        <DistrictRadarChart data={activeData} />
       </div>
 
       {/* District matrix table */}
-      <DistrictTable data={socioData} />
+      <DistrictTable data={activeData} />
 
       {/* Cross-module actions */}
       <CrossModulePanel onNavigate={onNavigate} setChatInput={setChatInput} logAuditEvent={logAuditEvent} />

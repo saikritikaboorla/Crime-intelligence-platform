@@ -4,6 +4,9 @@
  * Works in both Node (server.ts) and browser (Vite replaces fs with empty shim).
  */
 
+import fs from "fs";
+import path from "path";
+
 import {
   CaseMaster,
   ComplainantDetails,
@@ -68,15 +71,12 @@ function splitCSVLine(line: string): string[] {
 // ---------------------------------------------------------------------------
 function loadCSV(filename: string): Record<string, string>[] {
   try {
-    // Dynamic require so Vite doesn't try to bundle it
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const fs = require("fs") as typeof import("fs");
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const path = require("path") as typeof import("path");
+    if (typeof window !== "undefined" || typeof process === "undefined" || !fs?.readFileSync) return [];
     const csvPath = path.resolve(process.cwd(), "data", "csv", filename);
     const raw = fs.readFileSync(csvPath, "utf-8");
     return parseCSV(raw);
-  } catch {
+  } catch (err) {
+    console.error(`Failed to load CSV ${filename}:`, err);
     return [];
   }
 }
