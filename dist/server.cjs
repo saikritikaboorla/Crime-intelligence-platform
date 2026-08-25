@@ -23,13 +23,15 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 
 // server.ts
 var import_express = __toESM(require("express"), 1);
-var import_path = __toESM(require("path"), 1);
+var import_path2 = __toESM(require("path"), 1);
 var import_vite = require("vite");
 var import_genai = require("@google/genai");
 var import_dotenv = __toESM(require("dotenv"), 1);
 var import_zcatalyst_sdk_node = __toESM(require("zcatalyst-sdk-node"), 1);
 
 // src/mockData.ts
+var import_fs = __toESM(require("fs"), 1);
+var import_path = __toESM(require("path"), 1);
 function parseCSV(raw) {
   const lines = raw.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim().split("\n");
   if (lines.length < 2) return [];
@@ -67,12 +69,12 @@ function splitCSVLine(line) {
 }
 function loadCSV(filename) {
   try {
-    const fs = require("fs");
-    const path2 = require("path");
-    const csvPath = path2.resolve(process.cwd(), "data", "csv", filename);
-    const raw = fs.readFileSync(csvPath, "utf-8");
+    if (typeof window !== "undefined" || typeof process === "undefined" || !import_fs.default?.readFileSync) return [];
+    const csvPath = import_path.default.resolve(process.cwd(), "data", "csv", filename);
+    const raw = import_fs.default.readFileSync(csvPath, "utf-8");
     return parseCSV(raw);
-  } catch {
+  } catch (err) {
+    console.error(`Failed to load CSV ${filename}:`, err);
     return [];
   }
 }
@@ -1348,9 +1350,9 @@ app.get("/api/analytics/forecasting", (_req, res) => {
 if (process.env.NODE_ENV === "development") {
   startVite();
 } else {
-  const distPath = import_path.default.join(process.cwd(), "dist");
+  const distPath = import_path2.default.join(process.cwd(), "dist");
   app.use(import_express.default.static(distPath));
-  app.get("*", (_req, res) => res.sendFile(import_path.default.join(distPath, "index.html")));
+  app.get("*", (_req, res) => res.sendFile(import_path2.default.join(distPath, "index.html")));
   app.listen(Number(PORT), () => console.log(`Production server on port ${PORT}`));
 }
 async function startVite() {
