@@ -18,6 +18,7 @@ interface MissionControlProps {
   onNavigate: (tab: string) => void;
   forecasting: { warnings: any[]; hotspotsRisk: any[] };
   trendData: { crimeByMonth: any[]; crimeByType: any[]; hotspots: any[] };
+  metrics: { activeInvestigations: number; highRiskSuspects: number; hotspotDistricts: number; suspiciousTransactions: number } | null;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -67,12 +68,12 @@ function AIBriefCard() {
   );
 }
 
-function KPIGrid({ onNavigate }: { onNavigate: (t: string) => void }) {
+function KPIGrid({ onNavigate, metrics }: { onNavigate: (t: string) => void; metrics: MissionControlProps["metrics"] }) {
   const { t } = useLanguage();
-  const activeCases      = mockCases.filter(c => c.CaseStatusID === 2).length;
-  const highRiskSuspects = mockAccused.filter((_, i) => i < 3).length;
-  const hotspotCount     = mockDistricts.filter(d => d.SocioEconomic.economicStressIndex > 40).length;
-  const suspiciousTx     = mockFinancialTransactions.filter(t => t.IsSuspicious).length;
+  const activeCases      = metrics?.activeInvestigations ?? 0;
+  const highRiskSuspects = metrics?.highRiskSuspects ?? 0;
+  const hotspotCount     = metrics?.hotspotDistricts ?? 0;
+  const suspiciousTx     = metrics?.suspiciousTransactions ?? 0;
 
   const kpis = [
     {
@@ -466,7 +467,7 @@ function DistrictRiskTable({ hotspotsRisk }: { hotspotsRisk: any[] }) {
 }
 
 // ── Main export ────────────────────────────────────────────────────────────
-export default function MissionControl({ onNavigate, forecasting, trendData }: MissionControlProps) {
+export default function MissionControl({ onNavigate, forecasting, trendData, metrics }: MissionControlProps) {
   const { t } = useLanguage();
   const [lastRefresh, setLastRefresh] = useState(new Date().toLocaleTimeString());
 
@@ -516,7 +517,7 @@ export default function MissionControl({ onNavigate, forecasting, trendData }: M
 
       {/* Row 2: KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-6 stagger-children">
-        <KPIGrid onNavigate={onNavigate} />
+        <KPIGrid onNavigate={onNavigate} metrics={metrics} />
       </div>
 
       {/* Row 3: Quick actions (full width) */}

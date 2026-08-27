@@ -493,6 +493,46 @@ app.get("/api/analytics/financial", (_req, res) => {
   });
 });
 
+// ── MISSION CONTROL METRICS (CSV-backed) ───────────────────────────────────
+app.get("/api/analytics/mission-control", (_req, res) => {
+  const activeInvestigations = mockCases.filter(c => c.CaseStatusID === 2).length;
+
+  // Keep this in step with the offender profiling endpoint: repeat offenders
+  // are scored from their linked FIRs, financial flags and chargesheets.
+  const personMap = new Map<string, typeof mockAccused[0][]>();
+  mockAccused.forEach(a => {
+    const entries = personMap.get(a.PersonID) ?? [];
+    entries.push(a);
+    personMap.set(a.PersonID, entries);
+  });
+  const highRiskSuspects = [...personMap.values()].filter(entries => {
+    if (entries.length < 2) return false;
+    const caseIds = [...new Set(entries.map(e => e.CaseMasterID))];
+    const cases = caseIds.map(id => mockCases.find(c => c.CaseMasterID === id)).filter(Boolean) as typeof mockCases;
+    const hasFinancialLink = mockFinancialTransactions.some(t => caseIds.includes(t.CaseMasterID) && t.IsSuspicious);
+    const hasHeinous = cases.some(c => c.GravityOffenceID === 1);
+    const chargesheeted = csvChargesheets.some(cs => caseIds.includes(cs.CaseMasterID));
+    const riskScore = Math.min(99, 40 + entries.length * 8 + (hasFinancialLink ? 10 : 0) + (hasHeinous ? 10 : 0) + (chargesheeted ? 5 : 0));
+    return riskScore >= 70; // HIGH or CRITICAL in /api/analytics/offenders
+  }).length;
+
+  const hotspotDistricts = mockDistricts.filter(d => mockUnits.some(u => u.DistrictID === d.DistrictID)).filter(d => {
+    const cases = mockCases.filter(c => districtOfStation(c.PoliceStationID) === d.DistrictID);
+    const heinous = cases.filter(c => c.GravityOffenceID === 1).length;
+    const recentCases = cases.filter(c => new Date(c.CrimeRegisteredDate) >= new Date("2026-05-01")).length;
+    const risk = Math.min(99, Math.round(
+      (heinous / Math.max(cases.length, 1)) * 40 +
+      (d.SocioEconomic.economicStressIndex / 100) * 30 +
+      (recentCases / Math.max(cases.length, 1)) * 20 +
+      (d.SocioEconomic.migrationRate / 20) * 10
+    ));
+    return risk >= 50;
+  }).length;
+
+  const suspiciousTransactions = mockFinancialTransactions.filter(t => t.IsSuspicious).length;
+  res.json({ activeInvestigations, highRiskSuspects, hotspotDistricts, suspiciousTransactions });
+});
+
 // ── TRENDS ───────────────────────────────────────────────────────────────────
 app.get("/api/analytics/trends", (_req, res) => {
   const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];

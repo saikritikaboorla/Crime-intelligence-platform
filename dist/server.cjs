@@ -728,6 +728,36 @@ app.get("/api/analytics/financial", (_req, res) => {
     }
   });
 });
+app.get("/api/analytics/mission-control", (_req, res) => {
+  const activeInvestigations = mockCases.filter((c) => c.CaseStatusID === 2).length;
+  const personMap = /* @__PURE__ */ new Map();
+  mockAccused.forEach((a) => {
+    const entries = personMap.get(a.PersonID) ?? [];
+    entries.push(a);
+    personMap.set(a.PersonID, entries);
+  });
+  const highRiskSuspects = [...personMap.values()].filter((entries) => {
+    if (entries.length < 2) return false;
+    const caseIds = [...new Set(entries.map((e) => e.CaseMasterID))];
+    const cases = caseIds.map((id) => mockCases.find((c) => c.CaseMasterID === id)).filter(Boolean);
+    const hasFinancialLink = mockFinancialTransactions.some((t) => caseIds.includes(t.CaseMasterID) && t.IsSuspicious);
+    const hasHeinous = cases.some((c) => c.GravityOffenceID === 1);
+    const chargesheeted = csvChargesheets.some((cs) => caseIds.includes(cs.CaseMasterID));
+    const riskScore = Math.min(99, 40 + entries.length * 8 + (hasFinancialLink ? 10 : 0) + (hasHeinous ? 10 : 0) + (chargesheeted ? 5 : 0));
+    return riskScore >= 70;
+  }).length;
+  const hotspotDistricts = mockDistricts.filter((d) => mockUnits.some((u) => u.DistrictID === d.DistrictID)).filter((d) => {
+    const cases = mockCases.filter((c) => districtOfStation(c.PoliceStationID) === d.DistrictID);
+    const heinous = cases.filter((c) => c.GravityOffenceID === 1).length;
+    const recentCases = cases.filter((c) => new Date(c.CrimeRegisteredDate) >= /* @__PURE__ */ new Date("2026-05-01")).length;
+    const risk = Math.min(99, Math.round(
+      heinous / Math.max(cases.length, 1) * 40 + d.SocioEconomic.economicStressIndex / 100 * 30 + recentCases / Math.max(cases.length, 1) * 20 + d.SocioEconomic.migrationRate / 20 * 10
+    ));
+    return risk >= 50;
+  }).length;
+  const suspiciousTransactions = mockFinancialTransactions.filter((t) => t.IsSuspicious).length;
+  res.json({ activeInvestigations, highRiskSuspects, hotspotDistricts, suspiciousTransactions });
+});
 app.get("/api/analytics/trends", (_req, res) => {
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const crimeByMonth = monthNames.map((month, i) => {

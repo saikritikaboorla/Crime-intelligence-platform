@@ -120,6 +120,7 @@ export default function App() {
   
   // Forecasting and warning state
   const [forecasting, setForecasting] = useState<any>({ warnings: [], hotspotsRisk: [] });
+  const [missionControlMetrics, setMissionControlMetrics] = useState<any | null>(null);
   const [heatmapData, setHeatmapData] = useState<any[]>([]);
   
   // Audit Logs state
@@ -166,6 +167,7 @@ export default function App() {
     fetchAuditLogs();
     fetchDiscoveryFilters();
     fetchFinancial();
+    fetchMissionControlMetrics();
   }, []);
 
   useEffect(() => {
@@ -323,6 +325,16 @@ export default function App() {
       setFinancialTransactions(Array.isArray(data.transactions) ? data.transactions : []);
     } catch (err) {
       console.error("Error fetching financial transactions:", err);
+    }
+  };
+
+  const fetchMissionControlMetrics = async () => {
+    try {
+      const res = await fetch("/api/analytics/mission-control");
+      const data = await res.json();
+      setMissionControlMetrics(data);
+    } catch (err) {
+      console.error("Error fetching Mission Control metrics:", err);
     }
   };
 
@@ -1060,6 +1072,7 @@ export default function App() {
                   onNavigate={handleTabChange}
                   forecasting={forecasting}
                   trendData={trendData}
+                  metrics={missionControlMetrics}
                 />
               )}
 
