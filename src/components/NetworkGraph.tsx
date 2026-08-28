@@ -138,11 +138,16 @@ function computeImprovedLayout(
 ): { id: string; x: number; y: number }[] {
   if (!nodes.length) return [];
 
-  const nodeCount = nodes.length;
-
   // Compute degree centrality for each node
   const degree: Record<string, number> = {};
+  const nodeById = new Map<string, any>();
+  const targetRingById: Record<string, number> = {};
   nodes.forEach(n => { degree[n.id] = 0; });
+  nodes.forEach(n => {
+    nodeById.set(n.id, n);
+    const config = ENTITY_CONFIG[n.type as EntityType] || ENTITY_CONFIG.Person;
+    targetRingById[n.id] = config.ring;
+  });
   edges.forEach(e => {
     if (degree[e.source] !== undefined) degree[e.source]++;
     if (degree[e.target] !== undefined) degree[e.target]++;
@@ -150,8 +155,7 @@ function computeImprovedLayout(
 
   // Assign ring based on entity type and degree
   const getTargetRing = (node: any): number => {
-    const config = ENTITY_CONFIG[node.type as EntityType] || ENTITY_CONFIG.Person;
-    return config.ring;
+    return targetRingById[node.id] ?? ENTITY_CONFIG.Person.ring;
   };
 
   // Group nodes by ring
@@ -206,30 +210,29 @@ function computeImprovedLayout(
   });
 
   // Build adjacency for spring forces
-  const adjEdges: { source: string; target: string }[] = edges.map(e => ({ source: e.source, target: e.target }));
+  const adjEdges = edges.map(e => {
+    const sourceNode = nodeById.get(e.source);
+    const targetNode = nodeById.get(e.target);
+    return {
+      source: e.source,
+      target: e.target,
+      idealLength: sourceNode && targetNode && getTargetRing(sourceNode) === getTargetRing(targetNode) ? 60 : 90,
+    };
+  });
 
   // Force simulation parameters
-  const iterations = 180;
+  // The ring anchors provide most of the visual structure, so 72 iterations
+  // are enough and keep tab activation responsive for larger graphs.
+  const iterations = Math.min(72, Math.max(36, Math.round(9000 / Math.max(nodes.length, 1))));
   // Node radii for collision (based on type + degree)
-  const getNodeRadius = (nodeId: string): number => {
-    const node = nodes.find(n => n.id === nodeId);
-    if (!node) return 12;
+  const nodeRadiusById: Record<string, number> = {};
+  nodes.forEach(node => {
+    if (!node) return;
     const config = ENTITY_CONFIG[node.type as EntityType] || ENTITY_CONFIG.Person;
-    const d = degree[nodeId] || 0;
+    const d = degree[node.id] || 0;
     const hubBonus = Math.min(d * 1.5, 12);
-    return config.baseSize + hubBonus + 8; // collision padding
-  };
-
-  // Ideal spring distance based on type compatibility
-  const springLength = (a: string, b: string): number => {
-    const na = nodes.find(n => n.id === a);
-    const nb = nodes.find(n => n.id === b);
-    if (!na || !nb) return 80;
-    const rA = getTargetRing(na);
-    const rB = getTargetRing(nb);
-    if (rA === rB) return 60; // same ring: shorter spring
-    return 90; // different rings: longer spring
-  };
+    nodeRadiusById[node.id] = config.baseSize + hubBonus + 8; // collision padding
+  });
 
   for (let iter = 0; iter < iterations; iter++) {
     const alpha = 1 - iter / iterations; // cooling factor
@@ -249,7 +252,7 @@ function computeImprovedLayout(
         const dy = b.y - a.y;
         const distSq = dx * dx + dy * dy;
         const dist = Math.sqrt(distSq) || 0.01;
-        const minDist = getNodeRadius(ids[i]) + getNodeRadius(ids[j]);
+        const minDist = nodeRadiusById[ids[i]] + nodeRadiusById[ids[j]];
 
         const force = repulsionStrength / (distSq + 1);
         const fx = (dx / dist) * force;
@@ -280,7 +283,7 @@ function computeImprovedLayout(
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
-      const ideal = springLength(edge.source, edge.target);
+      const ideal = edge.idealLength;
       const delta = dist - ideal;
       const force = springStrength * delta;
       const fx = (dx / dist) * force;
@@ -500,22 +503,34 @@ export default function NetworkGraph({ nodes, edges, onSelectNode }: NetworkGrap
       );
       setLayoutPositions(positions);
     }, 0);
+    let resizeFrame = 0;
+    let lastLayoutWidth = w;
+    let lastLayoutHeight = h;
     
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry) return;
       const { width: rw, height: rh } = entry.contentRect;
       if (rw < 10 || rh < 10) return;
-      const newPositions = computeImprovedLayout(
-        propertyGraph.nodes, propertyGraph.edges,
-        rw / 2, rh / 2, rw, rh
-      );
-      setLayoutPositions(newPositions);
+      // ResizeObserver can fire several times while the tab settles. Coalesce
+      // those notifications and ignore sub-pixel/container settling changes.
+      if (Math.abs(rw - lastLayoutWidth) < 24 && Math.abs(rh - lastLayoutHeight) < 24) return;
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => {
+        lastLayoutWidth = rw;
+        lastLayoutHeight = rh;
+        const newPositions = computeImprovedLayout(
+          propertyGraph.nodes, propertyGraph.edges,
+          rw / 2, rh / 2, rw, rh
+        );
+        setLayoutPositions(newPositions);
+      });
     });
     resizeObserver.observe(container);
 
     return () => {
       clearTimeout(timer);
+      cancelAnimationFrame(resizeFrame);
       resizeObserver.disconnect();
     };
   }, [propertyGraph]);

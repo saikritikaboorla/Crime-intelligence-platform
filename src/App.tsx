@@ -557,7 +557,6 @@ export default function App() {
     if (station) parts.push(`at ${station.name}`);
 
     const query = parts.join(" ");
-    setLanguage("en");
     setChatInput(query);
     logAuditEvent("Filter Search", `Generated filtered chat query: ${query}`, query);
     handleSendMessage(undefined, query);
@@ -1949,10 +1948,10 @@ export default function App() {
                   <div>
                     <h2 className="section-title">
                       <DollarSign className="w-6 h-6 text-rose-500" />
-                      Financial Crime & Transaction Link Analysis
+                      {t("financialTitle")}
                     </h2>
                     <p className="section-subtitle mt-1">
-                      Automated tracking of suspicious transaction flows, unverified mule accounts, and layering sequences (FR-7)
+                      {t("financialSub")}
                     </p>
                   </div>
 
@@ -1963,7 +1962,7 @@ export default function App() {
                       <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
-                        placeholder="Search account / person..."
+                        placeholder={t("searchEntity")}
                         value={finSearchQuery}
                         onChange={(e) => setFinSearchQuery(e.target.value)}
                         className="w-full bg-slate-900 border border-slate-800 text-slate-200 rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:border-sky-500/50" style={{ fontSize: 'var(--type-body-size)' }}/>
@@ -1977,7 +1976,7 @@ export default function App() {
                           finRiskFilter === "ALL" ? "bg-sky-500/20 text-sky-300 border border-sky-500/30" : "text-slate-400 hover:text-slate-200"
                         }`}
                       >
-                        All
+                        {t("allLayers")}
                       </button>
                       <button
                         onClick={() => setFinRiskFilter("SUSPICIOUS")}
@@ -1985,7 +1984,7 @@ export default function App() {
                           finRiskFilter === "SUSPICIOUS" ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" : "text-slate-400 hover:text-slate-200"
                         }`}
                       >
-                        Flagged Only
+                        {t("flagged")}
                       </button>
                       <button
                         onClick={() => setFinRiskFilter("NORMAL")}
@@ -1993,7 +1992,7 @@ export default function App() {
                           finRiskFilter === "NORMAL" ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "text-slate-400 hover:text-slate-200"
                         }`}
                       >
-                        Passed
+                        {t("passed")}
                       </button>
                     </div>
 
@@ -2050,33 +2049,33 @@ export default function App() {
 
                   const kpis = [
                     {
-                      label: "Total Cashflow Volume",
+                      label: t("totalCashflow"),
                       value: `₹${(totalVolume / 100000).toFixed(2)} Lakh`,
-                      subText: `${filtered.length} transactions recorded`,
+                      subText: `${filtered.length} ${t("transactionsRecorded")}`,
                       icon: <DollarSign className="w-6 h-6 text-sky-400" />,
                       color: "border-sky-500/30 bg-sky-500/5 hover:border-sky-500/50",
                       valueClass: "text-sky-300",
                     },
                     {
-                      label: "Flagged Transactions",
+                      label: t("flaggedTransactions"),
                       value: suspicious.length,
-                      subText: `${((suspicious.length / Math.max(filtered.length, 1)) * 100).toFixed(0)}% suspicious rate`,
+                      subText: `${((suspicious.length / Math.max(filtered.length, 1)) * 100).toFixed(0)}% ${t("suspiciousRate")}`,
                       icon: <AlertTriangle className="w-6 h-6 text-rose-400" />,
                       color: "border-rose-500/30 bg-rose-500/5 hover:border-rose-500/50",
                       valueClass: "text-rose-300",
                     },
                     {
-                      label: "Total Flagged Amount",
+                      label: t("totalFlaggedAmount"),
                       value: `₹${(totalFlaggedAmount / 100000).toFixed(2)} Lakh`,
-                      subText: "Requires freeze & recovery action",
+                      subText: t("requiresFreeze"),
                       icon: <TrendingUp className="w-6 h-6 text-amber-400" />,
                       color: "border-amber-500/30 bg-amber-500/5 hover:border-amber-500/50",
                       valueClass: "text-amber-300",
                     },
                     {
-                      label: "Active Accounts Monitored",
+                      label: t("activeAccounts"),
                       value: uniqueAccounts,
-                      subText: "Source & mule bank accounts",
+                      subText: t("sourceMule"),
                       icon: <Users className="w-6 h-6 text-emerald-400" />,
                       color: "border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/50",
                       valueClass: "text-emerald-300",
@@ -2107,10 +2106,10 @@ export default function App() {
                     <div>
                       <h3 className="text-sm font-bold uppercase tracking-wider text-rose-400 flex items-center gap-2">
                         <Activity className="w-4 h-4 text-rose-500" />
-                        Money-Laundering Chain: 3-Phase Flow Analysis
+                        {t("moneyLaundering")}
                       </h3>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        Automated detection of placement → layering → integration sequences in criminal proceeds
+                        {t("automatedDetection")}
                       </p>
                     </div>
                     {/* Visual Legend */}

@@ -29,6 +29,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -156,6 +157,7 @@ function CategoryTooltip({ active, payload }: any) {
 
 // ── Main component ──────────────────────────────────────────────────────────
 export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
+  const { t } = useLanguage();
   const [data, setData] = useState<TrendsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -211,14 +213,14 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
         <div>
           <h2 className="section-title">
             <TrendingUp className="w-5 h-5 text-amber-500" />
-            Crime Trends
+            {t("crimeTrends.title")}
           </h2>
-          <p className="section-subtitle mt-1">Monthly crime velocity, category distribution and district-level hotspot analysis</p>
+          <p className="section-subtitle mt-1">{t("crimeTrends.subtitle")}</p>
         </div>
         <div className="flex items-center gap-2 text-micro text-slate-600 whitespace-nowrap">
           <span className="text-slate-700">Mission Control</span>
           <span className="text-slate-800">›</span>
-          <span className="text-amber-500/70 font-semibold">Crime Trends</span>
+          <span className="text-amber-500/70 font-semibold">{t("crimeTrends.title")}</span>
         </div>
       </div>
 
@@ -226,17 +228,17 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
       <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-4 flex flex-wrap items-end gap-4">
         <div className="flex items-center gap-2 text-amber-500 shrink-0">
           <Filter className="w-4 h-4" />
-          <span className="text-xs font-bold uppercase tracking-wider">Filters</span>
+          <span className="text-xs font-bold uppercase tracking-wider">{t("crimeTrends.filters")}</span>
         </div>
 
         <div className="flex flex-col gap-1 min-w-[160px]">
-          <label className="text-micro text-slate-500 font-semibold uppercase tracking-wider">District</label>
+          <label className="text-micro text-slate-500 font-semibold uppercase tracking-wider">{t("crimeTrends.district")}</label>
           <select
             value={selectedDistrict}
             onChange={e => setSelectedDistrict(e.target.value)}
             className="bg-slate-900 border border-slate-700 text-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-amber-500/50 cursor-pointer"
           >
-            <option value="all">All Districts</option>
+            <option value="all">{t("crimeTrends.allDistricts")}</option>
             {data?.filters.availableDistricts.map(d => (
               <option key={d.id} value={String(d.id)}>{d.name}</option>
             ))}
@@ -244,13 +246,13 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
         </div>
 
         <div className="flex flex-col gap-1 min-w-[200px]">
-          <label className="text-micro text-slate-500 font-semibold uppercase tracking-wider">Crime Category</label>
+          <label className="text-micro text-slate-500 font-semibold uppercase tracking-wider">{t("crimeTrends.crimeCategory")}</label>
           <select
             value={selectedCategory}
             onChange={e => setSelectedCategory(e.target.value)}
             className="bg-slate-900 border border-slate-700 text-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-amber-500/50 cursor-pointer"
           >
-            <option value="all">All Categories</option>
+            <option value="all">{t("crimeTrends.allCategories")}</option>
             {data?.filters.availableCategories.map(c => (
               <option key={c.id} value={String(c.id)}>{c.name}</option>
             ))}
@@ -258,13 +260,13 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
         </div>
 
         <div className="flex flex-col gap-1 min-w-[150px]">
-          <label className="text-micro text-slate-500 font-semibold uppercase tracking-wider">Time Period</label>
+          <label className="text-micro text-slate-500 font-semibold uppercase tracking-wider">{t("crimeTrends.timePeriod")}</label>
           <select
             value={selectedMonth}
             onChange={e => setSelectedMonth(e.target.value)}
             className="bg-slate-900 border border-slate-700 text-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-amber-500/50 cursor-pointer"
           >
-            <option value="all">All Months</option>
+            <option value="all">{t("crimeTrends.allMonths")}</option>
             {data?.filters.availableMonths.map(m => (
               <option key={m.key} value={m.key}>{m.label}</option>
             ))}
@@ -276,7 +278,7 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
             onClick={resetFilters}
             className="text-xs text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 rounded-lg px-3 py-1.5 flex items-center gap-1.5 transition self-end"
           >
-            <RefreshCw className="w-3 h-3" /> Reset
+            <RefreshCw className="w-3 h-3" /> {t("crimeTrends.reset")}
           </button>
         )}
       </div>
@@ -285,17 +287,17 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
       {data && (
         <div className="bg-slate-950/50 border border-slate-800/60 rounded-xl px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Records</span>
+            <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">{t("crimeTrends.records")}</span>
             <span className="text-sm font-bold text-amber-400">{data.summary.filteredRecords}</span>
-            <span className="text-xs text-slate-600">of {data.summary.totalRecordsAnalyzed} total</span>
+            <span className="text-xs text-slate-600">{t("crimeTrends.ofTotal")} {data.summary.totalRecordsAnalyzed} total</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Date Range</span>
+            <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">{t("crimeTrends.dateRange")}</span>
             <span className="text-xs font-semibold text-slate-300">{data.summary.dateRange}</span>
           </div>
           {data.summary.appliedFilters.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Active Filters</span>
+              <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">{t("crimeTrends.activeFilters")}</span>
               {data.summary.appliedFilters.map((f, i) => (
                 <span key={i} className="text-micro bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-semibold">{f}</span>
               ))}
@@ -308,13 +310,13 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
       {loading && (
         <div className="flex items-center justify-center py-16 text-slate-400 text-sm gap-3">
           <RefreshCw className="w-4 h-4 animate-spin" />
-          Loading trends from CSV data…
+          {t("crimeTrends.loadingTrends")}
         </div>
       )}
       {error && (
         <div className="flex items-center gap-3 bg-rose-950/30 border border-rose-800/40 rounded-xl p-4 text-rose-400 text-sm">
           <AlertTriangle className="w-4 h-4 shrink-0" />
-          Failed to load trend data: {error}
+          {t("crimeTrends.failedLoad")}: {error}
         </div>
       )}
 
@@ -327,27 +329,27 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/60 pb-3">
               <div>
                 <h3 className="text-sm font-bold uppercase tracking-wider text-amber-500">
-                  Crime Incidents by Month
+                  {t("crimeTrends.crimeIncidentsByMonth")}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Monthly registered FIR count — split by gravity of offence
+                  {t("crimeTrends.monthlyRegistered")}
                 </p>
               </div>
               <div className="flex items-center gap-5 text-xs shrink-0">
                 <span className="flex items-center gap-1.5">
                   <span className="inline-block w-8 h-2 rounded-sm" style={{ background: HEINOUS_COLOR, opacity: 0.85 }} />
-                  <span className="text-slate-300 font-medium">Heinous</span>
+                  <span className="text-slate-300 font-medium">{t("crimeTrends.heinous")}</span>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="inline-block w-8 h-2 rounded-sm" style={{ background: NON_HEINOUS_COLOR, opacity: 0.85 }} />
-                  <span className="text-slate-300 font-medium">Non-Heinous</span>
+                  <span className="text-slate-300 font-medium">{t("crimeTrends.nonHeinous")}</span>
                 </span>
               </div>
             </div>
 
             {data.crimeByMonth.length === 0 ? (
               <div className="flex items-center justify-center h-48 text-slate-500 text-sm">
-                No data for selected filters
+                {t("crimeTrends.noData")}
               </div>
             ) : (
               <div style={{ height: 320, width: "100%" }}>
@@ -422,16 +424,16 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
           <div className="bg-slate-950/60 border border-slate-800/80 p-5 rounded-xl flex flex-col gap-3">
             <div className="border-b border-slate-800/60 pb-3">
               <h3 className="text-sm font-bold uppercase tracking-wider text-amber-500">
-                Crime Sub-Category Distribution
+                {t("crimeTrends.crimeSubCategoryDistribution")}
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Registered FIRs per IPC sub-head — sorted by count
+                {t("crimeTrends.registeredPerIPC")}
               </p>
             </div>
 
             {data.crimeByType.length === 0 ? (
               <div className="flex items-center justify-center h-48 text-slate-500 text-sm">
-                No data for selected filters
+                {t("crimeTrends.noData")}
               </div>
             ) : (
               <div style={{ height: barChartHeight, width: "100%" }}>
@@ -487,9 +489,9 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
             <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-5">
               <h3 className="text-sm font-bold uppercase tracking-wider text-amber-500 mb-4 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />
-                Trend Insights
+                {t("crimeTrends.trendInsights")}
                 <span className="text-micro text-slate-600 font-normal lowercase tracking-normal ml-1">
-                  — derived from CSV data only
+                  {t("crimeTrends.derivedFromCSV")}
                 </span>
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -520,11 +522,11 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-rose-500" />
                 <span className="text-sm font-bold uppercase tracking-wider text-amber-500">
-                  Active District Grid
+                  {t("crimeTrends.activeDistrictGrid")}
                 </span>
                 {data.districts.length > 0 && (
                   <span className="text-micro bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">
-                    {data.districts.filter(d => d.totalCases > 0).length} districts
+                    {data.districts.filter(d => d.totalCases > 0).length} {t("crimeTrends.districtsCount")}
                   </span>
                 )}
               </div>
@@ -536,7 +538,7 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
             {dossierOpen && (
               <div className="px-5 pb-5 pt-1">
                 {data.districts.filter(d => d.totalCases > 0).length === 0 ? (
-                  <p className="text-slate-500 text-sm py-4 text-center">No district data for selected filters</p>
+                  <p className="text-slate-500 text-sm py-4 text-center">{t("crimeTrends.noDistrictData")}</p>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {data.districts.filter(d => d.totalCases > 0).map((d, idx) => {
@@ -572,7 +574,7 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
                     onClick={() => { onNavigate("sociological"); logAuditEvent("Cross Link", "Transitioned to Sociological Insights from Crime Trends."); }}
                     className="cross-action-btn flex-1"
                   >
-                    <span>Compare Socio-drivers</span>
+                    <span>{t("crimeTrends.compareSocio")}</span>
                     <span>→</span>
                   </button>
                   <button
@@ -580,7 +582,7 @@ export default function CrimeTrends({ onNavigate, logAuditEvent }: Props) {
                     onClick={() => { onNavigate("forecasting"); logAuditEvent("Cross Link", "Transitioned to Forecasting from Crime Trends."); }}
                     className="cross-action-btn flex-1"
                   >
-                    <span>Review Dispatch Beats</span>
+                    <span>{t("crimeTrends.reviewDispatch")}</span>
                     <span>→</span>
                   </button>
                 </div>
